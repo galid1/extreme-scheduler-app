@@ -20,16 +20,16 @@ const { height } = Dimensions.get('window');
 
 export default function PhoneAuthScreen() {
   const router = useRouter();
-  const { setToken } = useAuthStore();
+  const { setToken, setPhoneNumber } = useAuthStore();
 
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [localPhoneNumber, setLocalPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isPhoneSubmitted, setIsPhoneSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [remainingTime, setRemainingTime] = useState(180); // 3 minutes
 
   // Phone number validation
-  const isValidPhone = phoneNumber.match(/^010\d{8}$/);
+  const isValidPhone = localPhoneNumber.match(/^010\d{8}$/);
 
   // Timer effect
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function PhoneAuthScreen() {
   const handlePhoneChange = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
     if (cleaned.length <= 11) {
-      setPhoneNumber(cleaned);
+      setLocalPhoneNumber(cleaned);
     }
   };
 
@@ -83,8 +83,18 @@ export default function PhoneAuthScreen() {
 
       // Simulate successful verification
       if (verificationCode === '123456') {
-        setToken('dummy_token');
-        router.replace('/(tabs)');
+        // Check if user exists in server
+        // For now, we'll assume user doesn't exist and redirect to signup
+        const userExists = false; // This would be from server response
+
+        if (userExists) {
+          setToken('dummy_token');
+          router.replace('/(tabs)');
+        } else {
+          // Save phone number for signup
+          setPhoneNumber(localPhoneNumber);
+          router.replace('/(auth)/signup');
+        }
       } else {
         Alert.alert('오류', '잘못된 인증번호입니다.');
       }
@@ -145,7 +155,7 @@ export default function PhoneAuthScreen() {
               placeholder="010-0000-0000"
               placeholderTextColor="rgba(255,255,255,0.6)"
               keyboardType="number-pad"
-              value={formatPhoneNumber(phoneNumber)}
+              value={formatPhoneNumber(localPhoneNumber)}
               onChangeText={handlePhoneChange}
               editable={!isPhoneSubmitted}
               maxLength={13}
@@ -153,20 +163,19 @@ export default function PhoneAuthScreen() {
 
             {isPhoneSubmitted && (
               <View style={{ marginTop: 16 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ position: 'relative' }}>
                   <TextInput
                     style={{
-                      flex: 1,
                       borderWidth: 1,
                       borderColor: 'white',
                       backgroundColor: '#3B82F6',
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 16,
+                      paddingRight: 80,
                       fontSize: 18,
                       color: 'white',
                       textAlign: 'center',
-                      marginRight: 12,
                     }}
                     placeholder="인증번호 6자리"
                     placeholderTextColor="rgba(255,255,255,0.6)"
@@ -176,17 +185,19 @@ export default function PhoneAuthScreen() {
                     maxLength={6}
                   />
                   <View style={{
-                    backgroundColor: '#E6E6FA',
-                    borderRadius: 8,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    minWidth: 60,
-                    alignItems: 'center',
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: [{ translateY: -12 }],
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    borderRadius: 6,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
                   }}>
                     <Text style={{
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: '600',
-                      color: remainingTime < 30 ? '#FF9999' : '#7DA3F0',
+                      color: remainingTime < 30 ? '#FF9999' : 'white',
                     }}>
                       {formatTime(remainingTime)}
                     </Text>
