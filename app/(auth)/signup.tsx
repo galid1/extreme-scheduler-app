@@ -38,7 +38,7 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { phoneNumber, setToken } = useAuthStore();
+  const { phoneNumber, setToken, setUserInfo } = useAuthStore();
 
   const [currentStep, setCurrentStep] = useState<SignupStep>('name');
   const [name, setName] = useState('');
@@ -130,6 +130,12 @@ export default function SignupScreen() {
 
       // TODO: Implement actual signup API call
       await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Save user info to store
+      setUserInfo({
+        name,
+        accountType,
+      });
 
       // Simulate successful signup
       setToken('dummy_token_with_signup');
