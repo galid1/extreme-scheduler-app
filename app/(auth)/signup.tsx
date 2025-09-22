@@ -266,15 +266,6 @@ export default function SignupScreen() {
                     editable={!completedSteps.includes('name')}
                     autoFocus
                   />
-                  {completedSteps.includes('name') && (
-                    <View style={{
-                      position: 'absolute',
-                      right: 16,
-                      top: 16,
-                    }}>
-                      <Text style={{ fontSize: 20 }}>✓</Text>
-                    </View>
-                  )}
                 </View>
                 {!completedSteps.includes('name') && (
                   <TouchableOpacity
@@ -384,15 +375,6 @@ export default function SignupScreen() {
                       editable={!completedSteps.includes('birthDate')}
                     />
                     <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 18, marginLeft: 8 }}>******</Text>
-                    {completedSteps.includes('birthDate') && (
-                      <View style={{
-                        position: 'absolute',
-                        right: 100,
-                        top: 16,
-                      }}>
-                        <Text style={{ fontSize: 20 }}>✓</Text>
-                      </View>
-                    )}
                   </View>
                   <Text style={{
                     color: 'rgba(255,255,255,0.7)',

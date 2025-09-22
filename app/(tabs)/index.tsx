@@ -196,7 +196,10 @@ export default function HomeScreen() {
   }
 
   // Show schedule registration as full page for NOT_READY status or when editing
-  if (accountType === 'MEMBER' && trainerAccountId && (scheduleStatus === 'NOT_READY' || showScheduleEdit)) {
+  // For MEMBER: need trainerAccountId assigned
+  // For TRAINER: can register schedule directly
+  if ((accountType === 'MEMBER' && trainerAccountId && (scheduleStatus === 'NOT_READY' || showScheduleEdit)) ||
+      (accountType === 'TRAINER' && (scheduleStatus === 'NOT_READY' || showScheduleEdit))) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.scheduleHeader}>
@@ -214,9 +217,17 @@ export default function HomeScreen() {
             </TouchableOpacity>
           )}
           <Text style={styles.schedulePageTitle}>
-            {showScheduleEdit ? '일정 수정 요청' : '차주의 원하는 일정을 등록하세요'}
+            {showScheduleEdit
+              ? '일정 수정 요청'
+              : accountType === 'TRAINER'
+                ? '운영 가능한 일정을 등록하세요'
+                : '차주의 원하는 일정을 등록하세요'}
           </Text>
-          <Text style={styles.scheduleSubtitle}>트레이너가 확인 후 일정을 확정해드립니다</Text>
+          <Text style={styles.scheduleSubtitle}>
+            {accountType === 'TRAINER'
+              ? '회원들이 수업을 신청할 수 있는 시간대를 설정합니다'
+              : '트레이너가 확인 후 일정을 확정해드립니다'}
+          </Text>
           <View style={styles.helpContainer}>
             <View style={styles.helpItem}>
               <View style={[styles.helpIndicator, { backgroundColor: 'rgba(91, 153, 247, 0.3)' }]}>
@@ -235,31 +246,49 @@ export default function HomeScreen() {
         </View>
 
         <ScrollView style={styles.scheduleScrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.daysFullContainer}>
-            {['월', '화', '수', '목', '금', '토', '일'].map((day) => (
-              <View key={day} style={styles.dayFullSection}>
-                <TouchableOpacity
-                  style={[
-                    styles.dayFullButton,
-                    expandedDay === day && styles.dayFullButtonActive,
-                  ]}
-                  onPress={() => setExpandedDay(expandedDay === day ? null : day)}
-                >
-                  <Text style={[
-                    styles.dayFullButtonText,
-                    expandedDay === day && styles.dayButtonTextActive,
-                  ]}>
-                    {day}요일
-                  </Text>
-                  <Ionicons
-                    name={expandedDay === day ? "chevron-up" : "chevron-down"}
-                    size={20}
-                    color="white"
-                  />
-                </TouchableOpacity>
+          <View style={styles.daysContainer}>
+            {(() => {
+              const days = ['월', '화', '수', '목', '금', '토', '일'];
+              // Sort days to put expanded day first
+              const sortedDays = expandedDay
+                ? [expandedDay, ...days.filter(d => d !== expandedDay)]
+                : days;
 
-                {expandedDay === day && (
-                  <View style={styles.timeFullSlots}>
+              return sortedDays.map((day) => (
+                <View key={day} style={styles.daySection}>
+                  <TouchableOpacity
+                    style={[
+                      styles.dayButton,
+                      expandedDay === day && styles.dayButtonActive,
+                      selectedTimes[day]?.length > 0 && styles.dayButtonHasSchedule,
+                    ]}
+                    onPress={() => setExpandedDay(expandedDay === day ? null : day)}
+                  >
+                    <Text style={[
+                      styles.dayButtonText,
+                      expandedDay === day && styles.dayButtonTextActive,
+                    ]}>
+                      {day}요일
+                    </Text>
+                    <View style={styles.dayButtonRight}>
+                      {selectedTimes[day]?.length > 0 && (
+                        <View style={styles.dayCountBadge}>
+                          <Text style={styles.dayCountText}>
+                            {selectedTimes[day].length}
+                          </Text>
+                        </View>
+                      )}
+                      <Ionicons
+                        name={expandedDay === day ? "chevron-up" : "chevron-down"}
+                        size={20}
+                        color="white"
+                        style={{ marginLeft: 8 }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+
+                  {expandedDay === day && (
+                    <View style={styles.timeFullSlots}>
                     <ScrollView style={styles.timeFullSlotsScroll} showsVerticalScrollIndicator={false}>
                       {/* Morning Section */}
                       <View style={styles.timePeriodSection}>
@@ -430,9 +459,10 @@ export default function HomeScreen() {
                       </View>
                     </ScrollView>
                   </View>
-                )}
-              </View>
-            ))}
+                  )}
+                </View>
+              ));
+            })()}
           </View>
         </ScrollView>
 
@@ -636,20 +666,60 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {accountType === 'TRAINER' && (
-          <View style={styles.trainerDashboard}>
-            <Text style={styles.dashboardTitle}>트레이너 대시보드</Text>
-            <View style={styles.statsContainer}>
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>12</Text>
-                <Text style={styles.statLabel}>회원</Text>
+        {/* Show trainer dashboard or schedule management */}
+        {accountType === 'TRAINER' && scheduleStatus === 'READY' && (
+          <>
+            {/* Display saved schedule summary */}
+            {Object.keys(savedSchedule).length > 0 && (
+              <View style={styles.trainerScheduleContainer}>
+                <TouchableOpacity
+                  style={styles.schedulePreview}
+                  onPress={() => setShowScheduleDetail(true)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.schedulePreviewHeader}>
+                    <Text style={styles.schedulePreviewTitle}>운영 일정</Text>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+                  </View>
+                  {['월', '화', '수', '목', '금', '토', '일']
+                    .filter(day => savedSchedule[day]?.length > 0)
+                    .map((day) => (
+                      <View key={day} style={styles.schedulePreviewDay}>
+                        <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
+                        <Text style={styles.schedulePreviewTimes}>
+                          {savedSchedule[day].length}개 시간대
+                        </Text>
+                      </View>
+                    ))}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modifyScheduleButton}
+                  onPress={() => {
+                    setSelectedTimes(savedSchedule);
+                    setShowScheduleEdit(true);
+                  }}
+                >
+                  <Ionicons name="create-outline" size={20} color="white" />
+                  <Text style={styles.modifyScheduleButtonText}>운영 일정 수정</Text>
+                </TouchableOpacity>
               </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>8</Text>
-                <Text style={styles.statLabel}>오늘 일정</Text>
+            )}
+
+            <View style={styles.trainerDashboard}>
+              <Text style={styles.dashboardTitle}>트레이너 대시보드</Text>
+              <View style={styles.statsContainer}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>12</Text>
+                  <Text style={styles.statLabel}>회원</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>8</Text>
+                  <Text style={styles.statLabel}>오늘 일정</Text>
+                </View>
               </View>
             </View>
-          </View>
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -810,10 +880,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginRight: 4,
   },
+  trainerScheduleContainer: {
+    padding: 20,
+  },
   trainerDashboard: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 16,
     padding: 20,
+    marginHorizontal: 20,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
@@ -876,6 +950,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   dayButtonTextActive: {
+    fontWeight: '600',
+  },
+  dayButtonRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dayCountBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  dayCountText: {
+    color: 'white',
+    fontSize: 12,
     fontWeight: '600',
   },
   timeSlots: {

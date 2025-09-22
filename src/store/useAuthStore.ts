@@ -9,9 +9,11 @@ interface AuthState {
   phoneNumber: string | null;
   name: string | null;
   accountType: AccountType;
+  // Schedule status for both member and trainer
+  scheduleStatus: ScheduleStatus;
+
   // Member specific fields
   trainerAccountId: string | null;
-  scheduleStatus: ScheduleStatus;
 
   // Actions
   setToken: (token: string) => void;
@@ -50,8 +52,9 @@ export const useAuthStore = create<AuthState>()(
           name: info.name,
           accountType: info.accountType,
           // Reset member-specific fields if switching to trainer
-          trainerAccountId: info.accountType === 'TRAINER' ? undefined : get().trainerAccountId,
-          scheduleStatus: info.accountType === 'TRAINER' ? undefined : get().scheduleStatus,
+          trainerAccountId: info.accountType === 'TRAINER' ? null : get().trainerAccountId,
+          // Both member and trainer have scheduleStatus
+          scheduleStatus: 'NOT_READY',
         });
       },
 
