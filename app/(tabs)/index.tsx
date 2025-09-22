@@ -45,6 +45,7 @@ export default function HomeScreen() {
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [savedSchedule, setSavedSchedule] = useState<{ [key: string]: TimeSlotSelection[] }>({});
+  const [showScheduleDetail, setShowScheduleDetail] = useState(false);
 
   const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
@@ -445,26 +446,128 @@ export default function HomeScreen() {
             ]}
             onPress={() => {
               if (Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)) {
-                if (showScheduleEdit) {
-                  // Save the updated schedule
-                  setSavedSchedule(selectedTimes);
-                  // Close the edit view
-                  setShowScheduleEdit(false);
+                // If a day is expanded, collapse it first
+                if (expandedDay) {
                   setExpandedDay(null);
                 } else {
-                  // Save initial schedule and update status
-                  setSavedSchedule(selectedTimes);
-                  setScheduleStatus('READY');
-                  setExpandedDay(null);
+                  // Proceed with submission
+                  if (showScheduleEdit) {
+                    // Save the updated schedule
+                    setSavedSchedule(selectedTimes);
+                    // Close the edit view
+                    setShowScheduleEdit(false);
+                  } else {
+                    // Save initial schedule and update status
+                    setSavedSchedule(selectedTimes);
+                    setScheduleStatus('READY');
+                  }
                 }
               }
             }}
             disabled={!Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)}
           >
             <Text style={styles.scheduleSubmitButtonText}>
-              {showScheduleEdit ? '수정 요청 완료' : '일정 등록 완료'}
+              {expandedDay
+                ? '완료'
+                : showScheduleEdit
+                  ? '수정 요청 완료'
+                  : '일정 등록 완료'}
             </Text>
           </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show schedule detail view when requested
+  if (showScheduleDetail) {
+    const days = ['월', '화', '수', '목', '금', '토', '일'];
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.scheduleDetailHeader}>
+          <TouchableOpacity
+            style={styles.scheduleDetailBackButton}
+            onPress={() => setShowScheduleDetail(false)}
+          >
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
+          <View style={{ width: 44 }} />
+        </View>
+
+        <View style={styles.scheduleCalendarContainer}>
+          {/* Days header */}
+          <View style={styles.calendarHeader}>
+            <View style={styles.timeColumnHeader} />
+            {days.map((day) => (
+              <View key={day} style={styles.dayColumnHeader}>
+                <Text style={styles.dayColumnText}>{day}</Text>
+                {savedSchedule[day]?.length > 0 && (
+                  <View style={styles.dayColumnBadge}>
+                    <Text style={styles.dayColumnBadgeText}>{savedSchedule[day].length}</Text>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+
+          {/* Time grid */}
+          <ScrollView style={styles.calendarBody} showsVerticalScrollIndicator={false}>
+            {hours.map((hour) => {
+              const isAM = hour < 12;
+              const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+
+              return (
+                <View key={hour} style={styles.timeRow}>
+                  <View style={styles.timeLabel}>
+                    <Text style={[styles.timeLabelPeriod, hour === 0 || hour === 12 ? {} : { opacity: 0 }]}>
+                      {isAM ? '오전' : '오후'}
+                    </Text>
+                    <Text style={styles.timeLabelText}>
+                      {displayHour.toString().padStart(2, '0')}:00
+                    </Text>
+                  </View>
+                  {days.map((day) => {
+                    const timeSlot = savedSchedule[day]?.find(t => t.hour === hour);
+                    const state = timeSlot?.state || 'none';
+
+                    return (
+                      <View
+                        key={`${day}-${hour}`}
+                        style={[
+                          styles.timeCell,
+                          state === 'once' && styles.timeCellOnce,
+                          state === 'recurring' && styles.timeCellRecurring,
+                        ]}
+                      >
+                        {state !== 'none' && (
+                          <View style={styles.timeCellIndicator}>
+                            {state === 'recurring' && (
+                              <Ionicons name="repeat" size={10} color="white" />
+                            )}
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Legend */}
+        <View style={styles.calendarLegend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendColor, { backgroundColor: 'rgba(91, 153, 247, 0.6)', borderWidth: 1, borderColor: '#5B99F7' }]} />
+            <Text style={styles.legendText}>일회</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendColor, { backgroundColor: 'rgba(139, 92, 246, 0.4)', borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.7)' }]} />
+            <Text style={styles.legendText}>매주 반복</Text>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -497,17 +600,26 @@ export default function HomeScreen() {
             <View style={styles.readyStateActions}>
               {/* Display saved schedule summary */}
               {Object.keys(savedSchedule).length > 0 && (
-                <View style={styles.schedulePreview}>
-                  <Text style={styles.schedulePreviewTitle}>등록된 일정</Text>
-                  {Object.entries(savedSchedule).map(([day, times]) => (
-                    <View key={day} style={styles.schedulePreviewDay}>
-                      <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
-                      <Text style={styles.schedulePreviewTimes}>
-                        {times.length}개 시간대
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+                <TouchableOpacity
+                  style={styles.schedulePreview}
+                  onPress={() => setShowScheduleDetail(true)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.schedulePreviewHeader}>
+                    <Text style={styles.schedulePreviewTitle}>등록된 일정</Text>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+                  </View>
+                  {['월', '화', '수', '목', '금', '토', '일']
+                    .filter(day => savedSchedule[day]?.length > 0)
+                    .map((day) => (
+                      <View key={day} style={styles.schedulePreviewDay}>
+                        <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
+                        <Text style={styles.schedulePreviewTimes}>
+                          {savedSchedule[day].length}개 시간대
+                        </Text>
+                      </View>
+                    ))}
+                </TouchableOpacity>
               )}
               <TouchableOpacity
                 style={styles.modifyScheduleButton}
@@ -1035,11 +1147,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
+  schedulePreviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   schedulePreviewTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: 'white',
-    marginBottom: 12,
   },
   schedulePreviewDay: {
     flexDirection: 'row',
@@ -1137,5 +1254,128 @@ const styles = StyleSheet.create({
   },
   stateIndicatorTextActive: {
     color: 'white',
+  },
+  // Schedule detail view styles
+  scheduleDetailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  scheduleDetailBackButton: {
+    padding: 4,
+  },
+  scheduleDetailTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'white',
+  },
+  scheduleCalendarContainer: {
+    flex: 1,
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.2)',
+  },
+  timeColumnHeader: {
+    width: 60,
+  },
+  dayColumnHeader: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dayColumnText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  dayColumnBadge: {
+    backgroundColor: 'rgba(91, 153, 247, 0.3)',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 4,
+  },
+  dayColumnBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  calendarBody: {
+    flex: 1,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    height: 40,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  timeLabel: {
+    width: 60,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 8,
+  },
+  timeLabelPeriod: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 9,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  timeLabelText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11,
+  },
+  timeCell: {
+    flex: 1,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255,255,255,0.05)',
+    padding: 2,
+  },
+  timeCellOnce: {
+    backgroundColor: 'rgba(91, 153, 247, 0.6)',
+    borderWidth: 1,
+    borderColor: '#5B99F7',
+  },
+  timeCellRecurring: {
+    backgroundColor: 'rgba(139, 92, 246, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.7)',
+  },
+  timeCellIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+  },
+  calendarLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    gap: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  legendColor: {
+    width: 16,
+    height: 16,
+    borderRadius: 4,
+  },
+  legendText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
   },
 });

@@ -1,0 +1,636 @@
+# Extreme Scheduler API 목록
+
+## 1. 인증 (Auth) API
+
+### 일반 사용자 인증 `/api/v1/auths`
+
+#### POST `/api/v1/auths/sms/send` - SMS 인증코드 전송
+**Request:**
+```json
+{
+  "phoneNumber": "010-1234-5678",
+  "deviceId": "device-uuid-1234"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "tempTokenForSignUp": "temp-token-xyz-123",
+    "expirationTime": "2024-01-01T12:00:00"
+  }
+}
+```
+
+#### POST `/api/v1/auths/sign-in` - 로그인
+**Request:**
+```json
+{
+  "phoneNumber": "010-1234-5678",
+  "identificationCode": "123456"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "authToken": "jwt-token-xyz",
+    "accountId": 1,
+    "accountType": "MEMBER"
+  }
+}
+```
+
+#### POST `/api/v1/auths/sign-up` - 회원가입
+**Request:**
+```json
+{
+  "tempTokenForSignUp": "temp-token-xyz-123",
+  "name": "홍길동",
+  "birthDate": "1990-01-01",
+  "gender": "MALE",
+  "phoneNumber": "010-1234-5678",
+  "accountType": "MEMBER",
+  "profileImageUrl": "https://example.com/profile.jpg"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "authToken": "jwt-token-xyz",
+    "accountId": 1
+  }
+}
+```
+
+### 관리자 인증 `/api/admin/auths`
+
+#### POST `/api/admin/auths/sign-in` - 관리자 로그인
+**Request:**
+```json
+{
+  "id": "admin",
+  "pw": "password123"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "success": true
+  }
+}
+```
+
+#### POST `/api/admin/auths/issue-token` - 토큰 발급
+**Request:**
+```json
+{
+  "accountId": 123
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "authToken": "jwt-token-for-user-123"
+  }
+}
+```
+
+## 2. 회원 (Member) API
+
+### 회원 기본 `/api/v1/members`
+- (현재 구현된 엔드포인트 없음 - TODO 주석 있음)
+
+### 회원 담당 트레이너 지정 `/api/v1/members/trainer-assignment`
+
+#### POST `/api/v1/members/trainer-assignment/search` - 전화번호로 트레이너 검색
+**Request:**
+```json
+{
+  "phoneNumber": "010-2222-3333"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "trainerAccountId": 2,
+    "name": "김트레이너",
+    "phoneNumber": "010-2222-3333",
+    "profileImageUrl": "https://example.com/trainer.jpg"
+  }
+}
+```
+
+#### POST `/api/v1/members/trainer-assignment/request` - 담당 트레이너 지정 요청
+**Request:**
+```json
+{
+  "trainerAccountId": 2
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "requestId": 1,
+    "memberAccountId": 5,
+    "trainerAccountId": 2,
+    "requestedAt": "2024-01-20T10:30:00"
+  }
+}
+```
+
+### 회원 스케줄 `/api/v1/members/schedules`
+#### 상태 관리
+
+##### POST `/api/v1/members/schedules/ready` - 스케줄 등록 완료 상태로 변경
+**Request:** (No body - uses auth token)
+**Response:**
+```json
+{
+  "data": {
+    "memberAccountId": 1,
+    "scheduleStatus": "READY"
+  }
+}
+```
+
+##### POST `/api/v1/members/schedules/unready` - 스케줄 미완료 상태로 변경
+**Request:** (No body - uses auth token)
+**Response:**
+```json
+{
+  "data": {
+    "memberAccountId": 1,
+    "scheduleStatus": "NOT_READY"
+  }
+}
+```
+
+#### 정기 스케줄
+
+##### POST `/api/v1/members/schedules/periodic` - 정기 스케줄 등록
+**Request:**
+```json
+{
+  "scheduleLines": [
+    {
+      "dayOfWeek": "MONDAY",
+      "startHour": 9,
+      "endHour": 11
+    },
+    {
+      "dayOfWeek": "WEDNESDAY",
+      "startHour": 14,
+      "endHour": 16
+    }
+  ]
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "createdScheduleIds": [1, 2],
+    "memberAccountId": 1
+  }
+}
+```
+
+##### PUT `/api/v1/members/schedules/periodic/{scheduleId}/time` - 정기 스케줄 시간 수정
+**Request:**
+```json
+{
+  "startHour": 10,
+  "endHour": 12
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "scheduleId": 1,
+    "updatedStartHour": 10,
+    "updatedEndHour": 12
+  }
+}
+```
+
+##### PUT `/api/v1/members/schedules/periodic/{scheduleId}/day-of-week` - 정기 스케줄 요일 수정
+**Request:**
+```json
+{
+  "dayOfWeek": "FRIDAY"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "scheduleId": 1,
+    "updatedDayOfWeek": "FRIDAY"
+  }
+}
+```
+
+##### DELETE `/api/v1/members/schedules/periodic/{scheduleId}` - 정기 스케줄 삭제
+**Request:** (No body)
+**Response:**
+```json
+{
+  "data": {
+    "deletedScheduleId": 1,
+    "success": true
+  }
+}
+```
+
+#### 일회성 스케줄
+
+##### POST `/api/v1/members/schedules/onetime` - 일회성 스케줄 등록
+**Request:**
+```json
+{
+  "scheduleLines": [
+    {
+      "startHour": 9,
+      "endHour": 11,
+      "scheduleDate": "2024-01-15"
+    },
+    {
+      "startHour": 14,
+      "endHour": 16,
+      "scheduleDate": "2024-01-20"
+    }
+  ]
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "createdScheduleIds": [3, 4],
+    "memberAccountId": 1
+  }
+}
+```
+
+##### PUT `/api/v1/members/schedules/onetime/{scheduleId}/time` - 일회성 스케줄 시간 수정
+**Request:**
+```json
+{
+  "startHour": 10,
+  "endHour": 12
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "scheduleId": 3,
+    "updatedStartHour": 10,
+    "updatedEndHour": 12
+  }
+}
+```
+
+##### PUT `/api/v1/members/schedules/onetime/{scheduleId}/date` - 일회성 스케줄 날짜 수정
+**Request:**
+```json
+{
+  "scheduleDate": "2024-01-25"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "scheduleId": 3,
+    "updatedScheduleDate": "2024-01-25"
+  }
+}
+```
+
+##### DELETE `/api/v1/members/schedules/onetime/{scheduleId}` - 일회성 스케줄 삭제
+**Request:** (No body)
+**Response:**
+```json
+{
+  "data": {
+    "deletedScheduleId": 3,
+    "success": true
+  }
+}
+```
+
+## 3. 트레이너 (Trainer) API
+
+### 트레이너 기본 `/api/v1/trainers`
+
+#### POST `/api/v1/trainers/members` - 회원 배정
+**Request:**
+```json
+{
+  "memberAccountId": 5
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "trainerAccountId": 2,
+    "memberAccountId": 5,
+    "assignedAt": "2024-01-15T10:00:00"
+  }
+}
+```
+
+### 트레이너 스케줄 `/api/v1/trainers/schedules`
+
+#### POST `/api/v1/trainers/schedules/periodic` - 정기 스케줄 등록
+**Request:**
+```json
+{
+  "scheduleLines": [
+    {
+      "dayOfWeek": "MONDAY",
+      "startHour": 6,
+      "endHour": 9
+    },
+    {
+      "dayOfWeek": "TUESDAY",
+      "startHour": 6,
+      "endHour": 9
+    },
+    {
+      "dayOfWeek": "WEDNESDAY",
+      "startHour": 18,
+      "endHour": 22
+    }
+  ]
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "createdScheduleIds": [10, 11, 12],
+    "trainerAccountId": 2
+  }
+}
+```
+
+#### POST `/api/v1/trainers/schedules/onetime` - 일회성 스케줄 등록
+**Request:**
+```json
+{
+  "scheduleLines": [
+    {
+      "startHour": 9,
+      "endHour": 12,
+      "scheduleDate": "2024-01-20"
+    },
+    {
+      "startHour": 14,
+      "endHour": 18,
+      "scheduleDate": "2024-01-21"
+    }
+  ]
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "createdScheduleIds": [13, 14],
+    "trainerAccountId": 2
+  }
+}
+```
+
+#### PUT `/api/v1/trainers/schedules/time` - 스케줄 시간 수정 (여러 개 동시)
+**Request:**
+```json
+{
+  "scheduleLines": [
+    {
+      "scheduleId": 10,
+      "startHour": 7,
+      "endHour": 10
+    },
+    {
+      "scheduleId": 11,
+      "startHour": 7,
+      "endHour": 10
+    }
+  ]
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "updatedScheduleIds": [10, 11],
+    "trainerAccountId": 2
+  }
+}
+```
+
+#### PUT `/api/v1/trainers/schedules/{scheduleId}/day-of-week` - 스케줄 요일 수정
+**Request:**
+```json
+{
+  "dayOfWeek": "THURSDAY"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "scheduleId": 10,
+    "updatedDayOfWeek": "THURSDAY",
+    "trainerAccountId": 2
+  }
+}
+```
+
+#### DELETE `/api/v1/trainers/schedules/{scheduleId}` - 스케줄 삭제
+**Request:** (No body)
+**Response:**
+```json
+{
+  "data": {
+    "deletedScheduleId": 10,
+    "success": true
+  }
+}
+```
+
+## 4. 관리자 (Admin) API
+
+### 계정 관리 `/api/admin/accounts`
+
+#### GET `/api/admin/accounts` - 계정 목록 조회
+**Query Parameters:**
+- `page` (optional, default: 0): 페이지 번호
+- `size` (optional, default: 20): 페이지 크기
+- `accountType` (optional): MEMBER 또는 TRAINER
+- `phoneNumber` (optional): 전화번호 필터
+
+**Request Example:**
+```
+GET /api/admin/accounts?page=0&size=10&accountType=MEMBER&phoneNumber=010-1234
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "content": [
+      {
+        "id": 1,
+        "accountType": "MEMBER",
+        "profileImageUrl": "https://example.com/profile1.jpg",
+        "name": "홍길동",
+        "phoneNumber": "010-1234-5678"
+      },
+      {
+        "id": 3,
+        "accountType": "MEMBER",
+        "profileImageUrl": "https://example.com/profile3.jpg",
+        "name": "김철수",
+        "phoneNumber": "010-1234-9999"
+      }
+    ],
+    "page": 0,
+    "size": 10,
+    "totalElements": 25,
+    "totalPages": 3,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}
+```
+
+### 트레이너 관리 `/api/admin/trainers`
+
+#### GET `/api/admin/trainers` - 트레이너 목록 조회
+**Query Parameters:**
+- `page` (optional, default: 0): 페이지 번호
+- `size` (optional, default: 20): 페이지 크기
+- `status` (optional): PENDING 또는 ACTIVE
+
+**Request Example:**
+```
+GET /api/admin/trainers?page=0&size=10&status=PENDING
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "content": [
+      {
+        "accountId": 2,
+        "status": "PENDING",
+        "memberCount": 0,
+        "name": "박트레이너",
+        "phoneNumber": "010-2222-3333",
+        "profileImageUrl": "https://example.com/trainer2.jpg"
+      },
+      {
+        "accountId": 4,
+        "status": "PENDING",
+        "memberCount": 0,
+        "name": "이트레이너",
+        "phoneNumber": "010-4444-5555",
+        "profileImageUrl": "https://example.com/trainer4.jpg"
+      }
+    ],
+    "page": 0,
+    "size": 10,
+    "totalElements": 5,
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrevious": false
+  }
+}
+```
+
+#### PUT `/api/admin/trainers/{trainerId}/activate` - 트레이너 활성화
+**Request:** (No body)
+
+**Response:**
+```json
+{
+  "data": {
+    "trainerAccountId": 2,
+    "status": "ACTIVE",
+    "activatedAt": "2024-01-15T10:30:00"
+  }
+}
+```
+
+## 인증 요구사항
+
+### 인증 타입별 접근 권한
+- `@Auth(RequiredAccountType.MEMBER)` - 회원만 접근 가능
+- `@Auth(RequiredAccountType.TRAINER)` - 트레이너만 접근 가능
+- `@AdminAuth` - 관리자만 접근 가능
+
+### 인증 헤더
+```
+Authorization: Bearer {jwt-token}
+```
+
+## 공통 응답 형식
+모든 API는 다음 형식의 Response 객체로 응답:
+```json
+{
+  "data": {
+    // API별 응답 데이터
+  }
+}
+```
+
+## 공통 에러 응답
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "에러 메시지"
+  }
+}
+```
+
+## Enum 값 정의
+
+### AccountType
+- `MEMBER`: 회원
+- `TRAINER`: 트레이너
+
+### Gender
+- `MALE`: 남성
+- `FEMALE`: 여성
+
+### DayOfWeek
+- `MONDAY`: 월요일
+- `TUESDAY`: 화요일
+- `WEDNESDAY`: 수요일
+- `THURSDAY`: 목요일
+- `FRIDAY`: 금요일
+- `SATURDAY`: 토요일
+- `SUNDAY`: 일요일
+
+### MemberScheduleStatus
+- `NOT_READY`: 스케줄 미등록
+- `READY`: 스케줄 등록 완료 (수정 불가)
+- `SCHEDULED`: 트레이너가 스케줄링 완료
+
+### TrainerStatus
+- `PENDING`: 대기 중 (관리자 승인 필요)
+- `ACTIVE`: 활성화 (회원 배정 가능)
