@@ -57,7 +57,33 @@ export default function SignupScreen() {
   const nameInputRef = useRef<TextInput>(null);
 
   const isValidName = name.length >= 2;
-  const isValidBirthDate = birthDate.length === 6;
+
+  // Validate birth date (YYMMDD format)
+  const validateBirthDate = (dateStr: string): boolean => {
+    if (dateStr.length !== 6) return false;
+
+    const year = parseInt(dateStr.substring(0, 2));
+    const month = parseInt(dateStr.substring(2, 4));
+    const day = parseInt(dateStr.substring(4, 6));
+
+    // Validate month (1-12)
+    if (month < 1 || month > 12) return false;
+
+    // Days in each month
+    const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+    // Check for leap year (for February)
+    const fullYear = year > 50 ? 1900 + year : 2000 + year;
+    const isLeapYear = (fullYear % 4 === 0 && fullYear % 100 !== 0) || (fullYear % 400 === 0);
+    if (isLeapYear) daysInMonth[1] = 29;
+
+    // Validate day
+    if (day < 1 || day > daysInMonth[month - 1]) return false;
+
+    return true;
+  };
+
+  const isValidBirthDate = birthDate.length === 6 && validateBirthDate(birthDate);
   const isValidGenderDigit = genderDigit.match(/^[1-4]$/);
 
   const formatBirthDate = (text: string) => {
@@ -376,6 +402,17 @@ export default function SignupScreen() {
                   }}>
                     주민등록번호 앞 6자리와 뒤 첫 번째 숫자만 입력해주세요
                   </Text>
+                  {birthDate.length === 6 && !validateBirthDate(birthDate) && (
+                    <Text style={{
+                      color: '#FFB6C1',
+                      fontSize: 12,
+                      marginTop: 4,
+                      textAlign: 'center',
+                      fontWeight: '500'
+                    }}>
+                      올바른 날짜를 입력해주세요 (예: 990229는 불가능)
+                    </Text>
+                  )}
                   {!completedSteps.includes('birthDate') && (
                     <TouchableOpacity
                       style={{
