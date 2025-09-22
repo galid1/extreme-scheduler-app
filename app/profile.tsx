@@ -24,7 +24,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#111827" />
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>프로필</Text>
         <View style={{ width: 40 }} />
@@ -34,7 +34,7 @@ export default function ProfileScreen() {
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileIcon}>
-            <Ionicons name="person-circle" size={80} color="#6B7280" />
+            <Ionicons name="person-circle" size={50} color="white" />
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.userName}>사용자</Text>
@@ -46,42 +46,42 @@ export default function ProfileScreen() {
         <View style={styles.menuSection}>
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <Ionicons name="person-outline" size={20} color="#111827" />
+              <Ionicons name="person-outline" size={20} color="white" />
               <Text style={styles.menuItemText}>계정 정보</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <Ionicons name="notifications-outline" size={20} color="#111827" />
+              <Ionicons name="notifications-outline" size={20} color="white" />
               <Text style={styles.menuItemText}>알림 설정</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <Ionicons name="lock-closed-outline" size={20} color="#111827" />
+              <Ionicons name="lock-closed-outline" size={20} color="white" />
               <Text style={styles.menuItemText}>개인정보 보호</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <Ionicons name="help-circle-outline" size={20} color="#111827" />
+              <Ionicons name="help-circle-outline" size={20} color="white" />
               <Text style={styles.menuItemText}>도움말</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <Ionicons name="information-circle-outline" size={20} color="#111827" />
+              <Ionicons name="information-circle-outline" size={20} color="white" />
               <Text style={styles.menuItemText}>앱 정보</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
           </TouchableOpacity>
         </View>
 
@@ -97,7 +97,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F4FF',
+    backgroundColor: '#3B82F6',
   },
   header: {
     flexDirection: 'row',
@@ -105,9 +105,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   backButton: {
     padding: 4,
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: 'white',
   },
   content: {
     flex: 1,
@@ -123,9 +123,15 @@ const styles = StyleSheet.create({
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginTop: 20,
     marginBottom: 16,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   profileIcon: {
     marginRight: 16,
@@ -136,16 +142,21 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#111827',
+    color: 'white',
     marginBottom: 4,
   },
   userPhone: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255,255,255,0.8)',
   },
   menuSection: {
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     marginBottom: 16,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
   },
   menuItem: {
     flexDirection: 'row',
@@ -154,7 +165,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -162,11 +173,11 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    color: '#111827',
+    color: 'white',
     marginLeft: 12,
   },
   logoutButton: {
-    backgroundColor: 'white',
+    backgroundColor: '#5B99F7',
     marginHorizontal: 20,
     marginTop: 8,
     marginBottom: 32,
@@ -177,6 +188,6 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#EF4444',
+    color: 'white',
   },
 });

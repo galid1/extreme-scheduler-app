@@ -6,7 +6,8 @@
       "Bash(mkdir:*)",
       "Bash(npm run lint)",
       "Bash(npm start)",
-      "Bash(npx expo start:*)"
+      "Bash(npx expo start:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
