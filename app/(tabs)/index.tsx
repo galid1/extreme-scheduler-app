@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 interface TrainerProfile {
   id: string;
@@ -33,6 +34,7 @@ interface TimeSlotSelection {
 }
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus } = useAuthStore();
   const [trainerPhone, setTrainerPhone] = useState('');
   const [trainerProfile, setTrainerProfile] = useState<TrainerProfile | null>(null);
@@ -41,6 +43,8 @@ export default function HomeScreen() {
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
+  const [showScheduleEdit, setShowScheduleEdit] = useState(false);
+  const [savedSchedule, setSavedSchedule] = useState<{ [key: string]: TimeSlotSelection[] }>({});
 
   const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
@@ -190,12 +194,27 @@ export default function HomeScreen() {
     );
   }
 
-  // Show schedule registration as full page for NOT_READY status
-  if (accountType === 'MEMBER' && trainerAccountId && scheduleStatus === 'NOT_READY') {
+  // Show schedule registration as full page for NOT_READY status or when editing
+  if (accountType === 'MEMBER' && trainerAccountId && (scheduleStatus === 'NOT_READY' || showScheduleEdit)) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.scheduleHeader}>
-          <Text style={styles.schedulePageTitle}>차주의 원하는 일정을 등록하세요</Text>
+          {showScheduleEdit && (
+            <TouchableOpacity
+              style={styles.scheduleBackButton}
+              onPress={() => {
+                setShowScheduleEdit(false);
+                // Restore saved schedule when cancelling edit
+                setSelectedTimes(savedSchedule);
+                setExpandedDay(null);
+              }}
+            >
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+          )}
+          <Text style={styles.schedulePageTitle}>
+            {showScheduleEdit ? '일정 수정 요청' : '차주의 원하는 일정을 등록하세요'}
+          </Text>
           <Text style={styles.scheduleSubtitle}>트레이너가 확인 후 일정을 확정해드립니다</Text>
           <View style={styles.helpContainer}>
             <View style={styles.helpItem}>
@@ -426,16 +445,25 @@ export default function HomeScreen() {
             ]}
             onPress={() => {
               if (Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)) {
-                // Submit schedule and update status
-                setScheduleStatus('READY');
-                // Clear selections
-                setSelectedTimes({});
-                setExpandedDay(null);
+                if (showScheduleEdit) {
+                  // Save the updated schedule
+                  setSavedSchedule(selectedTimes);
+                  // Close the edit view
+                  setShowScheduleEdit(false);
+                  setExpandedDay(null);
+                } else {
+                  // Save initial schedule and update status
+                  setSavedSchedule(selectedTimes);
+                  setScheduleStatus('READY');
+                  setExpandedDay(null);
+                }
               }
             }}
             disabled={!Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)}
           >
-            <Text style={styles.scheduleSubmitButtonText}>일정 등록 완료</Text>
+            <Text style={styles.scheduleSubmitButtonText}>
+              {showScheduleEdit ? '수정 요청 완료' : '일정 등록 완료'}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -448,7 +476,10 @@ export default function HomeScreen() {
       <View style={styles.topHeader}>
         <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
         {accountType === 'MEMBER' && trainerAccountId && (
-          <TouchableOpacity style={styles.trainerBadge}>
+          <TouchableOpacity
+            style={styles.trainerBadge}
+            onPress={() => router.push('/trainer-profile')}
+          >
             <Text style={styles.trainerBadgeText}>담당 트레이너</Text>
             <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
@@ -462,6 +493,35 @@ export default function HomeScreen() {
             <Ionicons name="checkmark-circle" size={60} color="#5B99F7" />
             <Text style={styles.readyStateTitle}>일정 등록 완료</Text>
             <Text style={styles.readyStateSubtitle}>트레이너가 확인 중입니다</Text>
+
+            {/* Display saved schedule summary */}
+            {Object.keys(savedSchedule).length > 0 && (
+              <View style={styles.schedulePreview}>
+                <Text style={styles.schedulePreviewTitle}>등록된 일정</Text>
+                {Object.entries(savedSchedule).map(([day, times]) => (
+                  <View key={day} style={styles.schedulePreviewDay}>
+                    <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
+                    <Text style={styles.schedulePreviewTimes}>
+                      {times.length}개 시간대
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <View style={styles.readyStateActions}>
+              <TouchableOpacity
+                style={styles.modifyScheduleButton}
+                onPress={() => {
+                  // Load saved schedule for editing
+                  setSelectedTimes(savedSchedule);
+                  setShowScheduleEdit(true);
+                }}
+              >
+                <Ionicons name="create-outline" size={20} color="white" />
+                <Text style={styles.modifyScheduleButtonText}>일정 수정 요청</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -829,6 +889,14 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingHorizontal: 20,
     paddingBottom: 20,
+    position: 'relative',
+  },
+  scheduleBackButton: {
+    position: 'absolute',
+    left: 20,
+    top: 40,
+    padding: 4,
+    zIndex: 1,
   },
   schedulePageTitle: {
     fontSize: 24,
@@ -939,6 +1007,56 @@ const styles = StyleSheet.create({
   },
   readyStateSubtitle: {
     fontSize: 16,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  readyStateActions: {
+    marginTop: 40,
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  modifyScheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#5B99F7',
+    borderRadius: 12,
+    paddingVertical: 16,
+    gap: 8,
+  },
+  modifyScheduleButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  schedulePreview: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  schedulePreviewTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 12,
+  },
+  schedulePreviewDay: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  schedulePreviewDayName: {
+    fontSize: 14,
+    color: 'white',
+  },
+  schedulePreviewTimes: {
+    fontSize: 12,
     color: 'rgba(255,255,255,0.7)',
   },
   timePeriodSection: {
