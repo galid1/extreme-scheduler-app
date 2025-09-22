@@ -494,22 +494,21 @@ export default function HomeScreen() {
             <Text style={styles.readyStateTitle}>일정 등록 완료</Text>
             <Text style={styles.readyStateSubtitle}>트레이너가 확인 중입니다</Text>
 
-            {/* Display saved schedule summary */}
-            {Object.keys(savedSchedule).length > 0 && (
-              <View style={styles.schedulePreview}>
-                <Text style={styles.schedulePreviewTitle}>등록된 일정</Text>
-                {Object.entries(savedSchedule).map(([day, times]) => (
-                  <View key={day} style={styles.schedulePreviewDay}>
-                    <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
-                    <Text style={styles.schedulePreviewTimes}>
-                      {times.length}개 시간대
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
             <View style={styles.readyStateActions}>
+              {/* Display saved schedule summary */}
+              {Object.keys(savedSchedule).length > 0 && (
+                <View style={styles.schedulePreview}>
+                  <Text style={styles.schedulePreviewTitle}>등록된 일정</Text>
+                  {Object.entries(savedSchedule).map(([day, times]) => (
+                    <View key={day} style={styles.schedulePreviewDay}>
+                      <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
+                      <Text style={styles.schedulePreviewTimes}>
+                        {times.length}개 시간대
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
               <TouchableOpacity
                 style={styles.modifyScheduleButton}
                 onPress={() => {
@@ -1032,8 +1031,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
     padding: 16,
-    marginTop: 20,
-    marginHorizontal: 20,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
