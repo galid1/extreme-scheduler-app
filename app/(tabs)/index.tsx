@@ -25,12 +25,22 @@ interface TrainerProfile {
   rating: number;
 }
 
+type TimeSlotState = 'none' | 'once' | 'recurring';
+
+interface TimeSlotSelection {
+  hour: number;
+  state: TimeSlotState;
+}
+
 export default function HomeScreen() {
-  const { accountType, trainerAccountId, setTrainerAccountId, name } = useAuthStore();
+  const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus } = useAuthStore();
   const [trainerPhone, setTrainerPhone] = useState('');
   const [trainerProfile, setTrainerProfile] = useState<TrainerProfile | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
 
   const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
@@ -180,21 +190,278 @@ export default function HomeScreen() {
     );
   }
 
+  // Show schedule registration as full page for NOT_READY status
+  if (accountType === 'MEMBER' && trainerAccountId && scheduleStatus === 'NOT_READY') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.scheduleHeader}>
+          <Text style={styles.schedulePageTitle}>차주의 원하는 일정을 등록하세요</Text>
+          <Text style={styles.scheduleSubtitle}>트레이너가 확인 후 일정을 확정해드립니다</Text>
+          <View style={styles.helpContainer}>
+            <View style={styles.helpItem}>
+              <View style={[styles.helpIndicator, { backgroundColor: 'rgba(91, 153, 247, 0.3)' }]}>
+                <Text style={styles.helpIndicatorText}>일회</Text>
+              </View>
+              <Text style={styles.helpText}>한 번만</Text>
+            </View>
+            <View style={styles.helpItem}>
+              <View style={[styles.helpIndicator, { backgroundColor: 'rgba(139, 92, 246, 0.3)' }]}>
+                <Ionicons name="repeat" size={12} color="white" />
+                <Text style={styles.helpIndicatorText}>반복</Text>
+              </View>
+              <Text style={styles.helpText}>매주 반복</Text>
+            </View>
+          </View>
+        </View>
+
+        <ScrollView style={styles.scheduleScrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.daysFullContainer}>
+            {['월', '화', '수', '목', '금', '토', '일'].map((day) => (
+              <View key={day} style={styles.dayFullSection}>
+                <TouchableOpacity
+                  style={[
+                    styles.dayFullButton,
+                    expandedDay === day && styles.dayFullButtonActive,
+                  ]}
+                  onPress={() => setExpandedDay(expandedDay === day ? null : day)}
+                >
+                  <Text style={[
+                    styles.dayFullButtonText,
+                    expandedDay === day && styles.dayButtonTextActive,
+                  ]}>
+                    {day}요일
+                  </Text>
+                  <Ionicons
+                    name={expandedDay === day ? "chevron-up" : "chevron-down"}
+                    size={20}
+                    color="white"
+                  />
+                </TouchableOpacity>
+
+                {expandedDay === day && (
+                  <View style={styles.timeFullSlots}>
+                    <ScrollView style={styles.timeFullSlotsScroll} showsVerticalScrollIndicator={false}>
+                      {/* Morning Section */}
+                      <View style={styles.timePeriodSection}>
+                        <Text style={styles.timePeriodLabel}>오전</Text>
+                        {Array.from({ length: 12 }, (_, i) => i).map((hour) => {
+                          const timeSlot = selectedTimes[day]?.find(t => t.hour === hour);
+                          const state = timeSlot?.state || 'none';
+                          const displayHour = hour === 0 ? 12 : hour;
+
+                          return (
+                            <TouchableOpacity
+                              key={hour}
+                              style={[
+                                styles.timeFullSlot,
+                                state === 'once' && styles.timeSlotOnce,
+                                state === 'recurring' && styles.timeSlotRecurring,
+                              ]}
+                              onPress={() => {
+                                const dayTimes = selectedTimes[day] || [];
+                                const existingIndex = dayTimes.findIndex(t => t.hour === hour);
+
+                                if (existingIndex >= 0) {
+                                  const currentState = dayTimes[existingIndex].state;
+                                  if (currentState === 'once') {
+                                    // Change to recurring
+                                    const updated = [...dayTimes];
+                                    updated[existingIndex] = { hour, state: 'recurring' };
+                                    setSelectedTimes({ ...selectedTimes, [day]: updated });
+                                  } else {
+                                    // Remove (recurring -> none)
+                                    setSelectedTimes({
+                                      ...selectedTimes,
+                                      [day]: dayTimes.filter(t => t.hour !== hour),
+                                    });
+                                  }
+                                } else {
+                                  // Add as once
+                                  setSelectedTimes({
+                                    ...selectedTimes,
+                                    [day]: [...dayTimes, { hour, state: 'once' }].sort((a, b) => a.hour - b.hour),
+                                  });
+                                }
+                              }}
+                            >
+                              <View style={styles.timeSlotContent}>
+                                <Text style={[
+                                  styles.timeFullSlotText,
+                                  state !== 'none' && styles.timeSlotTextSelected,
+                                ]}>
+                                  {hour === 0
+                                    ? `오전 12:00 - 01:00`
+                                    : `오전 ${displayHour.toString().padStart(2, '0')}:00 - ${(displayHour + 1).toString().padStart(2, '0')}:00`}
+                                </Text>
+                                <View style={styles.timeSlotStateOptions}>
+                                  <View style={[
+                                    styles.stateOptionBadge,
+                                    state === 'once' && styles.stateOptionActive
+                                  ]}>
+                                    <Text style={[
+                                      styles.stateOptionText,
+                                      state === 'once' && styles.stateOptionTextActive
+                                    ]}>일회</Text>
+                                  </View>
+                                  <View style={[
+                                    styles.stateOptionBadge,
+                                    state === 'recurring' && styles.stateOptionActiveRecurring
+                                  ]}>
+                                    <Ionicons
+                                      name="repeat"
+                                      size={14}
+                                      color={state === 'recurring' ? 'white' : 'rgba(255,255,255,0.3)'}
+                                    />
+                                    <Text style={[
+                                      styles.stateOptionText,
+                                      state === 'recurring' && styles.stateOptionTextActive
+                                    ]}>반복</Text>
+                                  </View>
+                                </View>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+
+                      {/* Afternoon/Evening Section */}
+                      <View style={styles.timePeriodSection}>
+                        <Text style={styles.timePeriodLabel}>오후</Text>
+                        {Array.from({ length: 12 }, (_, i) => i + 12).map((hour) => {
+                          const timeSlot = selectedTimes[day]?.find(t => t.hour === hour);
+                          const state = timeSlot?.state || 'none';
+                          const displayHour = hour === 12 ? 12 : hour - 12;
+
+                          return (
+                            <TouchableOpacity
+                              key={hour}
+                              style={[
+                                styles.timeFullSlot,
+                                state === 'once' && styles.timeSlotOnce,
+                                state === 'recurring' && styles.timeSlotRecurring,
+                              ]}
+                              onPress={() => {
+                                const dayTimes = selectedTimes[day] || [];
+                                const existingIndex = dayTimes.findIndex(t => t.hour === hour);
+
+                                if (existingIndex >= 0) {
+                                  const currentState = dayTimes[existingIndex].state;
+                                  if (currentState === 'once') {
+                                    // Change to recurring
+                                    const updated = [...dayTimes];
+                                    updated[existingIndex] = { hour, state: 'recurring' };
+                                    setSelectedTimes({ ...selectedTimes, [day]: updated });
+                                  } else {
+                                    // Remove (recurring -> none)
+                                    setSelectedTimes({
+                                      ...selectedTimes,
+                                      [day]: dayTimes.filter(t => t.hour !== hour),
+                                    });
+                                  }
+                                } else {
+                                  // Add as once
+                                  setSelectedTimes({
+                                    ...selectedTimes,
+                                    [day]: [...dayTimes, { hour, state: 'once' }].sort((a, b) => a.hour - b.hour),
+                                  });
+                                }
+                              }}
+                            >
+                              <View style={styles.timeSlotContent}>
+                                <Text style={[
+                                  styles.timeFullSlotText,
+                                  state !== 'none' && styles.timeSlotTextSelected,
+                                ]}>
+                                  {hour === 12
+                                    ? `오후 12:00 - 01:00`
+                                    : hour === 23
+                                    ? `오후 ${displayHour.toString().padStart(2, '0')}:00 - 12:00`
+                                    : `오후 ${displayHour.toString().padStart(2, '0')}:00 - ${(displayHour + 1).toString().padStart(2, '0')}:00`}
+                                </Text>
+                                <View style={styles.timeSlotStateOptions}>
+                                  <View style={[
+                                    styles.stateOptionBadge,
+                                    state === 'once' && styles.stateOptionActive
+                                  ]}>
+                                    <Text style={[
+                                      styles.stateOptionText,
+                                      state === 'once' && styles.stateOptionTextActive
+                                    ]}>일회</Text>
+                                  </View>
+                                  <View style={[
+                                    styles.stateOptionBadge,
+                                    state === 'recurring' && styles.stateOptionActiveRecurring
+                                  ]}>
+                                    <Ionicons
+                                      name="repeat"
+                                      size={14}
+                                      color={state === 'recurring' ? 'white' : 'rgba(255,255,255,0.3)'}
+                                    />
+                                    <Text style={[
+                                      styles.stateOptionText,
+                                      state === 'recurring' && styles.stateOptionTextActive
+                                    ]}>반복</Text>
+                                  </View>
+                                </View>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+
+        <View style={styles.scheduleBottomBar}>
+          <TouchableOpacity
+            style={[
+              styles.scheduleSubmitButton,
+              Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)
+                ? styles.scheduleSubmitButtonActive
+                : styles.scheduleSubmitButtonDisabled,
+            ]}
+            onPress={() => {
+              if (Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)) {
+                // Submit schedule and update status
+                setScheduleStatus('READY');
+                // Clear selections
+                setSelectedTimes({});
+                setExpandedDay(null);
+              }
+            }}
+            disabled={!Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)}
+          >
+            <Text style={styles.scheduleSubmitButtonText}>일정 등록 완료</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // Default home screen for trainers or members with assigned trainer
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
-        </View>
-
+      <View style={styles.topHeader}>
+        <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
         {accountType === 'MEMBER' && trainerAccountId && (
-          <View style={styles.assignedTrainerCard}>
-            <Text style={styles.assignedTrainerTitle}>담당 트레이너</Text>
-            <Text style={styles.assignedTrainerName}>김트레이너</Text>
-            <TouchableOpacity style={styles.changeTrainerButton}>
-              <Text style={styles.changeTrainerText}>트레이너 변경</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.trainerBadge}>
+            <Text style={styles.trainerBadgeText}>담당 트레이너</Text>
+            <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.8)" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Show welcome or other content when schedule is ready */}
+        {accountType === 'MEMBER' && trainerAccountId && scheduleStatus === 'READY' && (
+          <View style={styles.readyStateContainer}>
+            <Ionicons name="checkmark-circle" size={60} color="#5B99F7" />
+            <Text style={styles.readyStateTitle}>일정 등록 완료</Text>
+            <Text style={styles.readyStateSubtitle}>트레이너가 확인 중입니다</Text>
           </View>
         )}
 
@@ -349,30 +616,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  assignedTrainerCard: {
+  topHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  trainerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
-  assignedTrainerTitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: 8,
-  },
-  assignedTrainerName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: 'white',
-    marginBottom: 12,
-  },
-  changeTrainerButton: {
-    alignSelf: 'flex-start',
-  },
-  changeTrainerText: {
-    color: '#5B99F7',
-    fontSize: 14,
+  trainerBadgeText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 12,
+    marginRight: 4,
   },
   trainerDashboard: {
     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -403,5 +668,358 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255,255,255,0.8)',
     marginTop: 4,
+  },
+  scheduleRegistration: {
+    padding: 20,
+  },
+  scheduleTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  daysContainer: {
+    marginBottom: 20,
+  },
+  daySection: {
+    marginBottom: 10,
+  },
+  dayButton: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  dayButtonActive: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'white',
+  },
+  dayButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  dayButtonTextActive: {
+    fontWeight: '600',
+  },
+  timeSlots: {
+    marginTop: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 10,
+  },
+  timeSlotsScroll: {
+    maxHeight: 300,
+  },
+  timeSlot: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  timeSlotSelected: {
+    backgroundColor: '#5B99F7',
+  },
+  timeSlotText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  timeSlotTextSelected: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  timeSlotOnce: {
+    backgroundColor: 'rgba(91, 153, 247, 0.3)',
+    borderWidth: 2,
+    borderColor: '#5B99F7',
+  },
+  timeSlotRecurring: {
+    backgroundColor: 'rgba(139, 92, 246, 0.3)',
+    borderWidth: 2,
+    borderColor: '#8B5CF6',
+  },
+  timeSlotContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flex: 1,
+  },
+  timeSlotStateOptions: {
+    flexDirection: 'row',
+    gap: 6,
+    marginLeft: 12,
+  },
+  stateOptionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  stateOptionActive: {
+    backgroundColor: '#5B99F7',
+    borderColor: '#5B99F7',
+    shadowColor: '#5B99F7',
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  stateOptionActiveRecurring: {
+    backgroundColor: '#8B5CF6',
+    borderColor: '#8B5CF6',
+    shadowColor: '#8B5CF6',
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  stateOptionText: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  stateOptionTextActive: {
+    color: 'white',
+  },
+  timeSlotIndicator: {
+    backgroundColor: '#5B99F7',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: 8,
+  },
+  timeSlotIndicatorRecurring: {
+    backgroundColor: '#8B5CF6',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  timeSlotIndicatorText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  submitButton: {
+    backgroundColor: '#5B99F7',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  scheduleHeader: {
+    paddingTop: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  schedulePageTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  scheduleSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+  },
+  scheduleScrollView: {
+    flex: 1,
+  },
+  daysFullContainer: {
+    padding: 20,
+  },
+  dayFullSection: {
+    marginBottom: 12,
+  },
+  dayFullButton: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  dayFullButtonActive: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  dayFullButtonText: {
+    color: 'white',
+    fontSize: 17,
+    fontWeight: '500',
+  },
+  timeFullSlots: {
+    marginTop: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 12,
+  },
+  timeFullSlotsScroll: {
+    maxHeight: 350,
+  },
+  timeFullSlot: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  timeFullSlotSelected: {
+    backgroundColor: '#5B99F7',
+    borderColor: 'white',
+  },
+  timeFullSlotText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  timeFullSlotTextSelected: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  scheduleBottomBar: {
+    padding: 20,
+    paddingBottom: 30,
+    backgroundColor: '#3B82F6',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  scheduleSubmitButton: {
+    borderRadius: 14,
+    paddingVertical: 18,
+    alignItems: 'center',
+  },
+  scheduleSubmitButtonActive: {
+    backgroundColor: '#5B99F7',
+  },
+  scheduleSubmitButtonDisabled: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  scheduleSubmitButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  readyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  readyStateTitle: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: 'white',
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  readyStateSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  timePeriodSection: {
+    marginBottom: 20,
+  },
+  timePeriodLabel: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginLeft: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignSelf: 'flex-start',
+    borderRadius: 6,
+  },
+  helpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+    gap: 24,
+  },
+  helpItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  helpIndicator: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  helpIndicatorText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  helpText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+  },
+  timeSlotInnerContent: {
+    flex: 1,
+  },
+  timeSlotStateIndicators: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  stateIndicatorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  stateIndicatorActive: {
+    backgroundColor: '#5B99F7',
+    borderColor: '#5B99F7',
+  },
+  stateIndicatorActiveRecurring: {
+    backgroundColor: '#8B5CF6',
+    borderColor: '#8B5CF6',
+  },
+  stateIndicatorText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  stateIndicatorTextActive: {
+    color: 'white',
   },
 });
