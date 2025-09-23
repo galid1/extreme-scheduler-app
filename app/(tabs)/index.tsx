@@ -33,6 +33,19 @@ interface TimeSlotSelection {
   state: TimeSlotState;
 }
 
+type TrainerAssignmentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+interface TrainerAssignmentRequestDto {
+  requestId: number;
+  memberAccountId: string;
+  memberName?: string;
+  memberPhone?: string;
+  status: TrainerAssignmentRequestStatus;
+  requestedAt: string;
+  processedAt?: string;
+  rejectReason?: string;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus, savedSchedule, setSavedSchedule } = useAuthStore();
@@ -45,6 +58,8 @@ export default function HomeScreen() {
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
+  const [assignmentRequests, setAssignmentRequests] = useState<TrainerAssignmentRequestDto[]>([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -52,6 +67,73 @@ export default function HomeScreen() {
       setSelectedTimes(savedSchedule);
     }
   }, [showScheduleEdit]);
+
+  // Fetch trainer assignment requests for trainers
+  useEffect(() => {
+    if (accountType === 'TRAINER' && scheduleStatus === 'READY') {
+      fetchAssignmentRequests();
+    }
+  }, [accountType, scheduleStatus]);
+
+  const fetchAssignmentRequests = async () => {
+    setIsLoadingRequests(true);
+    try {
+      // Mock API call - replace with actual API endpoint
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock data matching the DTO structure
+      const mockRequests: TrainerAssignmentRequestDto[] = [
+        {
+          requestId: 1,
+          memberAccountId: 'member_001',
+          memberName: '김민수',
+          memberPhone: '010-1234-5678',
+          status: 'PENDING',
+          requestedAt: new Date().toISOString(),
+        },
+        {
+          requestId: 2,
+          memberAccountId: 'member_002',
+          memberName: '이영희',
+          memberPhone: '010-2345-6789',
+          status: 'PENDING',
+          requestedAt: new Date(Date.now() - 3600000).toISOString(),
+        },
+        {
+          requestId: 3,
+          memberAccountId: 'member_003',
+          memberName: '박철수',
+          memberPhone: '010-3456-7890',
+          status: 'PENDING',
+          requestedAt: new Date(Date.now() - 7200000).toISOString(),
+        },
+      ];
+
+      setAssignmentRequests(mockRequests);
+    } catch (error) {
+      console.error('Error fetching assignment requests:', error);
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  };
+
+  const handleRequestAction = async (requestId: number, action: 'approve' | 'reject') => {
+    try {
+      // Mock API call - replace with actual API endpoint
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Update local state
+      setAssignmentRequests(prev =>
+        prev.map(req =>
+          req.requestId === requestId
+            ? { ...req, status: action === 'approve' ? 'APPROVED' : 'REJECTED', processedAt: new Date().toISOString() }
+            : req
+        )
+      );
+    } catch (error) {
+      console.error(`Error ${action}ing request:`, error);
+    }
+  };
 
   const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
@@ -676,18 +758,26 @@ export default function HomeScreen() {
         {accountType === 'TRAINER' && scheduleStatus === 'READY' && (
           <>
             <View style={styles.trainerDashboard}>
-              <Text style={styles.dashboardTitle}>트레이너 대시보드</Text>
+              <Text style={styles.dashboardTitle}>담당 회원 대시보드</Text>
               <View style={styles.statsContainer}>
-                <View style={styles.statCard}>
+                <TouchableOpacity
+                  style={styles.statCard}
+                  onPress={() => router.push('/approved-members')}
+                >
                   <Text style={styles.statNumber}>12</Text>
                   <Text style={styles.statLabel}>회원</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>8</Text>
-                  <Text style={styles.statLabel}>오늘 일정</Text>
-                </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.statCard}
+                  onPress={() => router.push('/assignment-requests')}
+                >
+                  <Text style={styles.statNumber}>
+                    {assignmentRequests.filter(req => req.status === 'PENDING').length}
+                  </Text>
+                  <Text style={styles.statLabel}>대기중 요청</Text>
+                </TouchableOpacity>
               </View>
-          </View>
+            </View>
 
               {/* Display saved schedule summary */}
             {Object.keys(savedSchedule).length > 0 && (
@@ -1477,5 +1567,84 @@ const styles = StyleSheet.create({
   legendText: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
+  },
+  memberRequestsContainer: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  memberRequestsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 12,
+  },
+  memberRequestCard: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginRight: 12,
+    width: 200,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  memberRequestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  memberRequestName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  memberRequestBadge: {
+    backgroundColor: 'rgba(91, 153, 247, 0.3)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: '#5B99F7',
+  },
+  memberRequestBadgeText: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: '600',
+  },
+  memberRequestSubtext: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 12,
+  },
+  memberRequestActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  memberRequestAccept: {
+    flex: 1,
+    backgroundColor: '#5B99F7',
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  memberRequestAcceptText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  memberRequestReject: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  memberRequestRejectText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
