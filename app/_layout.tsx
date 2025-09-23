@@ -35,6 +35,9 @@ export default function RootLayout() {
         <Stack.Screen name="trainer-profile" options={{ headerShown: false }} />
         <Stack.Screen name="assignment-requests" options={{ headerShown: false }} />
         <Stack.Screen name="approved-members" options={{ headerShown: false }} />
+        <Stack.Screen name="auto-scheduling" options={{ headerShown: false }} />
+        <Stack.Screen name="training-schedule" options={{ headerShown: false }} />
+        <Stack.Screen name="training-schedule-timeline" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />

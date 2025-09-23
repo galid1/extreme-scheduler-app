@@ -755,7 +755,7 @@ export default function HomeScreen() {
         )}
 
         {/* Show trainer dashboard or schedule management */}
-        {accountType === 'TRAINER' && scheduleStatus === 'READY' && (
+        {accountType === 'TRAINER' && (scheduleStatus === 'READY' || scheduleStatus === 'SCHEDULED') && (
           <>
             <View style={styles.trainerDashboard}>
               <Text style={styles.dashboardTitle}>담당 회원 대시보드</Text>
@@ -779,45 +779,85 @@ export default function HomeScreen() {
               </View>
             </View>
 
-              {/* Display saved schedule summary */}
-            {Object.keys(savedSchedule).length > 0 && (
+              {/* Display schedule based on status */}
+            {scheduleStatus === 'SCHEDULED' ? (
+              // Show training schedule when scheduled
               <View style={styles.trainerScheduleContainer}>
                 <TouchableOpacity
                   style={styles.schedulePreview}
-                  onPress={() => setShowScheduleDetail(true)}
+                  onPress={() => router.push('/training-schedule')}
                   activeOpacity={0.8}
                 >
                   <View style={styles.schedulePreviewHeader}>
-                    <Text style={styles.schedulePreviewTitle}>운영 일정</Text>
+                    <Text style={styles.schedulePreviewTitle}>트레이닝 일정</Text>
                     <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
                   </View>
-                  {['월', '화', '수', '목', '금', '토', '일']
-                    .filter(day => savedSchedule[day]?.length > 0)
-                    .map((day) => (
-                      <View key={day} style={styles.schedulePreviewDay}>
-                        <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
-                        <Text style={styles.schedulePreviewTimes}>
-                          {savedSchedule[day].length}개 시간대
-                        </Text>
-                      </View>
-                    ))}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.modifyScheduleButton}
-                  onPress={() => {
-                    setSelectedTimes(savedSchedule || {});
-                    setShowScheduleEdit(true);
-                  }}
-                >
-                  <Ionicons name="create-outline" size={20} color="white" />
-                  <Text style={styles.modifyScheduleButtonText}>운영 일정 수정</Text>
+                  <View style={styles.trainingScheduleInfo}>
+                    <View style={styles.trainingInfoItem}>
+                      <Ionicons name="people" size={16} color="rgba(255,255,255,0.7)" />
+                      <Text style={styles.trainingInfoText}>12명의 회원 일정 관리 중</Text>
+                    </View>
+                    <View style={styles.trainingInfoItem}>
+                      <Ionicons name="calendar" size={16} color="rgba(255,255,255,0.7)" />
+                      <Text style={styles.trainingInfoText}>주 48개 세션</Text>
+                    </View>
+                  </View>
                 </TouchableOpacity>
               </View>
+            ) : (
+              // Show operation schedule when ready
+              Object.keys(savedSchedule).length > 0 && (
+                <View style={styles.trainerScheduleContainer}>
+                  <TouchableOpacity
+                    style={styles.schedulePreview}
+                    onPress={() => setShowScheduleDetail(true)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.schedulePreviewHeader}>
+                      <Text style={styles.schedulePreviewTitle}>운영 일정</Text>
+                      <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+                    </View>
+                    {['월', '화', '수', '목', '금', '토', '일']
+                      .filter(day => savedSchedule[day]?.length > 0)
+                      .map((day) => (
+                        <View key={day} style={styles.schedulePreviewDay}>
+                          <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
+                          <Text style={styles.schedulePreviewTimes}>
+                            {savedSchedule[day].length}개 시간대
+                          </Text>
+                        </View>
+                      ))}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.modifyScheduleButton}
+                    onPress={() => {
+                      setSelectedTimes(savedSchedule || {});
+                      setShowScheduleEdit(true);
+                    }}
+                  >
+                    <Ionicons name="create-outline" size={20} color="white" />
+                    <Text style={styles.modifyScheduleButtonText}>운영 일정 수정</Text>
+                  </TouchableOpacity>
+                </View>
+              )
             )}
           </>
         )}
       </ScrollView>
+
+      {/* Auto Scheduling Button for Trainers with READY status */}
+      {accountType === 'TRAINER' && scheduleStatus === 'READY' && (
+        <View style={styles.autoScheduleButtonContainer}>
+          <TouchableOpacity
+            style={styles.autoScheduleButton}
+            onPress={() => router.push('/auto-scheduling')}
+          >
+            <Ionicons name="calendar-outline" size={20} color="white" />
+            <Text style={styles.autoScheduleButtonText}>자동 스케줄링</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -1646,5 +1686,43 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
     fontWeight: '600',
+  },
+  autoScheduleButtonContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
+  },
+  autoScheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#5B99F7',
+    borderRadius: 14,
+    paddingVertical: 18,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  autoScheduleButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  trainingScheduleInfo: {
+    marginTop: 12,
+  },
+  trainingInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  trainingInfoText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
   },
 });
