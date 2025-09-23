@@ -35,7 +35,7 @@ interface TimeSlotSelection {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus } = useAuthStore();
+  const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus, savedSchedule, setSavedSchedule } = useAuthStore();
   const [trainerPhone, setTrainerPhone] = useState('');
   const [trainerProfile, setTrainerProfile] = useState<TrainerProfile | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -44,8 +44,14 @@ export default function HomeScreen() {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
-  const [savedSchedule, setSavedSchedule] = useState<{ [key: string]: TimeSlotSelection[] }>({});
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
+
+  // Load saved schedule on mount for editing
+  useEffect(() => {
+    if (savedSchedule && Object.keys(savedSchedule).length > 0 && showScheduleEdit) {
+      setSelectedTimes(savedSchedule);
+    }
+  }, [showScheduleEdit]);
 
   const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
@@ -208,8 +214,8 @@ export default function HomeScreen() {
               style={styles.scheduleBackButton}
               onPress={() => {
                 setShowScheduleEdit(false);
-                // Restore saved schedule when cancelling edit
-                setSelectedTimes(savedSchedule);
+                // Restore saved schedule from store when cancelling edit
+                setSelectedTimes(savedSchedule || {});
                 setExpandedDay(null);
               }}
             >
@@ -482,12 +488,12 @@ export default function HomeScreen() {
                 } else {
                   // Proceed with submission
                   if (showScheduleEdit) {
-                    // Save the updated schedule
+                    // Save the updated schedule to store
                     setSavedSchedule(selectedTimes);
                     // Close the edit view
                     setShowScheduleEdit(false);
                   } else {
-                    // Save initial schedule and update status
+                    // Save initial schedule to store and update status
                     setSavedSchedule(selectedTimes);
                     setScheduleStatus('READY');
                   }
@@ -654,8 +660,8 @@ export default function HomeScreen() {
               <TouchableOpacity
                 style={styles.modifyScheduleButton}
                 onPress={() => {
-                  // Load saved schedule for editing
-                  setSelectedTimes(savedSchedule);
+                  // Load saved schedule from store for editing
+                  setSelectedTimes(savedSchedule || {});
                   setShowScheduleEdit(true);
                 }}
               >
@@ -669,7 +675,21 @@ export default function HomeScreen() {
         {/* Show trainer dashboard or schedule management */}
         {accountType === 'TRAINER' && scheduleStatus === 'READY' && (
           <>
-            {/* Display saved schedule summary */}
+            <View style={styles.trainerDashboard}>
+              <Text style={styles.dashboardTitle}>트레이너 대시보드</Text>
+              <View style={styles.statsContainer}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>12</Text>
+                  <Text style={styles.statLabel}>회원</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>8</Text>
+                  <Text style={styles.statLabel}>오늘 일정</Text>
+                </View>
+              </View>
+          </View>
+
+              {/* Display saved schedule summary */}
             {Object.keys(savedSchedule).length > 0 && (
               <View style={styles.trainerScheduleContainer}>
                 <TouchableOpacity
@@ -696,7 +716,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={styles.modifyScheduleButton}
                   onPress={() => {
-                    setSelectedTimes(savedSchedule);
+                    setSelectedTimes(savedSchedule || {});
                     setShowScheduleEdit(true);
                   }}
                 >
@@ -705,20 +725,6 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </View>
             )}
-
-            <View style={styles.trainerDashboard}>
-              <Text style={styles.dashboardTitle}>트레이너 대시보드</Text>
-              <View style={styles.statsContainer}>
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>12</Text>
-                  <Text style={styles.statLabel}>회원</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>8</Text>
-                  <Text style={styles.statLabel}>오늘 일정</Text>
-                </View>
-              </View>
-            </View>
           </>
         )}
       </ScrollView>

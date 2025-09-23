@@ -3,6 +3,13 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AccountType, ScheduleStatus } from '@/src/types/user';
 
+type TimeSlotState = 'none' | 'once' | 'recurring';
+
+interface TimeSlotSelection {
+  hour: number;
+  state: TimeSlotState;
+}
+
 interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
@@ -15,6 +22,9 @@ interface AuthState {
   // Member specific fields
   trainerAccountId: string | null;
 
+  // Schedule data for both member and trainer
+  savedSchedule: { [key: string]: TimeSlotSelection[] };
+
   // Actions
   setToken: (token: string) => void;
   setPhoneNumber: (phoneNumber: string) => void;
@@ -24,6 +34,7 @@ interface AuthState {
   }) => void;
   setTrainerAccountId: (id: string | null) => void;
   setScheduleStatus: (status: ScheduleStatus) => void;
+  setSavedSchedule: (schedule: { [key: string]: TimeSlotSelection[] }) => void;
   logout: () => void;
   checkAuth: () => boolean;
 }
@@ -38,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
       accountType: 'MEMBER',
       trainerAccountId: null,
       scheduleStatus: 'NOT_READY',
+      savedSchedule: {},
 
       setToken: (token) => {
         set({ token, isAuthenticated: true });
@@ -55,6 +67,8 @@ export const useAuthStore = create<AuthState>()(
           trainerAccountId: info.accountType === 'TRAINER' ? null : get().trainerAccountId,
           // Both member and trainer have scheduleStatus
           scheduleStatus: 'NOT_READY',
+          // Reset schedule when switching accounts
+          savedSchedule: {},
         });
       },
 
@@ -66,6 +80,10 @@ export const useAuthStore = create<AuthState>()(
         set({ scheduleStatus: status });
       },
 
+      setSavedSchedule: (schedule) => {
+        set({ savedSchedule: schedule });
+      },
+
       logout: () => {
         set({
           token: null,
@@ -75,6 +93,7 @@ export const useAuthStore = create<AuthState>()(
           accountType: 'MEMBER',
           trainerAccountId: null,
           scheduleStatus: 'NOT_READY',
+          savedSchedule: {},
         });
       },
 
