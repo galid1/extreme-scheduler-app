@@ -14,7 +14,8 @@ export default {
       backgroundColor: "#ffffff"
     },
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      bundleIdentifier: "com.galid.extremescheduler",
     },
     android: {
       adaptiveIcon: {
@@ -34,6 +35,9 @@ export default {
     extra: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       env: process.env.EXPO_PUBLIC_ENV,
+    "eas": {
+        "projectId": "ea1e2225-0e94-4ec0-b0aa-b98dcbffbaa5"
+    }
     }
   }
 };
