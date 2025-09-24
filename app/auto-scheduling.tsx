@@ -155,8 +155,8 @@ export default function AutoSchedulingScreen() {
   };
 
   const handleConfirmSchedule = () => {
-    // Navigate to schedule confirmation or home
-    router.push('/(tabs)');
+    // Navigate to training schedule view
+    router.push('/training-schedule');
   };
 
   if (isLoading) {
