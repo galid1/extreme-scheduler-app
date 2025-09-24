@@ -267,7 +267,7 @@ export default function TrainingScheduleScreen() {
                       </View>
 
                       <View style={styles.upcomingDayRow}>
-                      {isWithin24Hours ? (
+                      {isToday ? (
                           <View style={styles.nextDayRow}>
                               <Text style={[styles.upcomingDay, isNext && styles.nextText]}>
                                 오늘
@@ -653,9 +653,9 @@ const styles = StyleSheet.create({
     borderColor: '#3B82F6',
   },
   dayCellSelectedMember: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#3B82F6',
     borderWidth: 2,
-    borderColor: '#10B981',
+    borderColor: '#3B82F6',
   },
   dayCellOtherMember: {
     backgroundColor: '#E5E7EB',
