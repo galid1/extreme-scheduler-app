@@ -878,6 +878,7 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 18,
     color: '#333',
+      fontWeight: '700',
     marginBottom: 8,
   },
   title: {
@@ -1047,6 +1048,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
+      fontWeight: '600',
     color: '#6B7280',
     marginTop: 4,
   },
@@ -1717,6 +1719,7 @@ const styles = StyleSheet.create({
   trainingInfoItem: {
     flexDirection: 'row',
     alignItems: 'center',
+      fontWeight: '600',
     gap: 8,
     marginBottom: 8,
   },

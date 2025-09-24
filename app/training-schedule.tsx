@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ export default function TrainingScheduleScreen() {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime] = useState(new Date());
+  const calendarScrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     fetchTrainingSessions();
@@ -191,6 +192,17 @@ export default function TrainingScheduleScreen() {
       <View style={styles.upcomingSection}>
         <View style={styles.upcomingHeader}>
           <Text style={styles.upcomingTitle}>다음 일정</Text>
+          {allUpcomingSessions.length > 0 && (() => {
+            const firstSession = allUpcomingSessions[0];
+            const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
+            const currentDate = new Date();
+            const currentDayIndex = currentDate.getDay();
+            const currentHour = currentDate.getHours();
+            const sessionDayIndex = dayOrder.indexOf(firstSession.day);
+            const daysToAdd = (sessionDayIndex - currentDayIndex + 7) % 7;
+            const hoursUntil = daysToAdd === 0 ? firstSession.hour - currentHour : (daysToAdd * 24) + (firstSession.hour - currentHour);
+            return null;
+          })()}
         </View>
         <ScrollView
           horizontal
@@ -207,6 +219,7 @@ export default function TrainingScheduleScreen() {
               const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
               const currentDate = new Date();
               const currentDayIndex = currentDate.getDay();
+              const currentHour = currentDate.getHours();
               const sessionDayIndex = dayOrder.indexOf(session.day);
               const daysToAdd = (sessionDayIndex - currentDayIndex + 7) % 7;
               const sessionDate = new Date(currentDate);
@@ -214,41 +227,70 @@ export default function TrainingScheduleScreen() {
               const month = sessionDate.getMonth() + 1;
               const day = sessionDate.getDate();
 
+              // Check if today and calculate hours until session
+              const isToday = daysToAdd === 0;
+              const hoursUntil = isToday ? session.hour - currentHour : (daysToAdd * 24) + (session.hour - currentHour);
+              const isWithin12Hours = hoursUntil <= 12 && hoursUntil > 0;
+              const isWithin24Hours = hoursUntil <= 24 && hoursUntil > 0;
+
               return (
-                <View
+                <TouchableOpacity
                   key={`${session.memberId}-${session.day}-${session.hour}`}
-                  style={[styles.upcomingCard, isNext && styles.nextCard]}
+                  style={styles.cardWrapper}
+                  onPress={() => {
+                    setSelectedMember(session.memberId);
+                    // Scroll to the member's session hour in calendar
+                    if (calendarScrollRef.current) {
+                      const scrollY = session.hour * 50; // 50 is hourRow height
+                      calendarScrollRef.current.scrollTo({ y: scrollY, animated: true });
+                    }
+                  }}
+                  activeOpacity={0.8}
                 >
                   {isNext && (
-                    <View style={styles.nextIndicator}>
-                      <Ionicons name="arrow-forward-circle" size={16} color="yellow" />
-                      <Text style={styles.nextIndicatorText}>다음 수업</Text>
-                    </View>
+                      <View style={styles.nextBadgeTop}>
+                          <Ionicons name="arrow-forward-circle" size={14} color="white" />
+                          <Text style={styles.nextBadgeTopText}>다음 수업</Text>
+                      </View>
                   )}
+                  <View style={[styles.upcomingCard, isNext && styles.nextCard, selectedMember === session.memberId && styles.selectedUpcomingCard]}>
                   <View style={styles.upcomingTimeInfo}>
-                    <View style={styles.upcomingDayRow}>
-                      <Text style={[styles.upcomingDay, isNext && styles.nextText]}>
-                        {session.day}요일
-                      </Text>
-                      <Text style={[styles.upcomingDate, isNext && styles.nextText]}>
-                        ({month}/{day})
-                      </Text>
+                      <View style={styles.upcomingMemberInfo}>
+                          <Ionicons
+                              name="person-circle"
+                              size={32}
+                              color={isNext ? "white" : "#3B82F6"}
+                          />
+                          <Text style={[styles.upcomingMemberName, isNext && styles.nextText]}>
+                              {session.memberName}
+                          </Text>
+                      </View>
+
+                      <View style={styles.upcomingDayRow}>
+                      {isWithin24Hours ? (
+                          <View style={styles.nextDayRow}>
+                              <Text style={[styles.upcomingDay, isNext && styles.nextText]}>
+                                오늘
+                              </Text>
+                              <Text style={[styles.upcomingHoursUntil, isNext && styles.nextTimeText]}>
+                              {hoursUntil}시간 후
+                            </Text>
+                          </View>
+                      ) : (
+                        <View style={styles.nextDayRow}>
+                          <Text style={[styles.upcomingDay, isNext && styles.nextText]}>
+                              {month}/{day} {session.day}요일
+                          </Text>
+                            <Text style={[styles.upcomingTime, isNext && styles.nextText]}>
+                                {period} {displayHour}시
+                            </Text>
+                        </View>
+                      )}
                     </View>
-                    <Text style={[styles.upcomingTime, isNext && styles.nextText]}>
-                      {period} {displayHour}시
-                    </Text>
+
                   </View>
-                  <View style={styles.upcomingMemberInfo}>
-                    <Ionicons
-                      name="person-circle"
-                      size={32}
-                      color={isNext ? "white" : "#3B82F6"}
-                    />
-                    <Text style={[styles.upcomingMemberName, isNext && styles.nextText]}>
-                      {session.memberName}
-                    </Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               );
             })
           ) : (
@@ -270,7 +312,7 @@ export default function TrainingScheduleScreen() {
         </View>
 
         {/* Calendar Body */}
-        <ScrollView style={styles.calendarBody} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={calendarScrollRef} style={styles.calendarBody} showsVerticalScrollIndicator={false}>
           {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23].map((hour) => {
             const isPM = hour >= 12;
             const displayHour = hour === 12 ? 12 : hour > 12 ? hour - 12 : hour;
@@ -284,16 +326,19 @@ export default function TrainingScheduleScreen() {
                 </View>
                 {['월', '화', '수', '목', '금', '토', '일'].map((day) => {
                   const session = trainingSessions.find(
-                    s => s.day === day && s.hour === hour &&
-                    (!selectedMember || s.memberId === selectedMember)
+                    s => s.day === day && s.hour === hour
                   );
+                  const isSelectedMember = selectedMember && session?.memberId === selectedMember;
+                  const isOtherMember = selectedMember && session && session.memberId !== selectedMember;
                   return (
                     <View
                       key={`${day}-${hour}`}
                       style={[
                         styles.dayCell,
                         isPM && styles.dayCellPM,
-                        session && styles.dayCellWithSession
+                        session && !isOtherMember && styles.dayCellWithSession,
+                        isSelectedMember && styles.dayCellSelectedMember,
+                        isOtherMember && styles.dayCellOtherMember
                       ]}
                     >
                       {session && (
@@ -431,6 +476,31 @@ const styles = StyleSheet.create({
   upcomingScrollContent: {
     paddingHorizontal: 16,
     gap: 12,
+    paddingTop: 5,
+  },
+  cardWrapper: {
+    width: 150,
+    marginTop: 15,
+  },
+  nextBadgeTop: {
+    position: 'absolute',
+    top: -12,
+    left: '50%',
+    transform: [{ translateX: -35 }],
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    gap: 3,
+    zIndex: 10,
+    elevation: 5,
+  },
+  nextBadgeTopText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '700',
   },
   upcomingCard: {
     backgroundColor: '#F0F7FF',
@@ -439,7 +509,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     width: 150,
-    position: 'relative',
+  },
+  selectedUpcomingCard: {
+    borderColor: '#10B981',
+    borderWidth: 2,
   },
   nextCard: {
     backgroundColor: '#3B82F6',
@@ -453,17 +526,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  nextIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 8,
-  },
-  nextIndicatorText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '700',
-  },
   upcomingTimeInfo: {
     marginBottom: 2,
   },
@@ -472,9 +534,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
+    nextDayRow: {
+        padding: 5,
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+    },
   upcomingDate: {
     fontSize: 11,
     color: '#9CA3AF',
+  },
+  upcomingHoursUntil: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   upcomingDay: {
     fontSize: 12,
@@ -499,6 +570,10 @@ const styles = StyleSheet.create({
   nextText: {
     color: 'white',
   },
+    nextTimeText: {
+        color: 'yellow',
+        fontWeight: '700',
+    },
   noUpcomingText: {
     color: '#666',
     fontSize: 14,
@@ -576,6 +651,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F6',
     borderWidth: 1,
     borderColor: '#3B82F6',
+  },
+  dayCellSelectedMember: {
+    backgroundColor: '#10B981',
+    borderWidth: 2,
+    borderColor: '#10B981',
+  },
+  dayCellOtherMember: {
+    backgroundColor: '#E5E7EB',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
   },
   sessionMemberName: {
     color: 'white',
