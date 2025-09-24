@@ -12,6 +12,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from 'react-native';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -48,7 +49,7 @@ interface TrainerAssignmentRequestDto {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus, savedSchedule, setSavedSchedule } = useAuthStore();
+  const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus, savedSchedule, setSavedSchedule, notificationSent, setNotificationSent } = useAuthStore();
   const [trainerPhone, setTrainerPhone] = useState('');
   const [trainerProfile, setTrainerProfile] = useState<TrainerProfile | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -850,6 +851,20 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* View Schedule Button for Trainers with SCHEDULED status */}
+      {accountType === 'TRAINER' && scheduleStatus === 'SCHEDULED' && (
+        <View style={styles.autoScheduleButtonContainer}>
+          <TouchableOpacity
+            style={styles.viewScheduleButton}
+            onPress={() => router.push('/training-schedule')}
+          >
+            <Ionicons name="calendar-sharp" size={20} color="white" />
+            <Text style={styles.autoScheduleButtonText}>트레이닝 일정 확인</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
     </SafeAreaView>
   );
 }
@@ -1739,6 +1754,20 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: '600',
+  },
+  viewScheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10B981',
+    borderRadius: 14,
+    paddingVertical: 18,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   trainingScheduleInfo: {
     marginTop: 12,

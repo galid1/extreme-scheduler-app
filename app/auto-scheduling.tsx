@@ -19,14 +19,19 @@ interface Member {
   phoneNumber: string;
   scheduleStatus: 'READY' | 'NOT_READY';
   registeredTimes?: number;
-  lastScheduleUpdate?: string;
+  lastTrainingDate?: string;
+}
+
+interface MemberSelection {
+  memberId: string;
+  sessionCount: number;
 }
 
 export default function AutoSchedulingScreen() {
   const router = useRouter();
   const { setScheduleStatus } = useAuthStore();
   const [members, setMembers] = useState<Member[]>([]);
-  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<MemberSelection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmButton, setShowConfirmButton] = useState(false);
@@ -78,7 +83,7 @@ export default function AutoSchedulingScreen() {
           phoneNumber: '010-1234-5678',
           scheduleStatus: 'READY',
           registeredTimes: 8,
-          lastScheduleUpdate: '2024-01-15',
+          lastTrainingDate: '2024-01-15',
         },
         {
           id: 'member_002',
@@ -86,7 +91,7 @@ export default function AutoSchedulingScreen() {
           phoneNumber: '010-2345-6789',
           scheduleStatus: 'READY',
           registeredTimes: 12,
-          lastScheduleUpdate: '2024-01-14',
+          lastTrainingDate: '2024-01-14',
         },
         {
           id: 'member_003',
@@ -100,7 +105,7 @@ export default function AutoSchedulingScreen() {
           phoneNumber: '010-4567-8901',
           scheduleStatus: 'READY',
           registeredTimes: 6,
-          lastScheduleUpdate: '2024-01-13',
+          lastTrainingDate: '2024-01-13',
         },
         {
           id: 'member_005',
@@ -114,7 +119,7 @@ export default function AutoSchedulingScreen() {
           phoneNumber: '010-6789-0123',
           scheduleStatus: 'READY',
           registeredTimes: 10,
-          lastScheduleUpdate: '2024-01-16',
+          lastTrainingDate: '2024-01-16',
         },
       ];
 
@@ -134,11 +139,26 @@ export default function AutoSchedulingScreen() {
   };
 
   const toggleMemberSelection = (memberId: string) => {
-    setSelectedMemberIds(prev =>
-      prev.includes(memberId)
-        ? prev.filter(id => id !== memberId)
-        : [...prev, memberId]
+    setSelectedMembers(prev => {
+      const existing = prev.find(m => m.memberId === memberId);
+      if (existing) {
+        return prev.filter(m => m.memberId !== memberId);
+      } else {
+        return [...prev, { memberId, sessionCount: 1 }];
+      }
+    });
+  };
+
+  const updateSessionCount = (memberId: string, count: number) => {
+    setSelectedMembers(prev =>
+      prev.map(m =>
+        m.memberId === memberId ? { ...m, sessionCount: count } : m
+      )
     );
+  };
+
+  const getTotalSessionCount = () => {
+    return selectedMembers.reduce((total, member) => total + member.sessionCount, 0);
   };
 
   const handleAutoSchedule = async () => {
@@ -155,8 +175,8 @@ export default function AutoSchedulingScreen() {
   };
 
   const handleConfirmSchedule = () => {
-    // Navigate to training schedule view
-    router.push('/training-schedule');
+    // Navigate to training schedule view and replace the navigation stack
+    router.replace('/training-schedule');
   };
 
   if (isLoading) {
@@ -199,7 +219,7 @@ export default function AutoSchedulingScreen() {
                 </Animated.View>
                 <Text style={styles.processingTitle}>자동 스케줄링 중...</Text>
                 <Text style={styles.processingSubtitle}>
-                  {selectedMemberIds.length}명의 회원 일정을 최적화하고 있습니다
+                  {selectedMembers.length}명의 회원, 총 {getTotalSessionCount()}개 세션을 최적화하고 있습니다
                 </Text>
                 <ActivityIndicator
                   size="large"
@@ -212,7 +232,7 @@ export default function AutoSchedulingScreen() {
                 <Ionicons name="checkmark-circle" size={80} color="#4ADE80" />
                 <Text style={styles.successTitle}>스케줄링 완료!</Text>
                 <Text style={styles.successSubtitle}>
-                  총 {selectedMemberIds.length}명의 회원 일정이 생성되었습니다
+                  총 {selectedMembers.length}명의 회원, {getTotalSessionCount()}개 세션이 생성되었습니다
                 </Text>
                 <TouchableOpacity
                   style={styles.confirmButton}
@@ -255,102 +275,145 @@ export default function AutoSchedulingScreen() {
       >
         {members.map((member) => {
           const isReady = member.scheduleStatus === 'READY';
-          const isSelected = selectedMemberIds.includes(member.id);
+          const selectedMember = selectedMembers.find(m => m.memberId === member.id);
+          const isSelected = !!selectedMember;
 
           return (
-            <TouchableOpacity
-              key={member.id}
-              style={[
-                styles.memberCard,
-                !isReady && styles.memberCardDisabled,
-                isSelected && styles.memberCardSelected,
-              ]}
-              onPress={() => isReady && toggleMemberSelection(member.id)}
-              disabled={!isReady}
-              activeOpacity={0.8}
-            >
-              <View style={styles.memberCardHeader}>
-                <View style={styles.memberInfo}>
-                  <View style={styles.memberNameRow}>
-                    <Text style={[
-                      styles.memberName,
-                      !isReady && styles.memberNameDisabled,
-                    ]}>
-                      {member.name}
-                    </Text>
-                    <View style={[
-                      styles.statusBadge,
-                      !isReady && styles.statusBadgeNotReady,
-                    ]}>
-                      <Text style={styles.statusText}>
-                        {isReady ? 'READY' : 'NOT READY'}
+            <View key={member.id}>
+              <TouchableOpacity
+                style={[
+                  styles.memberCard,
+                  !isReady && styles.memberCardDisabled,
+                  isSelected && styles.memberCardSelected,
+                ]}
+                onPress={() => isReady && toggleMemberSelection(member.id)}
+                disabled={!isReady}
+                activeOpacity={0.8}
+              >
+                <View style={styles.memberCardHeader}>
+                  <View style={styles.memberInfo}>
+                    <View style={styles.memberNameRow}>
+                      <Text style={[
+                        styles.memberName,
+                        !isReady && styles.memberNameDisabled,
+                      ]}>
+                        {member.name}
                       </Text>
-                    </View>
-                  </View>
-                  <Text style={[
-                    styles.memberPhone,
-                    !isReady && styles.memberPhoneDisabled,
-                  ]}>
-                    {member.phoneNumber}
-                  </Text>
-                  {isReady && member.registeredTimes && (
-                    <View style={styles.memberMetaInfo}>
-                      <View style={styles.metaItem}>
-                        <Ionicons name="time-outline" size={14} color="#666" />
-                        <Text style={styles.metaText}>
-                          {member.registeredTimes}개 시간대
+                      <View style={[
+                        styles.statusBadge,
+                        !isReady && styles.statusBadgeNotReady,
+                      ]}>
+                        <Text style={styles.statusText}>
+                          {isReady ? 'READY' : 'NOT READY'}
                         </Text>
                       </View>
-                      {member.lastScheduleUpdate && (
+                    </View>
+                    <Text style={[
+                      styles.memberPhone,
+                      !isReady && styles.memberPhoneDisabled,
+                    ]}>
+                      {member.phoneNumber}
+                    </Text>
+                    {isReady && member.registeredTimes && (
+                      <View style={styles.memberMetaInfo}>
                         <View style={styles.metaItem}>
-                          <Ionicons name="calendar-outline" size={14} color="#666" />
+                          <Ionicons name="time-outline" size={14} color="#666" />
                           <Text style={styles.metaText}>
-                            {member.lastScheduleUpdate}
+                            {member.registeredTimes}개 시간대
                           </Text>
                         </View>
-                      )}
+                        {member.lastTrainingDate && (
+                          <View style={styles.metaItem}>
+                            <Ionicons name="fitness-outline" size={14} color="#666" />
+                            <Text style={styles.metaText}>
+                              마지막 수강: {member.lastTrainingDate}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                  <View style={[
+                    styles.checkbox,
+                    isSelected && styles.checkboxSelected,
+                    !isReady && styles.checkboxDisabled,
+                  ]}>
+                    {isSelected && (
+                      <Ionicons name="checkmark" size={18} color="white" />
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {isSelected && (
+                <View style={styles.sessionCountContainer}>
+                  <View style={styles.sessionCountSelector}>
+                    <Text style={styles.sessionCountLabel}>주간 세션:</Text>
+                    <TouchableOpacity
+                      style={styles.sessionCountButton}
+                      onPress={() => {
+                        if (selectedMember.sessionCount > 1) {
+                          updateSessionCount(member.id, selectedMember.sessionCount - 1);
+                        }
+                      }}
+                      disabled={selectedMember.sessionCount <= 1}
+                    >
+                      <Ionicons
+                        name="remove-circle"
+                        size={20}
+                        color={selectedMember.sessionCount <= 1 ? "#D1D5DB" : "#3B82F6"}
+                      />
+                    </TouchableOpacity>
+                    <View style={styles.sessionCountDisplay}>
+                      <Text style={styles.sessionCountText}>{selectedMember.sessionCount}회</Text>
                     </View>
-                  )}
+                    <TouchableOpacity
+                      style={styles.sessionCountButton}
+                      onPress={() => {
+                        if (selectedMember.sessionCount < 3) {
+                          updateSessionCount(member.id, selectedMember.sessionCount + 1);
+                        }
+                      }}
+                      disabled={selectedMember.sessionCount >= 3}
+                    >
+                      <Ionicons
+                        name="add-circle"
+                        size={20}
+                        color={selectedMember.sessionCount >= 3 ? "#D1D5DB" : "#3B82F6"}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                <View style={[
-                  styles.checkbox,
-                  isSelected && styles.checkboxSelected,
-                  !isReady && styles.checkboxDisabled,
-                ]}>
-                  {isSelected && (
-                    <Ionicons name="checkmark" size={18} color="white" />
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
+              )}
+            </View>
           );
         })}
       </ScrollView>
 
       <View style={styles.bottomBar}>
-        {selectedMemberIds.length > 0 && (
+        {selectedMembers.length > 0 && (
           <View style={styles.selectedInfo}>
             <Text style={styles.selectedCount}>
-              {selectedMemberIds.length}명 선택됨
+              {selectedMembers.length}명 선택 · 총 {getTotalSessionCount()}개 세션
             </Text>
           </View>
         )}
         <TouchableOpacity
           style={[
             styles.proceedButton,
-            selectedMemberIds.length === 0 && styles.proceedButtonDisabled,
+            selectedMembers.length === 0 && styles.proceedButtonDisabled,
           ]}
           onPress={handleAutoSchedule}
-          disabled={selectedMemberIds.length === 0}
+          disabled={selectedMembers.length === 0}
         >
           <Text style={[
             styles.proceedButtonText,
-            selectedMemberIds.length === 0 && styles.proceedButtonTextDisabled,
+            selectedMembers.length === 0 && styles.proceedButtonTextDisabled,
           ]}>자동 스케줄링 시작</Text>
           <Ionicons
             name="arrow-forward"
             size={20}
-            color={selectedMemberIds.length === 0 ? "#999" : "white"}
+            color={selectedMembers.length === 0 ? "#999" : "white"}
           />
         </TouchableOpacity>
       </View>
@@ -593,5 +656,45 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: 'white',
+  },
+  sessionCountContainer: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: -10,
+    marginBottom: 12,
+    marginHorizontal: 16,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+    borderTopWidth: 0,
+  },
+  sessionCountLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginRight: 12,
+  },
+  sessionCountSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  sessionCountButton: {
+    padding: 2,
+  },
+  sessionCountDisplay: {
+    backgroundColor: 'white',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  sessionCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3B82F6',
   },
 });

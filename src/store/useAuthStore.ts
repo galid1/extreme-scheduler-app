@@ -25,6 +25,9 @@ interface AuthState {
   // Schedule data for both member and trainer
   savedSchedule: { [key: string]: TimeSlotSelection[] };
 
+  // Notification status
+  notificationSent: boolean;
+
   // Actions
   setToken: (token: string) => void;
   setPhoneNumber: (phoneNumber: string) => void;
@@ -35,6 +38,7 @@ interface AuthState {
   setTrainerAccountId: (id: string | null) => void;
   setScheduleStatus: (status: ScheduleStatus) => void;
   setSavedSchedule: (schedule: { [key: string]: TimeSlotSelection[] }) => void;
+  setNotificationSent: (sent: boolean) => void;
   logout: () => void;
   checkAuth: () => boolean;
 }
@@ -50,6 +54,7 @@ export const useAuthStore = create<AuthState>()(
       trainerAccountId: null,
       scheduleStatus: 'NOT_READY',
       savedSchedule: {},
+      notificationSent: false,
 
       setToken: (token) => {
         set({ token, isAuthenticated: true });
@@ -77,11 +82,19 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setScheduleStatus: (status) => {
-        set({ scheduleStatus: status });
+        set({
+          scheduleStatus: status,
+          // Reset notification status when schedule status changes to READY
+          notificationSent: status === 'READY' ? false : get().notificationSent
+        });
       },
 
       setSavedSchedule: (schedule) => {
         set({ savedSchedule: schedule });
+      },
+
+      setNotificationSent: (sent) => {
+        set({ notificationSent: sent });
       },
 
       logout: () => {
@@ -94,6 +107,7 @@ export const useAuthStore = create<AuthState>()(
           trainerAccountId: null,
           scheduleStatus: 'NOT_READY',
           savedSchedule: {},
+          notificationSent: false,
         });
       },
 

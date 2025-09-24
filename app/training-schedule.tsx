@@ -8,9 +8,11 @@ import {
   StyleSheet,
   ActivityIndicator,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/src/store/useAuthStore';
 
 interface TrainingSession {
   memberId: string;
@@ -22,9 +24,11 @@ interface TrainingSession {
 
 export default function TrainingScheduleScreen() {
   const router = useRouter();
+  const { notificationSent, setNotificationSent, setScheduleStatus } = useAuthStore();
   const [trainingSessions, setTrainingSessions] = useState<TrainingSession[]>([]);
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
   const [currentTime] = useState(new Date());
   const calendarScrollRef = useRef<ScrollView>(null);
 
@@ -355,6 +359,101 @@ export default function TrainingScheduleScreen() {
         </ScrollView>
       </View>
 
+      {/* Bottom Action Buttons */}
+      <View style={styles.bottomButtonsContainer}>
+        <TouchableOpacity
+          style={[
+            styles.notificationButton,
+            notificationSent && styles.notificationButtonDisabled
+          ]}
+          onPress={() => {
+            if (!notificationSent) {
+              Alert.alert(
+                '알림 발송 확인',
+                '모든 회원에게 트레이닝 일정 알림을 발송하시겠습니까?',
+                [
+                  { text: '취소', style: 'cancel' },
+                  {
+                    text: '발송',
+                    onPress: async () => {
+                      setIsSendingNotification(true);
+                      // Simulate notification sending
+                      await new Promise(resolve => setTimeout(resolve, 1500));
+                      setNotificationSent(true);
+                      setIsSendingNotification(false);
+                      Alert.alert('알림 발송 완료', '모든 회원에게 일정 알림이 발송되었습니다.');
+                    }
+                  }
+                ]
+              );
+            }
+          }}
+          disabled={notificationSent || isSendingNotification}
+        >
+          {isSendingNotification ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <>
+              <Ionicons
+                name={notificationSent ? "checkmark-circle" : "notifications-outline"}
+                size={18}
+                color="white"
+              />
+              <Text style={styles.notificationButtonText}>
+                {notificationSent ? '알림발송 완료' : '알림 발송'}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={() => {
+            if (notificationSent) {
+              Alert.alert(
+                '스케줄 재설정 확인',
+                '모든 회원에게 일정 취소 알림이 발송됩니다. 정말 재설정하시겠습니까?',
+                [
+                  { text: '취소', style: 'cancel' },
+                  {
+                    text: '재설정',
+                    style: 'destructive',
+                    onPress: () => {
+                      setScheduleStatus('READY');
+                      setNotificationSent(false);
+                      router.replace('/(tabs)');
+                      Alert.alert(
+                        '재설정 완료',
+                        '스케줄이 재설정되었고, 회원들에게 취소 알림이 발송되었습니다.'
+                      );
+                    }
+                  }
+                ]
+              );
+            } else {
+              Alert.alert(
+                '스케줄 재설정',
+                '스케줄을 재설정하시겠습니까?',
+                [
+                  { text: '취소', style: 'cancel' },
+                  {
+                    text: '재설정',
+                    onPress: () => {
+                      setScheduleStatus('READY');
+                      setNotificationSent(false);
+                      router.replace('/(tabs)');
+                    }
+                  }
+                ]
+              );
+            }
+          }}
+        >
+          <Ionicons name="refresh-outline" size={18} color="white" />
+          <Text style={styles.resetButtonText}>재설정</Text>
+        </TouchableOpacity>
+      </View>
+
     </SafeAreaView>
   );
 }
@@ -666,5 +765,57 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 11,
     fontWeight: '500',
+  },
+  bottomButtonsContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  notificationButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  notificationButtonDisabled: {
+    backgroundColor: '#94A3B8',
+    opacity: 0.8,
+  },
+  notificationButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  resetButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF4444',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  resetButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
