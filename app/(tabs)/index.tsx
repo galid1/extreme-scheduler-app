@@ -790,7 +790,7 @@ export default function HomeScreen() {
                 >
                   <View style={styles.schedulePreviewHeader}>
                     <Text style={styles.schedulePreviewTitle}>트레이닝 일정</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                    <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
                   </View>
                   <View style={styles.trainingScheduleInfo}>
                     <View style={styles.trainingInfoItem}>
@@ -815,7 +815,7 @@ export default function HomeScreen() {
                   >
                     <View style={styles.schedulePreviewHeader}>
                       <Text style={styles.schedulePreviewTitle}>운영 일정</Text>
-                      <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
                     </View>
                     {['월', '화', '수', '목', '금', '토', '일']
                       .filter(day => savedSchedule[day]?.length > 0)
@@ -865,7 +865,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
     flexGrow: 1,
@@ -1021,12 +1021,20 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   trainerDashboard: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    shadowColor: '#3B82F6',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   dashboardTitle: {
     fontSize: 20,
@@ -1040,17 +1048,24 @@ const styles = StyleSheet.create({
   },
   statCard: {
     alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'white',
+    minWidth: 100,
   },
   statNumber: {
     fontSize: 28,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#3B82F6',
   },
   statLabel: {
     fontSize: 14,
-      fontWeight: '600',
+      fontWeight: '500',
     color: '#6B7280',
     marginTop: 4,
+      borderBottomWidth: 1,
   },
   scheduleRegistration: {
     padding: 20,
@@ -1371,12 +1386,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   schedulePreview: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#EFF6FF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#BFDBFE',
+    borderLeftWidth: 4,
+    borderLeftColor: '#3B82F6',
   },
   schedulePreviewHeader: {
     flexDirection: 'row',
@@ -1385,9 +1402,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   schedulePreviewTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1E40AF',
   },
   schedulePreviewDay: {
     flexDirection: 'row',
@@ -1395,15 +1412,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#E0E7FF',
   },
   schedulePreviewDayName: {
     fontSize: 14,
-    color: '#1F2937',
+    color: '#1E40AF',
+    fontWeight: '600',
   },
   schedulePreviewTimes: {
     fontSize: 12,
-    color: '#6B7280',
+    color: '#64748B',
   },
   timePeriodSection: {
     marginBottom: 20,
@@ -1725,6 +1743,6 @@ const styles = StyleSheet.create({
   },
   trainingInfoText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#475569',
   },
 });
