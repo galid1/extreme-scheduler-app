@@ -21,7 +21,7 @@ export default function ExploreScreen() {
           onPress={() => router.push('/profile')}
           style={styles.settingsButton}
         >
-          <Ionicons name="settings-outline" size={24} color="white" />
+          <Ionicons name="settings-outline" size={24} color="#3B82F6" />
         </TouchableOpacity>
       </View>
 
@@ -47,7 +47,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',
@@ -55,14 +55,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.2)',
+    borderBottomColor: '#E5E7EB',
   },
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
   },
   settingsButton: {
     padding: 8,
@@ -77,18 +77,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
     marginBottom: 12,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#F3F4F6',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#E5E7EB',
   },
   cardText: {
-    color: 'rgba(255,255,255,0.8)',
+    color: '#6B7280',
     fontSize: 14,
   },
 });

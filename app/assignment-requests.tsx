@@ -151,7 +151,7 @@ export default function AssignmentRequestsScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Ionicons name="arrow-back" size={24} color="#3B82F6" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>담당 트레이너 요청</Text>
         <View style={{ width: 44 }} />
@@ -160,7 +160,7 @@ export default function AssignmentRequestsScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="white" />
+            <ActivityIndicator size="large" color="#3B82F6" />
             <Text style={styles.loadingText}>요청 목록을 불러오는 중...</Text>
           </View>
         ) : (
@@ -172,7 +172,7 @@ export default function AssignmentRequestsScreen() {
                   <View key={request.requestId} style={styles.requestCard}>
                     <View style={styles.requestInfo}>
                       <View style={styles.profileIcon}>
-                        <Ionicons name="person-circle" size={48} color="white" />
+                        <Ionicons name="person-circle" size={48} color="#3B82F6" />
                       </View>
                       <View style={styles.requestDetails}>
                         <Text style={styles.memberName}>{request.memberName || '이름 없음'}</Text>
@@ -203,10 +203,10 @@ export default function AssignmentRequestsScreen() {
                         disabled={processingIds.has(request.requestId)}
                       >
                         {processingIds.has(request.requestId) ? (
-                          <ActivityIndicator size="small" color="rgba(255,255,255,0.8)" />
+                          <ActivityIndicator size="small" color="#6B7280" />
                         ) : (
                           <>
-                            <Ionicons name="close" size={18} color="rgba(255,255,255,0.8)" />
+                            <Ionicons name="close" size={18} color="#6B7280" />
                             <Text style={styles.rejectButtonText}>거절</Text>
                           </>
                         )}
@@ -224,7 +224,7 @@ export default function AssignmentRequestsScreen() {
                   <View key={request.requestId} style={[styles.requestCard, styles.processedCard]}>
                     <View style={styles.requestInfo}>
                       <View style={styles.profileIcon}>
-                        <Ionicons name="person-circle" size={48} color="rgba(255,255,255,0.6)" />
+                        <Ionicons name="person-circle" size={48} color="#9CA3AF" />
                       </View>
                       <View style={styles.requestDetails}>
                         <Text style={[styles.memberName, styles.processedText]}>
@@ -247,7 +247,7 @@ export default function AssignmentRequestsScreen() {
                         <Ionicons
                           name={request.status === 'APPROVED' ? 'checkmark-circle' : 'close-circle'}
                           size={16}
-                          color="white"
+                          color="#1F2937"
                         />
                         <Text style={styles.statusText}>
                           {request.status === 'APPROVED' ? '승인됨' : '거절됨'}
@@ -264,7 +264,7 @@ export default function AssignmentRequestsScreen() {
 
             {requests.length === 0 && (
               <View style={styles.emptyContainer}>
-                <Ionicons name="people-outline" size={60} color="rgba(255,255,255,0.3)" />
+                <Ionicons name="people-outline" size={60} color="#D1D5DB" />
                 <Text style={styles.emptyText}>요청이 없습니다</Text>
               </View>
             )}
@@ -278,7 +278,7 @@ export default function AssignmentRequestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#E5E7EB',
   },
   backButton: {
     padding: 4,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
   },
   content: {
     flex: 1,
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   loadingText: {
-    color: 'white',
+    color: '#6B7280',
     marginTop: 12,
     fontSize: 14,
   },
@@ -318,16 +318,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
     marginBottom: 12,
   },
   requestCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#F3F4F6',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#E5E7EB',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -349,20 +349,20 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
     marginBottom: 2,
   },
   memberPhone: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#6B7280',
     marginBottom: 2,
   },
   requestTime: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
+    color: '#9CA3AF',
   },
   processedText: {
-    color: 'rgba(255,255,255,0.6)',
+    color: '#9CA3AF',
   },
   actionButtons: {
     flexDirection: 'column',
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   acceptButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -385,16 +385,16 @@ const styles = StyleSheet.create({
   rejectButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'white',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
     gap: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#E5E7EB',
   },
   rejectButtonText: {
-    color: 'rgba(255,255,255,0.8)',
+    color: '#6B7280',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -423,13 +423,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(239, 68, 68, 0.5)',
   },
   statusText: {
-    color: 'white',
+    color: '#1F2937',
     fontSize: 12,
     fontWeight: '600',
   },
   rejectReason: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
+    color: '#9CA3AF',
     marginTop: 4,
   },
   emptyContainer: {
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   emptyText: {
-    color: 'rgba(255,255,255,0.5)',
+    color: '#9CA3AF',
     fontSize: 16,
     marginTop: 12,
   },

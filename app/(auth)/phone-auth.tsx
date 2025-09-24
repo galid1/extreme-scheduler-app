@@ -107,7 +107,7 @@ export default function PhoneAuthScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#3B82F6' }}
+      style={{ flex: 1, backgroundColor: 'white' }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
@@ -120,14 +120,14 @@ export default function PhoneAuthScreen() {
                 <Text style={{
                   fontSize: 24,
                   fontWeight: '600',
-                  color: 'white',
+                  color: '#3B82F6',
                   textAlign: 'center'
                 }}>
                   전화번호를 입력해주세요
                 </Text>
                 <Text style={{
                   fontSize: 14,
-                  color: 'white',
+                  color: '#666',
                   textAlign: 'center',
                   marginTop: 8
                 }}>
@@ -143,17 +143,17 @@ export default function PhoneAuthScreen() {
                 <TextInput
               style={{
                 borderWidth: 1,
-                borderColor: 'white',
-                backgroundColor: '#3B82F6',
+                borderColor: '#3B82F6',
+                backgroundColor: 'white',
                 borderRadius: 12,
                 paddingHorizontal: 16,
                 paddingVertical: 16,
                 fontSize: 18,
-                color: 'white',
+                color: '#333',
                 textAlign: 'center',
               }}
               placeholder="010-0000-0000"
-              placeholderTextColor="rgba(255,255,255,0.6)"
+              placeholderTextColor="#999"
               keyboardType="number-pad"
               value={formatPhoneNumber(localPhoneNumber)}
               onChangeText={handlePhoneChange}
@@ -167,18 +167,18 @@ export default function PhoneAuthScreen() {
                   <TextInput
                     style={{
                       borderWidth: 1,
-                      borderColor: 'white',
-                      backgroundColor: '#3B82F6',
+                      borderColor: '#3B82F6',
+                      backgroundColor: 'white',
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 16,
                       paddingRight: 80,
                       fontSize: 18,
-                      color: 'white',
+                      color: '#333',
                       textAlign: 'center',
                     }}
                     placeholder="인증번호 6자리"
-                    placeholderTextColor="rgba(255,255,255,0.6)"
+                    placeholderTextColor="#999"
                     keyboardType="number-pad"
                     value={verificationCode}
                     onChangeText={setVerificationCode}
@@ -189,7 +189,7 @@ export default function PhoneAuthScreen() {
                     right: 12,
                     top: '50%',
                     transform: [{ translateY: -12 }],
-                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    backgroundColor: '#F3F4F6',
                     borderRadius: 6,
                     paddingHorizontal: 10,
                     paddingVertical: 4,
@@ -197,7 +197,7 @@ export default function PhoneAuthScreen() {
                     <Text style={{
                       fontSize: 14,
                       fontWeight: '600',
-                      color: remainingTime < 30 ? '#FF9999' : 'white',
+                      color: remainingTime < 30 ? '#EF4444' : '#3B82F6',
                     }}>
                       {formatTime(remainingTime)}
                     </Text>
@@ -211,7 +211,7 @@ export default function PhoneAuthScreen() {
                     }}
                     style={{ marginTop: 8, alignSelf: 'center' }}
                   >
-                    <Text style={{ color: '#7DA3F0', fontSize: 14 }}>재전송</Text>
+                    <Text style={{ color: '#3B82F6', fontSize: 14 }}>재전송</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -224,12 +224,12 @@ export default function PhoneAuthScreen() {
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: '#3B82F6',
+            backgroundColor: 'white',
           }}>
             <TouchableOpacity
               style={{
                 backgroundColor: (!isPhoneSubmitted && isValidPhone) || (isPhoneSubmitted && verificationCode.length === 6)
-                  ? '#5B99F7'
+                  ? '#3B82F6'
                   : '#E0E0E0',
                 paddingVertical: 20,
               }}

@@ -163,7 +163,7 @@ export default function AutoSchedulingScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="white" />
+          <ActivityIndicator size="large" color="#3B82F6" />
           <Text style={styles.loadingText}>회원 목록을 불러오는 중...</Text>
         </View>
       </SafeAreaView>
@@ -195,7 +195,7 @@ export default function AutoSchedulingScreen() {
                     transform: [{ rotate: spin }],
                   }}
                 >
-                  <Ionicons name="sync" size={64} color="white" />
+                  <Ionicons name="sync" size={64} color="#3B82F6" />
                 </Animated.View>
                 <Text style={styles.processingTitle}>자동 스케줄링 중...</Text>
                 <Text style={styles.processingSubtitle}>
@@ -203,7 +203,7 @@ export default function AutoSchedulingScreen() {
                 </Text>
                 <ActivityIndicator
                   size="large"
-                  color="rgba(255,255,255,0.6)"
+                  color="#666"
                   style={{ marginTop: 20 }}
                 />
               </>
@@ -236,7 +236,7 @@ export default function AutoSchedulingScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Ionicons name="arrow-back" size={24} color="#3B82F6" />
         </TouchableOpacity>
         <Text style={styles.title}>자동 스케줄링</Text>
         <View style={{ width: 44 }} />
@@ -296,14 +296,14 @@ export default function AutoSchedulingScreen() {
                   {isReady && member.registeredTimes && (
                     <View style={styles.memberMetaInfo}>
                       <View style={styles.metaItem}>
-                        <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.6)" />
+                        <Ionicons name="time-outline" size={14} color="#666" />
                         <Text style={styles.metaText}>
                           {member.registeredTimes}개 시간대
                         </Text>
                       </View>
                       {member.lastScheduleUpdate && (
                         <View style={styles.metaItem}>
-                          <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.6)" />
+                          <Ionicons name="calendar-outline" size={14} color="#666" />
                           <Text style={styles.metaText}>
                             {member.lastScheduleUpdate}
                           </Text>
@@ -350,7 +350,7 @@ export default function AutoSchedulingScreen() {
           <Ionicons
             name="arrow-forward"
             size={20}
-            color={selectedMemberIds.length === 0 ? "rgba(255,255,255,0.3)" : "white"}
+            color={selectedMemberIds.length === 0 ? "#999" : "white"}
           />
         </TouchableOpacity>
       </View>
@@ -361,7 +361,7 @@ export default function AutoSchedulingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
   },
   loadingContainer: {
     flex: 1,
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: 'white',
+    color: '#333',
     fontSize: 16,
     marginTop: 12,
   },
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#E0E0E0',
   },
   backButton: {
     padding: 4,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
   },
   descriptionContainer: {
     paddingHorizontal: 20,
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666',
     textAlign: 'center',
   },
   membersList: {
@@ -406,21 +406,21 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   memberCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#F8F9FA',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#E0E0E0',
   },
   memberCardDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E0E0E0',
     opacity: 0.6,
   },
   memberCardSelected: {
-    backgroundColor: 'rgba(91, 153, 247, 0.3)',
-    borderColor: '#5B99F7',
+    backgroundColor: '#E8F2FF',
+    borderColor: '#3B82F6',
     borderWidth: 2,
   },
   memberCardHeader: {
@@ -440,35 +440,35 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 18,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
   },
   memberNameDisabled: {
-    color: 'rgba(255,255,255,0.5)',
+    color: '#999',
   },
   statusBadge: {
-    backgroundColor: 'rgba(91, 153, 247, 0.3)',
+    backgroundColor: '#E8F2FF',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderWidth: 1,
-    borderColor: '#5B99F7',
+    borderColor: '#3B82F6',
   },
   statusBadgeNotReady: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E0E0E0',
   },
   statusText: {
     fontSize: 10,
-    color: 'white',
+    color: '#3B82F6',
     fontWeight: '600',
   },
   memberPhone: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: '#666',
     marginBottom: 8,
   },
   memberPhoneDisabled: {
-    color: 'rgba(255,255,255,0.4)',
+    color: '#999',
   },
   memberMetaInfo: {
     flexDirection: 'row',
@@ -482,47 +482,47 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
+    color: '#666',
   },
   checkbox: {
     width: 28,
     height: 28,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: '#E0E0E0',
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxSelected: {
-    backgroundColor: '#5B99F7',
-    borderColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
   },
   checkboxDisabled: {
-    borderColor: 'rgba(255,255,255,0.15)',
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderColor: '#E0E0E0',
+    backgroundColor: '#F3F4F6',
   },
   bottomBar: {
     paddingHorizontal: 20,
     paddingVertical: 16,
     paddingBottom: 30,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: '#F8F9FA',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: '#E0E0E0',
   },
   selectedInfo: {
     marginBottom: 12,
   },
   selectedCount: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666',
     textAlign: 'center',
   },
   proceedButton: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
     borderRadius: 14,
     paddingVertical: 16,
     gap: 8,
@@ -533,11 +533,11 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   proceedButtonDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#E0E0E0',
     opacity: 0.6,
   },
   proceedButtonTextDisabled: {
-    color: 'rgba(255,255,255,0.5)',
+    color: '#999',
   },
   processingContainer: {
     flex: 1,
@@ -551,26 +551,26 @@ const styles = StyleSheet.create({
   processingTitle: {
     fontSize: 28,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
     marginTop: 30,
     marginBottom: 12,
   },
   processingSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666',
     textAlign: 'center',
     lineHeight: 24,
   },
   successTitle: {
     fontSize: 28,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
     marginTop: 20,
     marginBottom: 12,
   },
   successSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666',
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
     borderRadius: 14,
     paddingVertical: 16,
     paddingHorizontal: 32,

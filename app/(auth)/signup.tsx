@@ -190,46 +190,96 @@ export default function SignupScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#3B82F6' }}
+      style={{ flex: 1, backgroundColor: 'white' }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <View style={{ flex: 1 }}>
-            {/* Title at the top */}
-            <View style={{ marginTop: 40, paddingHorizontal: 24, marginBottom: 20 }}>
-              <Text style={{
-                fontSize: 26,
-                fontWeight: '600',
-                color: 'white',
-                textAlign: 'center'
-              }}>
-                회원가입
-              </Text>
-            </View>
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          {/* Title at the top */}
+          <View style={{ marginTop: 40, paddingHorizontal: 24, marginBottom: 20 }}>
+            <Text style={{
+              fontSize: 26,
+              fontWeight: '600',
+              color: '#3B82F6',
+              textAlign: 'center'
+            }}>
+              회원가입
+            </Text>
+          </View>
 
-            {/* Input area */}
-            <ScrollView
-              ref={scrollViewRef}
-              style={{ flex: 1 }}
-              contentContainerStyle={{
-                paddingHorizontal: 24,
-                paddingBottom: 100,
+          {/* Scrollable content area */}
+          <ScrollView
+            ref={scrollViewRef}
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: 24,
+              paddingBottom: 20,
+            }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Name Step */}
+            <Animated.View
+              style={{
+                opacity: nameAnim,
+                transform: [{
+                  translateY: nameAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [50, 0],
+                  }),
+                }, {
+                  scale: nameAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.9, 1],
+                  }),
+                }],
+                marginBottom: 20,
               }}
-              showsVerticalScrollIndicator={false}
             >
-              {/* Name Step */}
+              <Text style={{
+                fontSize: 16,
+                color: '#333',
+                marginBottom: 12,
+                fontWeight: '500'
+              }}>
+                이름을 입력해주세요
+              </Text>
+              <View style={{ position: 'relative' }}>
+                <TextInput
+                  ref={nameInputRef}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: completedSteps.includes('name') ? '#E0E0E0' : '#3B82F6',
+                    backgroundColor: completedSteps.includes('name') ? '#F3F4F6' : 'white',
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 16,
+                    fontSize: 18,
+                    color: '#333',
+                    textAlign: 'center',
+                  }}
+                  placeholder="홍길동"
+                  placeholderTextColor="#999"
+                  value={name}
+                  onChangeText={setName}
+                  editable={!completedSteps.includes('name')}
+                  autoFocus
+                />
+              </View>
+            </Animated.View>
+
+            {/* Birth Date Step */}
+            {completedSteps.includes('name') && (
               <Animated.View
                 style={{
-                  opacity: nameAnim,
+                  opacity: birthDateAnim,
                   transform: [{
-                    translateY: nameAnim.interpolate({
+                    translateY: birthDateAnim.interpolate({
                       inputRange: [0, 1],
                       outputRange: [50, 0],
                     }),
                   }, {
-                    scale: nameAnim.interpolate({
+                    scale: birthDateAnim.interpolate({
                       inputRange: [0, 1],
                       outputRange: [0.9, 1],
                     }),
@@ -239,268 +289,232 @@ export default function SignupScreen() {
               >
                 <Text style={{
                   fontSize: 16,
-                  color: 'rgba(255,255,255,0.9)',
+                  color: '#333',
                   marginBottom: 12,
                   fontWeight: '500'
                 }}>
-                  이름을 입력해주세요
+                  생년월일을 입력해주세요
                 </Text>
-                <View style={{ position: 'relative' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <TextInput
-                    ref={nameInputRef}
                     style={{
-                      borderWidth: completedSteps.includes('name') ? 0 : 1,
-                      borderColor: 'white',
-                      backgroundColor: completedSteps.includes('name') ? 'rgba(255,255,255,0.1)' : '#3B82F6',
+                      flex: 1,
+                      borderWidth: 1,
+                      borderColor: completedSteps.includes('birthDate') ? '#E0E0E0' : '#3B82F6',
+                      backgroundColor: completedSteps.includes('birthDate') ? '#F3F4F6' : 'white',
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 16,
                       fontSize: 18,
-                      color: 'white',
+                      color: '#333',
                       textAlign: 'center',
+                      marginRight: 8,
                     }}
-                    placeholder="홍길동"
-                    placeholderTextColor="rgba(255,255,255,0.6)"
-                    value={name}
-                    onChangeText={setName}
-                    editable={!completedSteps.includes('name')}
-                    autoFocus
+                    placeholder="990101"
+                    placeholderTextColor="#999"
+                    keyboardType="number-pad"
+                    value={formatBirthDate(birthDate)}
+                    onChangeText={(text) => {
+                      const cleaned = text.replace(/\D/g, '');
+                      if (cleaned.length <= 6) {
+                        setBirthDate(cleaned);
+                        if (cleaned.length === 6) {
+                          genderInputRef.current?.focus();
+                        }
+                      }
+                    }}
+                    maxLength={6}
+                    editable={!completedSteps.includes('birthDate')}
+                    autoFocus={!completedSteps.includes('birthDate')}
                   />
-                </View>
-                {!completedSteps.includes('name') && (
-                  <TouchableOpacity
+                  <Text style={{ color: '#333', fontSize: 18, marginHorizontal: 8 }}>-</Text>
+                  <TextInput
+                    ref={genderInputRef}
                     style={{
-                      backgroundColor: isValidName ? '#5B99F7' : '#E0E0E0',
+                      width: 50,
+                      borderWidth: 1,
+                      borderColor: completedSteps.includes('birthDate') ? '#E0E0E0' : '#3B82F6',
+                      backgroundColor: completedSteps.includes('birthDate') ? '#F3F4F6' : 'white',
                       borderRadius: 12,
-                      paddingVertical: 14,
-                      marginTop: 12,
-                    }}
-                    onPress={handleNameNext}
-                    disabled={!isValidName}
-                  >
-                    <Text style={{
-                      color: 'white',
+                      paddingHorizontal: 16,
+                      paddingVertical: 16,
+                      fontSize: 18,
+                      color: '#333',
                       textAlign: 'center',
-                      fontSize: 16,
-                      fontWeight: '600',
-                    }}>
-                      다음
-                    </Text>
-                  </TouchableOpacity>
+                    }}
+                    placeholder="1"
+                    placeholderTextColor="#999"
+                    keyboardType="number-pad"
+                    value={genderDigit}
+                    onChangeText={(text) => {
+                      if (text.match(/^[1-4]?$/)) setGenderDigit(text);
+                    }}
+                    maxLength={1}
+                    editable={!completedSteps.includes('birthDate')}
+                  />
+                  <Text style={{ color: '#999', fontSize: 18, marginLeft: 8 }}>******</Text>
+                </View>
+                <Text style={{
+                  color: '#666',
+                  fontSize: 12,
+                  marginTop: 8,
+                  textAlign: 'center'
+                }}>
+                  주민등록번호 앞 6자리와 뒤 첫 번째 숫자만 입력해주세요
+                </Text>
+                {birthDate.length === 6 && !validateBirthDate(birthDate) && (
+                  <Text style={{
+                    color: '#EF4444',
+                    fontSize: 12,
+                    marginTop: 4,
+                    textAlign: 'center',
+                    fontWeight: '500'
+                  }}>
+                    올바른 날짜를 입력해주세요 (예: 990229는 불가능)
+                  </Text>
                 )}
               </Animated.View>
+            )}
 
-              {/* Birth Date Step */}
-              {completedSteps.includes('name') && (
-                <Animated.View
-                  style={{
-                    opacity: birthDateAnim,
-                    transform: [{
-                      translateY: birthDateAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [50, 0],
-                      }),
-                    }, {
-                      scale: birthDateAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.9, 1],
-                      }),
-                    }],
-                    marginBottom: 20,
-                  }}
-                >
-                  <Text style={{
-                    fontSize: 16,
-                    color: 'rgba(255,255,255,0.9)',
-                    marginBottom: 12,
-                    fontWeight: '500'
-                  }}>
-                    생년월일을 입력해주세요
-                  </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <TextInput
+            {/* Account Type Step */}
+            {completedSteps.includes('birthDate') && (
+              <Animated.View
+                style={{
+                  opacity: accountTypeAnim,
+                  transform: [{
+                    translateY: accountTypeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [50, 0],
+                    }),
+                  }, {
+                    scale: accountTypeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.9, 1],
+                    }),
+                  }],
+                  marginBottom: 20,
+                }}
+              >
+                <Text style={{
+                  fontSize: 16,
+                  color: '#333',
+                  marginBottom: 12,
+                  fontWeight: '500'
+                }}>
+                  계정 유형을 선택해주세요
+                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  {(['MEMBER', 'TRAINER'] as AccountType[]).map((type) => (
+                    <TouchableOpacity
+                      key={type}
                       style={{
                         flex: 1,
-                        borderWidth: completedSteps.includes('birthDate') ? 0 : 1,
-                        borderColor: 'white',
-                        backgroundColor: completedSteps.includes('birthDate') ? 'rgba(255,255,255,0.1)' : '#3B82F6',
+                        backgroundColor: accountType === type ? '#3B82F6' : '#F3F4F6',
                         borderRadius: 12,
-                        paddingHorizontal: 16,
-                        paddingVertical: 16,
-                        fontSize: 18,
-                        color: 'white',
-                        textAlign: 'center',
-                        marginRight: 8,
+                        padding: 20,
+                        marginHorizontal: type === 'MEMBER' ? 0 : 5,
+                        marginRight: type === 'MEMBER' ? 5 : 0,
+                        borderWidth: 1,
+                        borderColor: accountType === type ? '#3B82F6' : '#E0E0E0',
                       }}
-                      placeholder="990101"
-                      placeholderTextColor="rgba(255,255,255,0.6)"
-                      keyboardType="number-pad"
-                      value={formatBirthDate(birthDate)}
-                      onChangeText={(text) => {
-                        const cleaned = text.replace(/\D/g, '');
-                        if (cleaned.length <= 6) {
-                          setBirthDate(cleaned);
-                          if (cleaned.length === 6) {
-                            genderInputRef.current?.focus();
-                          }
-                        }
-                      }}
-                      maxLength={6}
-                      editable={!completedSteps.includes('birthDate')}
-                      autoFocus={!completedSteps.includes('birthDate')}
-                    />
-                    <Text style={{ color: 'white', fontSize: 18, marginHorizontal: 8 }}>-</Text>
-                    <TextInput
-                      ref={genderInputRef}
-                      style={{
-                        width: 50,
-                        borderWidth: completedSteps.includes('birthDate') ? 0 : 1,
-                        borderColor: 'white',
-                        backgroundColor: completedSteps.includes('birthDate') ? 'rgba(255,255,255,0.1)' : '#3B82F6',
-                        borderRadius: 12,
-                        paddingHorizontal: 16,
-                        paddingVertical: 16,
-                        fontSize: 18,
-                        color: 'white',
-                        textAlign: 'center',
-                      }}
-                      placeholder="1"
-                      placeholderTextColor="rgba(255,255,255,0.6)"
-                      keyboardType="number-pad"
-                      value={genderDigit}
-                      onChangeText={(text) => {
-                        if (text.match(/^[1-4]?$/)) setGenderDigit(text);
-                      }}
-                      maxLength={1}
-                      editable={!completedSteps.includes('birthDate')}
-                    />
-                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 18, marginLeft: 8 }}>******</Text>
-                  </View>
-                  <Text style={{
-                    color: 'rgba(255,255,255,0.7)',
-                    fontSize: 12,
-                    marginTop: 8,
-                    textAlign: 'center'
-                  }}>
-                    주민등록번호 앞 6자리와 뒤 첫 번째 숫자만 입력해주세요
-                  </Text>
-                  {birthDate.length === 6 && !validateBirthDate(birthDate) && (
-                    <Text style={{
-                      color: '#FFB6C1',
-                      fontSize: 12,
-                      marginTop: 4,
-                      textAlign: 'center',
-                      fontWeight: '500'
-                    }}>
-                      올바른 날짜를 입력해주세요 (예: 990229는 불가능)
-                    </Text>
-                  )}
-                  {!completedSteps.includes('birthDate') && (
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: (isValidBirthDate && isValidGenderDigit) ? '#5B99F7' : '#E0E0E0',
-                        borderRadius: 12,
-                        paddingVertical: 14,
-                        marginTop: 12,
-                      }}
-                      onPress={handleBirthDateNext}
-                      disabled={!(isValidBirthDate && isValidGenderDigit)}
+                      onPress={() => setAccountType(type)}
                     >
                       <Text style={{
-                        color: 'white',
+                        color: accountType === type ? 'white' : '#333',
+                        fontSize: 18,
                         textAlign: 'center',
-                        fontSize: 16,
-                        fontWeight: '600',
+                        fontWeight: accountType === type ? '600' : '400',
                       }}>
-                        다음
+                        {ACCOUNT_TYPE_LABELS[type]}
                       </Text>
                     </TouchableOpacity>
-                  )}
-                </Animated.View>
-              )}
+                  ))}
+                </View>
+              </Animated.View>
+            )}
+          </ScrollView>
 
-              {/* Account Type Step */}
-              {completedSteps.includes('birthDate') && (
-                <Animated.View
-                  style={{
-                    opacity: accountTypeAnim,
-                    transform: [{
-                      translateY: accountTypeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [50, 0],
-                      }),
-                    }, {
-                      scale: accountTypeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.9, 1],
-                      }),
-                    }],
-                  }}
-                >
+          {/* Fixed bottom button area */}
+          <View style={{
+            paddingHorizontal: 24,
+            paddingBottom: 20,
+            paddingTop: 10,
+            backgroundColor: 'white',
+            borderTopWidth: 1,
+            borderTopColor: '#F3F4F6'
+          }}>
+            {/* Name Step Button */}
+            {!completedSteps.includes('name') && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: isValidName ? '#3B82F6' : '#E0E0E0',
+                  borderRadius: 12,
+                  paddingVertical: 14,
+                }}
+                onPress={handleNameNext}
+                disabled={!isValidName}
+              >
+                <Text style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: 16,
+                  fontWeight: '600',
+                }}>
+                  다음
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Birth Date Step Button */}
+            {completedSteps.includes('name') && !completedSteps.includes('birthDate') && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: (isValidBirthDate && isValidGenderDigit) ? '#3B82F6' : '#E0E0E0',
+                  borderRadius: 12,
+                  paddingVertical: 14,
+                }}
+                onPress={handleBirthDateNext}
+                disabled={!(isValidBirthDate && isValidGenderDigit)}
+              >
+                <Text style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: 16,
+                  fontWeight: '600',
+                }}>
+                  다음
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Account Type Step Button */}
+            {completedSteps.includes('birthDate') && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: accountType !== '' ? '#3B82F6' : '#E0E0E0',
+                  borderRadius: 12,
+                  paddingVertical: 16,
+                }}
+                onPress={handleSignup}
+                disabled={accountType === '' || isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
                   <Text style={{
-                    fontSize: 16,
-                    color: 'rgba(255,255,255,0.9)',
-                    marginBottom: 12,
-                    fontWeight: '500'
+                    color: 'white',
+                    textAlign: 'center',
+                    fontSize: 18,
+                    fontWeight: '600',
                   }}>
-                    계정 유형을 선택해주세요
+                    가입 완료
                   </Text>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    {(['MEMBER', 'TRAINER'] as AccountType[]).map((type) => (
-                      <TouchableOpacity
-                        key={type}
-                        style={{
-                          flex: 1,
-                          backgroundColor: accountType === type ? '#5B99F7' : 'rgba(255,255,255,0.1)',
-                          borderRadius: 12,
-                          padding: 20,
-                          marginHorizontal: type === 'MEMBER' ? 0 : 5,
-                          marginRight: type === 'MEMBER' ? 5 : 0,
-                          borderWidth: 1,
-                          borderColor: accountType === type ? 'white' : 'rgba(255,255,255,0.2)',
-                        }}
-                        onPress={() => setAccountType(type)}
-                      >
-                        <Text style={{
-                          color: 'white',
-                          fontSize: 18,
-                          textAlign: 'center',
-                          fontWeight: accountType === type ? '600' : '400',
-                        }}>
-                          {ACCOUNT_TYPE_LABELS[type]}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: accountType !== '' ? '#5B99F7' : '#E0E0E0',
-                      borderRadius: 12,
-                      paddingVertical: 16,
-                      marginTop: 20,
-                    }}
-                    onPress={handleSignup}
-                    disabled={accountType === '' || isLoading}
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator color="white" />
-                    ) : (
-                      <Text style={{
-                        color: 'white',
-                        textAlign: 'center',
-                        fontSize: 18,
-                        fontWeight: '600',
-                      }}>
-                        가입 완료
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </Animated.View>
-              )}
-            </ScrollView>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
-        </SafeAreaView>
-      </TouchableWithoutFeedback>
+        </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

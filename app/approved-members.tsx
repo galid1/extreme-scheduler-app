@@ -208,7 +208,7 @@ export default function ApprovedMembersScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Ionicons name="arrow-back" size={24} color="#3B82F6" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>담당 회원 목록</Text>
         <View style={{ width: 44 }} />
@@ -228,7 +228,7 @@ export default function ApprovedMembersScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="white" />
+            <ActivityIndicator size="large" color="#3B82F6" />
             <Text style={styles.loadingText}>회원 목록을 불러오는 중...</Text>
           </View>
         ) : (
@@ -251,7 +251,7 @@ export default function ApprovedMembersScreen() {
                     <View style={styles.memberHeader}>
                       <View style={styles.memberInfo}>
                         <View style={styles.profileIcon}>
-                          <Ionicons name="person-circle" size={40} color="white" />
+                          <Ionicons name="person-circle" size={40} color="#3B82F6" />
                         </View>
                         <View style={styles.memberDetails}>
                           <Text style={styles.memberName}>{member.name}</Text>
@@ -336,7 +336,7 @@ export default function ApprovedMembersScreen() {
                     <View style={styles.memberHeader}>
                       <View style={styles.memberInfo}>
                         <View style={styles.profileIcon}>
-                          <Ionicons name="person-circle" size={40} color="rgba(255,255,255,0.6)" />
+                          <Ionicons name="person-circle" size={40} color="#9CA3AF" />
                         </View>
                         <View style={styles.memberDetails}>
                           <Text style={[styles.memberName, styles.inactiveText]}>
@@ -373,7 +373,7 @@ export default function ApprovedMembersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#E5E7EB',
   },
   backButton: {
     padding: 4,
@@ -390,14 +390,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
   },
   statsBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#E5E7EB',
   },
   statItem: {
     alignItems: 'center',
@@ -405,11 +405,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '600',
-    color: 'white',
+    color: '#3B82F6',
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    color: '#6B7280',
     marginTop: 4,
   },
   content: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   loadingText: {
-    color: 'white',
+    color: '#6B7280',
     marginTop: 12,
     fontSize: 14,
   },
@@ -433,20 +433,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
     marginBottom: 12,
   },
   memberCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#F3F4F6',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#E5E7EB',
   },
   selectedCard: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderColor: 'white',
+    backgroundColor: '#E5E7EB',
+    borderColor: '#3B82F6',
   },
   inactiveCard: {
     opacity: 0.7,
@@ -470,15 +470,15 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
     marginBottom: 2,
   },
   memberPhone: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#6B7280',
   },
   inactiveText: {
-    color: 'rgba(255,255,255,0.6)',
+    color: '#9CA3AF',
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusText: {
-    color: 'white',
+    color: '#1F2937',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: '#E5E7EB',
   },
   statRow: {
     flexDirection: 'row',
@@ -504,11 +504,11 @@ const styles = StyleSheet.create({
   },
   statRowLabel: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.7)',
+    color: '#6B7280',
   },
   statRowValue: {
     fontSize: 13,
-    color: 'white',
+    color: '#1F2937',
     fontWeight: '500',
   },
   memberActions: {
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
     borderRadius: 8,
     paddingVertical: 10,
     gap: 6,

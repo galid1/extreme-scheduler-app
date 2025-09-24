@@ -114,7 +114,7 @@ export default function TrainingScheduleScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="white" />
+          <ActivityIndicator size="large" color="#3B82F6" />
           <Text style={styles.loadingText}>트레이닝 일정을 불러오는 중...</Text>
         </View>
       </SafeAreaView>
@@ -181,7 +181,7 @@ export default function TrainingScheduleScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Ionicons name="arrow-back" size={24} color="#3B82F6" />
         </TouchableOpacity>
         <Text style={styles.title}>트레이닝 일정</Text>
         <View style={{ width: 44 }} />
@@ -189,7 +189,9 @@ export default function TrainingScheduleScreen() {
 
       {/* Upcoming Sessions */}
       <View style={styles.upcomingSection}>
-        <Text style={styles.upcomingTitle}>다음 일정</Text>
+        <View style={styles.upcomingHeader}>
+          <Text style={styles.upcomingTitle}>다음 일정</Text>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -201,15 +203,37 @@ export default function TrainingScheduleScreen() {
               const period = session.hour < 12 ? '오전' : '오후';
               const isNext = idx === 0;
 
+              // Calculate date for the session
+              const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
+              const currentDate = new Date();
+              const currentDayIndex = currentDate.getDay();
+              const sessionDayIndex = dayOrder.indexOf(session.day);
+              const daysToAdd = (sessionDayIndex - currentDayIndex + 7) % 7;
+              const sessionDate = new Date(currentDate);
+              sessionDate.setDate(currentDate.getDate() + daysToAdd);
+              const month = sessionDate.getMonth() + 1;
+              const day = sessionDate.getDate();
+
               return (
                 <View
                   key={`${session.memberId}-${session.day}-${session.hour}`}
                   style={[styles.upcomingCard, isNext && styles.nextCard]}
                 >
+                  {isNext && (
+                    <View style={styles.nextIndicator}>
+                      <Ionicons name="arrow-forward-circle" size={16} color="yellow" />
+                      <Text style={styles.nextIndicatorText}>다음 수업</Text>
+                    </View>
+                  )}
                   <View style={styles.upcomingTimeInfo}>
-                    <Text style={[styles.upcomingDay, isNext && styles.nextText]}>
-                      {session.day}요일
-                    </Text>
+                    <View style={styles.upcomingDayRow}>
+                      <Text style={[styles.upcomingDay, isNext && styles.nextText]}>
+                        {session.day}요일
+                      </Text>
+                      <Text style={[styles.upcomingDate, isNext && styles.nextText]}>
+                        ({month}/{day})
+                      </Text>
+                    </View>
                     <Text style={[styles.upcomingTime, isNext && styles.nextText]}>
                       {period} {displayHour}시
                     </Text>
@@ -218,7 +242,7 @@ export default function TrainingScheduleScreen() {
                     <Ionicons
                       name="person-circle"
                       size={32}
-                      color={isNext ? "white" : "rgba(255,255,255,0.15)"}
+                      color={isNext ? "white" : "#3B82F6"}
                     />
                     <Text style={[styles.upcomingMemberName, isNext && styles.nextText]}>
                       {session.memberName}
@@ -269,7 +293,7 @@ export default function TrainingScheduleScreen() {
                       style={[
                         styles.dayCell,
                         isPM && styles.dayCellPM,
-                        session && (isPM ? styles.dayCellWithSessionPM : styles.dayCellWithSession)
+                        session && styles.dayCellWithSession
                       ]}
                     >
                       {session && (
@@ -293,7 +317,7 @@ export default function TrainingScheduleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
   },
   loadingContainer: {
     flex: 1,
@@ -301,7 +325,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: 'white',
+    color: '#333',
     fontSize: 16,
     marginTop: 12,
   },
@@ -312,7 +336,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#E0E0E0',
   },
   backButton: {
     padding: 4,
@@ -320,7 +344,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
   },
   membersSummary: {
     paddingVertical: 16,
@@ -376,43 +400,91 @@ const styles = StyleSheet.create({
   upcomingSection: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#E0E0E0',
+  },
+  upcomingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  nextBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  nextBadgeText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '600',
   },
   upcomingTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
-    marginBottom: 12,
-    paddingHorizontal: 16,
+    color: '#333',
   },
   upcomingScrollContent: {
     paddingHorizontal: 16,
     gap: 12,
   },
   upcomingCard: {
-    backgroundColor: 'rgba(91, 153, 247, 0.15)',
+    backgroundColor: '#F0F7FF',
     borderRadius: 12,
     padding: 12,
-    borderWidth: 0,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     width: 150,
+    position: 'relative',
   },
   nextCard: {
-    backgroundColor: 'rgba(91, 153, 247, 0.8)',
-    borderColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  nextIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
+  },
+  nextIndicatorText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '700',
   },
   upcomingTimeInfo: {
     marginBottom: 2,
   },
+  upcomingDayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  upcomingDate: {
+    fontSize: 11,
+    color: '#9CA3AF',
+  },
   upcomingDay: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.5)',
+    color: '#666',
     marginBottom: 2,
   },
   upcomingTime: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    color: '#333',
   },
   upcomingMemberInfo: {
     flexDirection: 'row',
@@ -422,13 +494,13 @@ const styles = StyleSheet.create({
   upcomingMemberName: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    color: '#333',
   },
   nextText: {
     color: 'white',
   },
   noUpcomingText: {
-    color: 'rgba(255,255,255,0.6)',
+    color: '#666',
     fontSize: 14,
     fontStyle: 'italic',
   },
@@ -440,7 +512,7 @@ const styles = StyleSheet.create({
   calendarHeader: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.2)',
+    borderBottomColor: '#E0E0E0',
     paddingBottom: 8,
     marginBottom: 8,
   },
@@ -453,7 +525,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   dayHeaderText: {
-    color: 'white',
+    color: '#333',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -464,11 +536,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: 50,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderBottomColor: '#F3F4F6',
+    backgroundColor: '#FAFAFA',
   },
   hourRowPM: {
-    backgroundColor: 'rgba(91, 153, 247, 0.05)',
+    backgroundColor: '#F0F7FF',
   },
   timeCell: {
     width: 60,
@@ -477,38 +549,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timeCellPM: {
-    backgroundColor: 'rgba(91, 153, 247, 0.08)',
+    backgroundColor: '#E8F2FF',
   },
   periodText: {
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666',
     fontSize: 10,
     fontWeight: '500',
   },
   timeText: {
-    color: 'white',
+    color: '#333',
     fontSize: 12,
     fontWeight: '600',
   },
   dayCell: {
     flex: 1,
     borderLeftWidth: 1,
-    borderLeftColor: 'rgba(255,255,255,0.05)',
+    borderLeftColor: '#F3F4F6',
     padding: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
   dayCellPM: {
-    backgroundColor: 'rgba(91, 153, 247, 0.03)',
+    backgroundColor: '#F8FBFF',
   },
   dayCellWithSession: {
-    backgroundColor: 'rgba(91, 153, 247, 0.4)',
+    backgroundColor: '#3B82F6',
     borderWidth: 1,
-    borderColor: 'rgba(91, 153, 247, 0.6)',
-  },
-  dayCellWithSessionPM: {
-    backgroundColor: 'rgba(91, 153, 247, 0.5)',
-    borderWidth: 1,
-    borderColor: '#5B99F7',
+    borderColor: '#3B82F6',
   },
   sessionMemberName: {
     color: 'white',

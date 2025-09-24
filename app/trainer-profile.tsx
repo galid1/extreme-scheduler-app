@@ -73,13 +73,13 @@ export default function TrainerProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="white" />
+            <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>담당 트레이너</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="white" />
+          <ActivityIndicator size="large" color="#3B82F6" />
         </View>
       </SafeAreaView>
     );
@@ -90,7 +90,7 @@ export default function TrainerProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="white" />
+            <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>담당 트레이너</Text>
           <View style={{ width: 40 }} />
@@ -106,7 +106,7 @@ export default function TrainerProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>담당 트레이너</Text>
         <View style={{ width: 40 }} />
@@ -130,12 +130,12 @@ export default function TrainerProfileScreen() {
         {/* Stats Section */}
         <View style={styles.statsSection}>
           <View style={styles.statCard}>
-            <Ionicons name="people" size={24} color="white" />
+            <Ionicons name="people" size={24} color="#3B82F6" />
             <Text style={styles.statNumber}>{trainerProfile.memberCount}</Text>
             <Text style={styles.statLabel}>회원</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons name="calendar" size={24} color="white" />
+            <Ionicons name="calendar" size={24} color="#3B82F6" />
             <Text style={styles.statNumber}>{trainerProfile.todaySchedule}</Text>
             <Text style={styles.statLabel}>오늘 일정</Text>
           </View>
@@ -158,10 +158,10 @@ export default function TrainerProfileScreen() {
           <Text style={styles.infoTitle}>운동 일정</Text>
           <TouchableOpacity style={styles.infoCard}>
             <View style={styles.infoCardContent}>
-              <Ionicons name="time" size={20} color="white" />
+              <Ionicons name="time" size={20} color="#3B82F6" />
               <Text style={styles.infoCardText}>다음 수업: 오늘 오후 3:00</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
+            <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
         </View>
 
@@ -169,10 +169,10 @@ export default function TrainerProfileScreen() {
           <Text style={styles.infoTitle}>운동 기록</Text>
           <TouchableOpacity style={styles.infoCard}>
             <View style={styles.infoCardContent}>
-              <Ionicons name="analytics" size={20} color="white" />
+              <Ionicons name="analytics" size={20} color="#3B82F6" />
               <Text style={styles.infoCardText}>이번 달 운동 기록 보기</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
+            <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -183,7 +183,7 @@ export default function TrainerProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#e9ecef',
   },
   backButton: {
     padding: 4,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
   },
   content: {
     flex: 1,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: 'white',
+    color: '#333',
     fontSize: 16,
   },
   profileSection: {
@@ -230,22 +230,22 @@ const styles = StyleSheet.create({
   },
   statCard: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#f8f9fa',
     borderRadius: 16,
     padding: 16,
     minWidth: 100,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#e9ecef',
   },
   statNumber: {
     fontSize: 24,
     fontWeight: '600',
-    color: 'white',
+    color: '#3B82F6',
     marginTop: 8,
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666',
     marginTop: 4,
   },
   actionSection: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
     borderRadius: 12,
     paddingVertical: 14,
     gap: 8,
@@ -276,18 +276,18 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
     marginBottom: 12,
   },
   infoCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#f8f9fa',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#e9ecef',
   },
   infoCardContent: {
     flexDirection: 'row',
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   infoCardText: {
-    color: 'white',
+    color: '#333',
     fontSize: 14,
   },
 });

@@ -790,15 +790,15 @@ export default function HomeScreen() {
                 >
                   <View style={styles.schedulePreviewHeader}>
                     <Text style={styles.schedulePreviewTitle}>트레이닝 일정</Text>
-                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+                    <Ionicons name="chevron-forward" size={20} color="#6B7280" />
                   </View>
                   <View style={styles.trainingScheduleInfo}>
                     <View style={styles.trainingInfoItem}>
-                      <Ionicons name="people" size={16} color="rgba(255,255,255,0.7)" />
+                      <Ionicons name="people" size={16} color="#3B82F6" />
                       <Text style={styles.trainingInfoText}>12명의 회원 일정 관리 중</Text>
                     </View>
                     <View style={styles.trainingInfoItem}>
-                      <Ionicons name="calendar" size={16} color="rgba(255,255,255,0.7)" />
+                      <Ionicons name="calendar" size={16} color="#3B82F6" />
                       <Text style={styles.trainingInfoText}>주 48개 세션</Text>
                     </View>
                   </View>
@@ -815,7 +815,7 @@ export default function HomeScreen() {
                   >
                     <View style={styles.schedulePreviewHeader}>
                       <Text style={styles.schedulePreviewTitle}>운영 일정</Text>
-                      <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+                      <Ionicons name="chevron-forward" size={20} color="#6B7280" />
                     </View>
                     {['월', '화', '수', '목', '금', '토', '일']
                       .filter(day => savedSchedule[day]?.length > 0)
@@ -865,7 +865,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
   },
   scrollContent: {
     flexGrow: 1,
@@ -877,36 +877,36 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 18,
-    color: 'white',
+    color: '#333',
     marginBottom: 8,
   },
   title: {
     fontSize: 28,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666',
   },
   inputSection: {
     marginTop: 20,
   },
   inputLabel: {
     fontSize: 16,
-    color: 'white',
+    color: '#333',
     marginBottom: 12,
   },
   phoneInput: {
     borderWidth: 1,
-    borderColor: 'white',
-    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+    backgroundColor: 'white',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 18,
-    color: 'white',
+    color: '#333',
     textAlign: 'center',
   },
   loadingContainer: {
@@ -914,17 +914,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: 'white',
+    color: '#333',
     marginTop: 10,
     fontSize: 14,
   },
   profileCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#f8f9fa',
     borderRadius: 16,
     padding: 20,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#e9ecef',
   },
   profileHeader: {
     flexDirection: 'row',
@@ -940,12 +940,12 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 20,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
     marginBottom: 4,
   },
   profileExperience: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666',
     marginBottom: 4,
   },
   ratingContainer: {
@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ratingText: {
-    color: 'white',
+    color: '#333',
     marginLeft: 4,
     fontSize: 14,
   },
@@ -963,7 +963,7 @@ const styles = StyleSheet.create({
   specialtiesTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: 'white',
+    color: '#333',
     marginBottom: 10,
   },
   specialtiesList: {
@@ -971,7 +971,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   specialtyTag: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#e3f2fd',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -979,11 +979,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   specialtyText: {
-    color: 'white',
+    color: '#3B82F6',
     fontSize: 12,
   },
   confirmButton: {
-    backgroundColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -1004,15 +1004,15 @@ const styles = StyleSheet.create({
   trainerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#f8f9fa',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#e9ecef',
   },
   trainerBadgeText: {
-    color: 'rgba(255,255,255,0.9)',
+    color: '#666',
     fontSize: 12,
     marginRight: 4,
   },
@@ -1020,17 +1020,17 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   trainerDashboard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#F3F4F6',
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#E5E7EB',
   },
   dashboardTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
     marginBottom: 16,
   },
   statsContainer: {
@@ -1043,11 +1043,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: '600',
-    color: 'white',
+    color: '#3B82F6',
   },
   statLabel: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#6B7280',
     marginTop: 4,
   },
   scheduleRegistration: {
@@ -1067,41 +1067,40 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   dayButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#f8f9fa',
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#e9ecef',
   },
   dayButtonActive: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderColor: 'white',
+    backgroundColor: '#e3f2fd',
+    borderColor: '#3B82F6',
   },
   dayButtonText: {
-    color: 'white',
+    color: '#333',
     fontSize: 16,
     fontWeight: '500',
   },
   dayButtonTextActive: {
     fontWeight: '600',
+    color: '#3B82F6',
   },
   dayButtonRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   dayCountBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#3B82F6',
     borderRadius: 12,
     minWidth: 24,
     height: 24,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
   dayCountText: {
     color: 'white',
@@ -1164,14 +1163,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: '#f8f9fa',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#e9ecef',
   },
   stateOptionActive: {
-    backgroundColor: '#5B99F7',
-    borderColor: '#5B99F7',
-    shadowColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+    shadowColor: '#3B82F6',
     shadowOpacity: 0.4,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -1185,7 +1184,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   stateOptionText: {
-    color: 'rgba(255,255,255,0.3)',
+    color: '#999',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -1242,13 +1241,13 @@ const styles = StyleSheet.create({
   schedulePageTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
     textAlign: 'center',
     marginBottom: 8,
   },
   scheduleSubtitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: '#666',
     textAlign: 'center',
   },
   scheduleScrollView: {
@@ -1282,7 +1281,7 @@ const styles = StyleSheet.create({
   },
   timeFullSlots: {
     marginTop: 8,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: '#f8f9fa',
     borderRadius: 12,
     padding: 12,
   },
@@ -1294,16 +1293,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 10,
     marginBottom: 8,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: '#e9ecef',
   },
   timeFullSlotSelected: {
     backgroundColor: '#5B99F7',
     borderColor: 'white',
   },
   timeFullSlotText: {
-    color: 'rgba(255,255,255,0.5)',
+    color: '#666',
     fontSize: 15,
     textAlign: 'center',
   },
@@ -1314,9 +1313,9 @@ const styles = StyleSheet.create({
   scheduleBottomBar: {
     padding: 20,
     paddingBottom: 30,
-    backgroundColor: '#3B82F6',
+    backgroundColor: 'white',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: '#e9ecef',
   },
   scheduleSubmitButton: {
     borderRadius: 14,
@@ -1324,10 +1323,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scheduleSubmitButtonActive: {
-    backgroundColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
   },
   scheduleSubmitButtonDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#E0E0E0',
   },
   scheduleSubmitButtonText: {
     color: 'white',
@@ -1342,13 +1341,13 @@ const styles = StyleSheet.create({
   readyStateTitle: {
     fontSize: 22,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
     marginTop: 20,
     marginBottom: 8,
   },
   readyStateSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: '#666',
   },
   readyStateActions: {
     marginTop: 40,
@@ -1359,7 +1358,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#5B99F7',
+    backgroundColor: '#3B82F6',
     borderRadius: 12,
     paddingVertical: 16,
     gap: 8,
@@ -1370,12 +1369,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   schedulePreview: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#F3F4F6',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#E5E7EB',
   },
   schedulePreviewHeader: {
     flexDirection: 'row',
@@ -1386,7 +1385,7 @@ const styles = StyleSheet.create({
   schedulePreviewTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'white',
+    color: '#1F2937',
   },
   schedulePreviewDay: {
     flexDirection: 'row',
@@ -1394,28 +1393,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#E5E7EB',
   },
   schedulePreviewDayName: {
     fontSize: 14,
-    color: 'white',
+    color: '#1F2937',
   },
   schedulePreviewTimes: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    color: '#6B7280',
   },
   timePeriodSection: {
     marginBottom: 20,
   },
   timePeriodLabel: {
-    color: 'rgba(255,255,255,0.9)',
+    color: '#333',
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,
     marginLeft: 4,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#e9ecef',
     alignSelf: 'flex-start',
     borderRadius: 6,
   },
@@ -1446,7 +1445,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   helpText: {
-    color: 'rgba(255,255,255,0.6)',
+    color: '#666',
     fontSize: 12,
   },
   timeSlotInnerContent: {
@@ -1723,6 +1722,6 @@ const styles = StyleSheet.create({
   },
   trainingInfoText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#6B7280',
   },
 });
