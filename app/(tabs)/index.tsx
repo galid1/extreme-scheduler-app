@@ -348,7 +348,6 @@ export default function HomeScreen() {
                     style={[
                       styles.dayButton,
                       expandedDay === day && styles.dayButtonActive,
-                      selectedTimes[day]?.length > 0 && styles.dayButtonHasSchedule,
                     ]}
                     onPress={() => setExpandedDay(expandedDay === day ? null : day)}
                   >
@@ -603,13 +602,13 @@ export default function HomeScreen() {
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'white' }]}>
         <View style={styles.scheduleDetailHeader}>
           <TouchableOpacity
             style={styles.scheduleDetailBackButton}
             onPress={() => setShowScheduleDetail(false)}
           >
-            <Ionicons name="arrow-back" size={24} color="white" />
+            <Ionicons name="arrow-back" size={24} color="#3B82F6" />
           </TouchableOpacity>
           <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
           <View style={{ width: 44 }} />
@@ -622,11 +621,6 @@ export default function HomeScreen() {
             {days.map((day) => (
               <View key={day} style={styles.dayColumnHeader}>
                 <Text style={styles.dayColumnText}>{day}</Text>
-                {savedSchedule[day]?.length > 0 && (
-                  <View style={styles.dayColumnBadge}>
-                    <Text style={styles.dayColumnBadgeText}>{savedSchedule[day].length}</Text>
-                  </View>
-                )}
               </View>
             ))}
           </View>
@@ -634,17 +628,16 @@ export default function HomeScreen() {
           {/* Time grid */}
           <ScrollView style={styles.calendarBody} showsVerticalScrollIndicator={false}>
             {hours.map((hour) => {
-              const isAM = hour < 12;
+              const isPM = hour >= 12;
               const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+              const period = isPM ? '오후🌙' : '오전☀️';
 
               return (
-                <View key={hour} style={styles.timeRow}>
-                  <View style={styles.timeLabel}>
-                    <Text style={[styles.timeLabelPeriod, hour === 0 || hour === 12 ? {} : { opacity: 0 }]}>
-                      {isAM ? '오전' : '오후'}
-                    </Text>
+                <View key={hour} style={[styles.timeRow, isPM && styles.timeRowPM]}>
+                  <View style={[styles.timeLabel, isPM && styles.timeLabelPM]}>
+                    <Text style={styles.timeLabelPeriod}>{period}</Text>
                     <Text style={styles.timeLabelText}>
-                      {displayHour.toString().padStart(2, '0')}:00
+                      {displayHour}시
                     </Text>
                   </View>
                   {days.map((day) => {
@@ -656,15 +649,14 @@ export default function HomeScreen() {
                         key={`${day}-${hour}`}
                         style={[
                           styles.timeCell,
+                          isPM && styles.timeCellPM,
                           state === 'once' && styles.timeCellOnce,
                           state === 'recurring' && styles.timeCellRecurring,
                         ]}
                       >
-                        {state !== 'none' && (
+                        {state === 'recurring' && (
                           <View style={styles.timeCellIndicator}>
-                            {state === 'recurring' && (
-                              <Ionicons name="repeat" size={10} color="white" />
-                            )}
+                            <Ionicons name="repeat" size={12} color="white" />
                           </View>
                         )}
                       </View>
@@ -679,11 +671,11 @@ export default function HomeScreen() {
         {/* Legend */}
         <View style={styles.calendarLegend}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: 'rgba(91, 153, 247, 0.6)', borderWidth: 1, borderColor: '#5B99F7' }]} />
+            <View style={[styles.legendColor, { backgroundColor: '#3B82F6', borderWidth: 1, borderColor: '#3B82F6' }]} />
             <Text style={styles.legendText}>일회</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: 'rgba(139, 92, 246, 0.4)', borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.7)' }]} />
+            <View style={[styles.legendColor, { backgroundColor: '#8B5CF6', borderWidth: 1, borderColor: '#8B5CF6' }]} />
             <Text style={styles.legendText}>매주 반복</Text>
           </View>
         </View>
@@ -1512,15 +1504,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: '#E0E0E0',
   },
   scheduleDetailBackButton: {
     padding: 4,
   },
   scheduleDetailTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    color: 'white',
+    color: '#333',
   },
   scheduleCalendarContainer: {
     flex: 1,
@@ -1531,7 +1523,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.2)',
+    borderBottomColor: '#E0E0E0',
+    marginBottom: 8,
   },
   timeColumnHeader: {
     width: 60,
@@ -1541,19 +1534,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayColumnText: {
-    color: 'white',
+    color: '#333',
     fontSize: 14,
     fontWeight: '600',
   },
   dayColumnBadge: {
-    backgroundColor: 'rgba(91, 153, 247, 0.3)',
+    backgroundColor: '#EFF6FF',
     borderRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 2,
     marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
   },
   dayColumnBadgeText: {
-    color: 'white',
+    color: '#3B82F6',
     fontSize: 10,
     fontWeight: '600',
   },
@@ -1562,41 +1557,54 @@ const styles = StyleSheet.create({
   },
   timeRow: {
     flexDirection: 'row',
-    height: 40,
+    height: 50,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: '#F3F4F6',
+    backgroundColor: '#FAFAFA',
+  },
+  timeRowPM: {
+    backgroundColor: '#F0F7FF',
   },
   timeLabel: {
     width: 60,
     justifyContent: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     paddingRight: 8,
   },
+  timeLabelPM: {
+    backgroundColor: '#E8F2FF',
+  },
   timeLabelPeriod: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 9,
-    fontWeight: '600',
+    color: '#666',
+    fontSize: 10,
+    fontWeight: '500',
     marginBottom: 2,
   },
   timeLabelText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
+    color: '#333',
+    fontSize: 12,
+    fontWeight: '600',
   },
   timeCell: {
     flex: 1,
     borderLeftWidth: 1,
-    borderLeftColor: 'rgba(255,255,255,0.05)',
-    padding: 2,
+    borderLeftColor: '#F3F4F6',
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  timeCellPM: {
+    backgroundColor: '#F8FBFF',
   },
   timeCellOnce: {
-    backgroundColor: 'rgba(91, 153, 247, 0.6)',
+    backgroundColor: '#3B82F6',
     borderWidth: 1,
-    borderColor: '#5B99F7',
+    borderColor: '#3B82F6',
   },
   timeCellRecurring: {
-    backgroundColor: 'rgba(139, 92, 246, 0.4)',
+    backgroundColor: '#8B5CF6',
     borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.7)',
+    borderColor: '#8B5CF6',
   },
   timeCellIndicator: {
     flexDirection: 'row',
@@ -1611,7 +1619,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 24,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: '#E0E0E0',
+    backgroundColor: '#F8FAFC',
   },
   legendItem: {
     flexDirection: 'row',
@@ -1624,7 +1633,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendText: {
-    color: 'rgba(255,255,255,0.8)',
+    color: '#6B7280',
     fontSize: 12,
   },
   memberRequestsContainer: {
