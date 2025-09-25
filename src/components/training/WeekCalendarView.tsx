@@ -23,6 +23,7 @@ interface WeekCalendarViewProps {
   onSelectMember: (memberId: string) => void;
   scrollRef?: React.RefObject<ScrollView>;
   isCurrentWeek?: boolean;
+  currentWeek: number;
 }
 
 export default function WeekCalendarView({
@@ -30,11 +31,42 @@ export default function WeekCalendarView({
   selectedMember,
   onSelectMember,
   scrollRef,
-  isCurrentWeek = false
+  isCurrentWeek = false,
+  currentWeek
 }: WeekCalendarViewProps) {
   const currentTime = new Date();
   const currentDay = ['일', '월', '화', '수', '목', '금', '토'][currentTime.getDay()];
   const currentHour = currentTime.getHours();
+
+  // 해당 주차의 날짜 계산
+  const getWeekDates = () => {
+    const year = currentTime.getFullYear();
+    const jan1 = new Date(year, 0, 1);
+    const daysOffset = (currentWeek - 1) * 7;
+    const weekStart = new Date(jan1.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+
+    // 월요일로 조정
+    const day = weekStart.getDay();
+    const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+    weekStart.setDate(diff);
+
+    const dates = [];
+    const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      dates.push({
+        day: dayNames[i],
+        date: date.getDate(),
+        month: date.getMonth() + 1,
+        isToday: isCurrentWeek && dayNames[i] === currentDay
+      });
+    }
+    return dates;
+  };
+
+
+  const weekDates = getWeekDates();
 
   // 오늘인지 확인하는 함수
   const isToday = (day: string) => {
@@ -64,21 +96,27 @@ export default function WeekCalendarView({
       {/* Calendar Header with Days */}
       <View style={styles.calendarHeader}>
         <View style={styles.timeColumn} />
-        {['월', '화', '수', '목', '금', '토', '일'].map((day) => (
+        {weekDates.map((dateInfo) => (
           <View
-            key={day}
+            key={dateInfo.day}
             style={[
               styles.dayHeader,
-              isToday(day) && styles.todayHeader
+              dateInfo.isToday && styles.todayHeader
             ]}
           >
             <Text style={[
               styles.dayHeaderText,
-              isToday(day) && styles.todayHeaderText
+              dateInfo.isToday && styles.todayHeaderText
             ]}>
-              {day}
+              {dateInfo.day}
             </Text>
-            {isToday(day) && (
+            <Text style={[
+              styles.dateText,
+              dateInfo.isToday && styles.todayDateText
+            ]}>
+              {dateInfo.month}/{dateInfo.date}
+            </Text>
+            {dateInfo.isToday && (
               <View style={styles.todayIndicator}>
                 <Text style={styles.todayIndicatorText}>오늘</Text>
               </View>
@@ -212,6 +250,15 @@ const styles = StyleSheet.create({
   todayHeaderText: {
     color: '#3B82F6',
     fontWeight: '700',
+  },
+  dateText: {
+    fontSize: 10,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  todayDateText: {
+    color: '#3B82F6',
+    fontWeight: '600',
   },
   todayIndicator: {
     backgroundColor: '#3B82F6',

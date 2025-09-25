@@ -97,10 +97,13 @@ export default function TrainingScheduleScreen() {
       const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
       const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
-      // Generate sessions for current week and next 3 weeks
+      // Generate sessions for the week stored in state or current week
+      const weekToGenerate = currentWeek || currentWeekOfYear;
+
+      // Generate sessions for selected week and next 3 weeks
       const allSessions: any[] = [];
       for (let i = 0; i < 4; i++) {
-        const weekNum = currentWeekOfYear + i;
+        const weekNum = weekToGenerate + i;
         if (weekNum <= 52) { // Max 52 weeks in a year
           allSessions.push(...generateSessionsForWeek(weekNum));
         }
@@ -394,6 +397,7 @@ export default function TrainingScheduleScreen() {
           onSelectMember={setSelectedMember}
           scrollRef={calendarScrollRef}
           isCurrentWeek={isCurrentWeek(currentWeek)}
+          currentWeek={currentWeek}
         />
       </View>
 
@@ -460,7 +464,7 @@ export default function TrainingScheduleScreen() {
           onPress={() => {
             if (!isPastWeek(currentWeek) && !isCurrentWeek(currentWeek)) {
               Alert.alert(
-                `${currentWeek}주차 재설정`,
+                `${currentWeek}주차 일정 재설정`,
                 `${currentWeek}주차 트레이닝 일정을 재설정 하시겠습니까?`,
                 [
                   { text: '취소', style: 'cancel' },
