@@ -218,18 +218,26 @@ export default function AutoSchedulingScreen() {
   };
 
   const handleConfirmSchedule = () => {
-    // Always show next week's schedule
-    const today = new Date();
-    const startOfYear = new Date(today.getFullYear(), 0, 1);
-    const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-    const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-    const nextWeek = currentWeekOfYear + 1;
+    // 재설정 모드인 경우 해당 주차로, 아니면 다음 주차로 설정
+    let targetWeek;
 
-    // Store에 다음 주차 설정
+    if (resetMode && weekToReset) {
+      // 재설정 모드: 재설정한 주차로 이동
+      targetWeek = Number(weekToReset);
+    } else {
+      // 일반 모드: 다음 주차로 이동
+      const today = new Date();
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
+      const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+      const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+      targetWeek = currentWeekOfYear + 1;
+    }
+
+    // Store에 타겟 주차 설정
     const { setCurrentWeek } = useTrainingStore.getState();
-    setCurrentWeek(nextWeek);
+    setCurrentWeek(targetWeek);
 
-    // Navigate to training schedule view and replace the navigation stack
+    // training-schedule로 이동 (replace로 스택 교체)
     router.replace('/training-schedule');
   };
 
@@ -308,7 +316,14 @@ export default function AutoSchedulingScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => {
+            // 재설정 모드면 replace로 돌아가고, 일반 모드면 back
+            if (resetMode) {
+              router.replace('/training-schedule');
+            } else {
+              router.back();
+            }
+          }}
         >
           <Ionicons name="arrow-back" size={24} color="#3B82F6" />
         </TouchableOpacity>

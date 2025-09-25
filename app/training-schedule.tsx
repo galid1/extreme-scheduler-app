@@ -528,8 +528,8 @@ export default function TrainingScheduleScreen() {
                     onPress: () => {
                       // Store에 재설정할 주차 정보 저장
                       resetWeek(currentWeek);
-                      // 자동 스케줄링 화면으로 이동 (주차 정보 전달)
-                      router.push({
+                      // 자동 스케줄링 화면으로 이동 (replace로 스택을 교체)
+                      router.replace({
                         pathname: '/auto-scheduling',
                         params: {
                           weekToReset: currentWeek,
