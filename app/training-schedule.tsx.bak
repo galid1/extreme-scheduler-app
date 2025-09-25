@@ -53,9 +53,7 @@ export default function TrainingScheduleScreen() {
   useEffect(() => {
     // 지난 주차가 선택되어 있다면 현재 주차로 자동 이동
     const today = new Date();
-    const startOfYear = new Date(today.getFullYear(), 0, 1);
-    const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-    const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+    const realCurrentWeek = Math.ceil((today.getDate()) / 7);
     if (currentWeek < realCurrentWeek) {
       setCurrentWeek(realCurrentWeek);
     }
@@ -68,45 +66,43 @@ export default function TrainingScheduleScreen() {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Generate mock data for multiple weeks
-      const generateSessionsForWeek = (weekOfYear: number) => {
+      const generateSessionsForWeek = (week: number) => {
         const baseMembers = [
-          { memberId: 'member_001', memberName: '김민수', memberPhone: '010-1234-5678', hour: 9, day: '월', weekOfYear },
-          { memberId: 'member_002', memberName: '이영희', memberPhone: '010-2345-6789', hour: 10, day: '월', weekOfYear },
-          { memberId: 'member_003', memberName: '박철수', memberPhone: '010-3456-7890', hour: 11, day: '월', weekOfYear },
-          { memberId: 'member_004', memberName: '정미영', memberPhone: '010-4567-8901', hour: 14, day: '화', weekOfYear },
-          { memberId: 'member_005', memberName: '최준호', memberPhone: '010-5678-9012', hour: 15, day: '화', weekOfYear },
-          { memberId: 'member_006', memberName: '강서연', memberPhone: '010-6789-0123', hour: 16, day: '화', weekOfYear },
-          { memberId: 'member_007', memberName: '박준호', memberPhone: '010-7890-1234', hour: 9, day: '수', weekOfYear },
-          { memberId: 'member_008', memberName: '최수진', memberPhone: '010-8901-2345', hour: 11, day: '수', weekOfYear },
-          { memberId: 'member_009', memberName: '이동혁', memberPhone: '010-9012-3456', hour: 13, day: '수', weekOfYear },
-          { memberId: 'member_010', memberName: '김지은', memberPhone: '010-0123-4567', hour: 15, day: '수', weekOfYear },
-          { memberId: 'member_011', memberName: '장민호', memberPhone: '010-1234-0987', hour: 10, day: '목', weekOfYear },
-          { memberId: 'member_012', memberName: '윤서연', memberPhone: '010-2345-0987', hour: 14, day: '목', weekOfYear },
-          { memberId: 'member_013', memberName: '한소연', memberPhone: '010-3456-0987', hour: 16, day: '목', weekOfYear },
-          { memberId: 'member_014', memberName: '오지훈', memberPhone: '010-4567-0987', hour: 9, day: '금', weekOfYear },
-          { memberId: 'member_015', memberName: '신유나', memberPhone: '010-5678-0987', hour: 11, day: '금', weekOfYear },
+          { memberId: 'member_001', memberName: '김민수', memberPhone: '010-1234-5678', hour: 9, day: '월' },
+          { memberId: 'member_002', memberName: '이영희', memberPhone: '010-2345-6789', hour: 10, day: '월' },
+          { memberId: 'member_003', memberName: '박철수', memberPhone: '010-3456-7890', hour: 11, day: '월' },
+          { memberId: 'member_004', memberName: '정미영', memberPhone: '010-4567-8901', hour: 14, day: '화' },
+          { memberId: 'member_005', memberName: '최준호', memberPhone: '010-5678-9012', hour: 15, day: '화' },
+          { memberId: 'member_006', memberName: '강서연', memberPhone: '010-6789-0123', hour: 16, day: '화' },
+          { memberId: 'member_007', memberName: '박준호', memberPhone: '010-7890-1234', hour: 9, day: '수' },
+          { memberId: 'member_008', memberName: '최수진', memberPhone: '010-8901-2345', hour: 11, day: '수' },
+          { memberId: 'member_009', memberName: '이동혁', memberPhone: '010-9012-3456', hour: 13, day: '수' },
+          { memberId: 'member_010', memberName: '김지은', memberPhone: '010-0123-4567', hour: 15, day: '수' },
+          { memberId: 'member_011', memberName: '장민호', memberPhone: '010-1234-0987', hour: 10, day: '목' },
+          { memberId: 'member_012', memberName: '윤서연', memberPhone: '010-2345-0987', hour: 14, day: '목' },
+          { memberId: 'member_013', memberName: '한소연', memberPhone: '010-3456-0987', hour: 16, day: '목' },
+          { memberId: 'member_014', memberName: '오지훈', memberPhone: '010-4567-0987', hour: 9, day: '금' },
+          { memberId: 'member_015', memberName: '신유나', memberPhone: '010-5678-0987', hour: 11, day: '금' },
         ];
 
-        return baseMembers;
+        return baseMembers.map(member => ({
+          ...member,
+          week
+        }));
       };
 
-      // Get current week of year
-      const today = new Date();
-      const startOfYear = new Date(today.getFullYear(), 0, 1);
-      const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-      const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-
-      // Generate sessions for current week and next 3 weeks
+      // Generate sessions for 12 weeks
       const allSessions: any[] = [];
-      for (let i = 0; i < 4; i++) {
-        const weekNum = currentWeekOfYear + i;
-        if (weekNum <= 52) { // Max 52 weeks in a year
-          allSessions.push(...generateSessionsForWeek(weekNum));
-        }
+      for (let week = 1; week <= 12; week++) {
+        allSessions.push(...generateSessionsForWeek(week));
       }
 
       setTrainingSessions(allSessions);
-      setCurrentWeek(currentWeekOfYear);
+
+      // Set current week to real current week (시작 주차를 현재 주차로 설정)
+      const today = new Date();
+      const realCurrentWeek = Math.ceil((today.getDate()) / 7);
+      setCurrentWeek(Math.max(realCurrentWeek, 1)); // 최소 1주차부터 시작
     } catch (error) {
       console.error('Error fetching training sessions:', error);
     } finally {
@@ -285,38 +281,21 @@ export default function TrainingScheduleScreen() {
               const period = session.hour < 12 ? '오전' : '오후';
               const isNext = idx === 0;
 
-              // Calculate date for the session considering week difference
+              // Calculate date for the session
               const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
               const currentDate = new Date();
               const currentDayIndex = currentDate.getDay();
               const currentHour = currentDate.getHours();
               const sessionDayIndex = dayOrder.indexOf(session.day);
-
-              // Get current week of year
-              const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
-              const daysSinceStart = Math.floor((currentDate - startOfYear) / (24 * 60 * 60 * 1000));
-              const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-
-              // Calculate week difference
-              const weekDiff = session.weekOfYear - currentWeekOfYear;
-
-              // Calculate days to add considering week difference
-              let daysToAdd = (sessionDayIndex - currentDayIndex + 7) % 7;
-              if (weekDiff > 0) {
-                daysToAdd += weekDiff * 7;
-              } else if (weekDiff === 0 && daysToAdd === 0 && session.hour <= currentHour) {
-                // If same day but past time, it means next week
-                daysToAdd = 7;
-              }
-
+              const daysToAdd = (sessionDayIndex - currentDayIndex + 7) % 7;
               const sessionDate = new Date(currentDate);
               sessionDate.setDate(currentDate.getDate() + daysToAdd);
               const month = sessionDate.getMonth() + 1;
               const day = sessionDate.getDate();
 
               // Check if today and calculate hours until session
-              const isToday = daysToAdd === 0 && weekDiff === 0;
-              const hoursUntil = session.hour - currentHour + (daysToAdd * 24);
+              const isToday = daysToAdd === 0;
+              const hoursUntil = isToday ? session.hour - currentHour : (daysToAdd * 24) + (session.hour - currentHour);
               const isWithin12Hours = hoursUntil <= 12 && hoursUntil > 0;
               const isWithin24Hours = hoursUntil <= 24 && hoursUntil > 0;
 
@@ -482,6 +461,34 @@ export default function TrainingScheduleScreen() {
         </TouchableOpacity>
       </View>
 
+      <TouchableOpacity
+        style={styles.fullResetButton}
+        onPress={() => {
+          Alert.alert(
+            '\uc804\uccb4 \uc7ac\uc124\uc815',
+            '\ubaa8\ub4e0 \uc8fc\ucc28\uc758 \uc2a4\ucf00\uc904\uc744 \uc7ac\uc124\uc815\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?\n\uc774 \uc791\uc5c5\uc740 \ub418\ub3cc\ub9b4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.',
+            [
+              { text: '\ucde8\uc18c', style: 'cancel' },
+              {
+                text: '\uc7ac\uc124\uc815',
+                style: 'destructive',
+                onPress: () => {
+                  resetTraining();
+                  setScheduleStatus('READY');
+                  router.replace('/(tabs)');
+                  Alert.alert(
+                    '\uc7ac\uc124\uc815 \uc644\ub8cc',
+                    '\ubaa8\ub4e0 \ud2b8\ub808\uc774\ub2dd \uc2a4\ucf00\uc904\uc774 \uc7ac\uc124\uc815\ub418\uc5c8\uc2b5\ub2c8\ub2e4.'
+                  );
+                }
+              }
+            ]
+          );
+        }}
+      >
+        <Ionicons name="trash-outline" size={16} color="white" />
+        <Text style={styles.fullResetButtonText}>\uc804\uccb4 \uc7ac\uc124\uc815</Text>
+      </TouchableOpacity>
 
     </SafeAreaView>
   );
@@ -849,6 +856,28 @@ const styles = StyleSheet.create({
   weekResetButtonText: {
     color: 'white',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  fullResetButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EF4444',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  fullResetButtonText: {
+    color: 'white',
+    fontSize: 12,
     fontWeight: '600',
   },
 });

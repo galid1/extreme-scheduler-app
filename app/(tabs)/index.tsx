@@ -1759,7 +1759,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#10B981',
+    backgroundColor: '#3B82F6',
     borderRadius: 14,
     paddingVertical: 18,
     gap: 8,
