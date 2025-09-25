@@ -31,7 +31,7 @@ export default function TrainingScheduleScreen() {
     setCurrentWeek,
     setSelectedMember,
     setWeekNotificationSent,
-    getSessionsForWeek,
+    getSessionsForWeek: storeGetSessionsForWeek,
     canEditWeek,
     canSendNotification,
     isCurrentWeek,
@@ -61,6 +61,94 @@ export default function TrainingScheduleScreen() {
       setCurrentWeek(realCurrentWeek);
     }
   }, []);
+
+  // 가장 가까운 세션 찾기 및 자동 포커스
+  useEffect(() => {
+    if (!isLoading && trainingSessions.length > 0) {
+      const weekSessions = storeGetSessionsForWeek(currentWeek);
+      if (weekSessions.length === 0) return;
+
+      const today = new Date();
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
+      const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+      const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+
+      const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
+      const currentDay = dayOrder[today.getDay()];
+      const currentHour = today.getHours();
+
+      let targetSession = null;
+
+      if (currentWeek === realCurrentWeek) {
+        // 현재 주차: 현재 시간 이후의 가장 가까운 세션
+        const upcomingSessions = weekSessions.filter(session => {
+          const dayIndex = dayOrder.indexOf(session.day);
+          const currentDayIndex = dayOrder.indexOf(currentDay);
+
+          if (dayIndex > currentDayIndex) return true;
+          if (dayIndex === currentDayIndex && session.hour > currentHour) return true;
+          return false;
+        });
+
+        // 시간순으로 정렬
+        upcomingSessions.sort((a, b) => {
+          const aDayIndex = dayOrder.indexOf(a.day);
+          const bDayIndex = dayOrder.indexOf(b.day);
+
+          if (aDayIndex !== bDayIndex) {
+            return aDayIndex - bDayIndex;
+          }
+          return a.hour - b.hour;
+        });
+
+        if (upcomingSessions.length > 0) {
+          targetSession = upcomingSessions[0];
+        }
+      } else if (currentWeek > realCurrentWeek) {
+        // 미래 주차: 주차의 첫 번째 세션
+        const sortedSessions = [...weekSessions].sort((a, b) => {
+          const aDayIndex = dayOrder.indexOf(a.day);
+          const bDayIndex = dayOrder.indexOf(b.day);
+
+          if (aDayIndex !== bDayIndex) {
+            return aDayIndex - bDayIndex;
+          }
+          return a.hour - b.hour;
+        });
+
+        if (sortedSessions.length > 0) {
+          targetSession = sortedSessions[0];
+        }
+      }
+
+      // 타겟 세션이 있으면 선택하고 스크롤
+      if (targetSession) {
+        console.log('Auto-focusing on session:', targetSession);
+        setSelectedMember(targetSession.memberId);
+
+        // 캘린더 뷰 스크롤
+        setTimeout(() => {
+          if (calendarScrollRef.current) {
+            const scrollY = Math.max(0, (targetSession.hour - 1) * 50); // 50 is hourRow height
+            calendarScrollRef.current.scrollTo({ y: scrollY, animated: true });
+          }
+        }, 800);
+      } else if (currentWeek === realCurrentWeek) {
+        // 현재 주차이면서 남은 세션이 없으면 현재 시간으로 스크롤
+        setTimeout(() => {
+          if (calendarScrollRef.current) {
+            const scrollY = Math.max(0, (currentHour - 1) * 50);
+            calendarScrollRef.current.scrollTo({ y: scrollY, animated: true });
+          }
+        }, 800);
+      }
+    }
+  }, [isLoading, trainingSessions, currentWeek, storeGetSessionsForWeek, setSelectedMember]);
+
+  // getSessionsForWeek 함수를 로컬에 정의 (store 함수를 래핑)
+  const getSessionsForWeek = (week: number) => {
+    return storeGetSessionsForWeek(week);
+  };
 
   const fetchTrainingSessions = async () => {
     setIsLoading(true);
@@ -195,48 +283,35 @@ export default function TrainingScheduleScreen() {
 
   const upcomingSessions = getUpcomingSessions();
 
-  // Get all upcoming sessions for horizontal scroll
-  const getAllUpcomingSessions = () => {
+  // Get today's sessions only
+  const getTodaySessions = () => {
     const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
     const currentDay = dayOrder[currentTime.getDay()];
     const currentHour = currentTime.getHours();
     const weekSessions = getSessionsForWeek(currentWeek);
 
-    // Sort sessions by day and time
-    const sortedSessions = [...weekSessions].sort((a, b) => {
-      const aDayIndex = dayOrder.indexOf(a.day);
-      const bDayIndex = dayOrder.indexOf(b.day);
-      const currentDayIndex = dayOrder.indexOf(currentDay);
-
-      // Calculate days from current day (handle week wrap)
-      const aDaysFromNow = (aDayIndex - currentDayIndex + 7) % 7;
-      const bDaysFromNow = (bDayIndex - currentDayIndex + 7) % 7;
-
-      if (aDaysFromNow !== bDaysFromNow) {
-        return aDaysFromNow - bDaysFromNow;
+    // Filter sessions for today only
+    const todaySessions = weekSessions.filter(session => {
+      // Only show today's sessions if this is the current week
+      if (isCurrentWeek(currentWeek)) {
+        return session.day === currentDay;
       }
-      return a.hour - b.hour;
+      // For future weeks, don't show any sessions in "오늘 일정"
+      return false;
     });
 
-    // Filter upcoming sessions only if this is the current week
-    if (isCurrentWeek(currentWeek)) {
-      return sortedSessions.filter(session => {
-        const dayIndex = dayOrder.indexOf(session.day);
-        const currentDayIndex = dayOrder.indexOf(currentDay);
-        const daysFromNow = (dayIndex - currentDayIndex + 7) % 7;
+    // Sort by hour
+    const sortedSessions = [...todaySessions].sort((a, b) => a.hour - b.hour);
 
-        if (daysFromNow === 0) {
-          return session.hour > currentHour;
-        }
-        return true;
-      });
+    // If current week, filter out past sessions
+    if (isCurrentWeek(currentWeek)) {
+      return sortedSessions.filter(session => session.hour > currentHour);
     }
 
-    // For future weeks, return all sessions
     return sortedSessions;
   };
 
-  const allUpcomingSessions = getAllUpcomingSessions();
+  const todaySessions = getTodaySessions();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -261,29 +336,19 @@ export default function TrainingScheduleScreen() {
         isNextWeek={isNextWeek(currentWeek)}
       />
 
-      {/* Upcoming Sessions */}
-      <View style={styles.upcomingSection}>
-        <View style={styles.upcomingHeader}>
-          <Text style={styles.upcomingTitle}>다음 일정</Text>
-          {allUpcomingSessions.length > 0 && (() => {
-            const firstSession = allUpcomingSessions[0];
-            const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
-            const currentDate = new Date();
-            const currentDayIndex = currentDate.getDay();
-            const currentHour = currentDate.getHours();
-            const sessionDayIndex = dayOrder.indexOf(firstSession.day);
-            const daysToAdd = (sessionDayIndex - currentDayIndex + 7) % 7;
-            const hoursUntil = daysToAdd === 0 ? firstSession.hour - currentHour : (daysToAdd * 24) + (firstSession.hour - currentHour);
-            return null;
-          })()}
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.upcomingScrollContent}
-        >
-          {allUpcomingSessions.length > 0 ? (
-            allUpcomingSessions.map((session, idx) => {
+      {/* Upcoming Sessions - Only show for current week */}
+      {isCurrentWeek(currentWeek) && (
+        <View style={styles.upcomingSection}>
+          <View style={styles.upcomingHeader}>
+            <Text style={styles.upcomingTitle}>오늘 일정</Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.upcomingScrollContent}
+          >
+            {todaySessions.length > 0 ? (
+              todaySessions.map((session, idx) => {
               const displayHour = session.hour === 0 ? 12 : session.hour > 12 ? session.hour - 12 : session.hour;
               const period = session.hour < 12 ? '오전' : '오후';
               const isNext = idx === 0;
@@ -357,25 +422,14 @@ export default function TrainingScheduleScreen() {
                       </View>
 
                       <View style={styles.upcomingDayRow}>
-                      {isToday ? (
-                          <View style={styles.nextDayRow}>
-                              <Text style={[styles.upcomingDay, isNext && styles.nextText]}>
-                                오늘
-                              </Text>
-                              <Text style={[styles.upcomingHoursUntil, isNext && styles.nextTimeText]}>
-                              {hoursUntil}시간 후
-                            </Text>
-                          </View>
-                      ) : (
                         <View style={styles.nextDayRow}>
-                          <Text style={[styles.upcomingDay, isNext && styles.nextText]}>
-                              {month}/{day} {session.day}요일
-                          </Text>
                             <Text style={[styles.upcomingTime, isNext && styles.nextText]}>
                                 {period} {displayHour}시
                             </Text>
+                            <Text style={[styles.upcomingHoursUntil, isNext && styles.nextTimeText]}>
+                              {session.hour - currentHour}시간 후
+                            </Text>
                         </View>
-                      )}
                     </View>
 
                   </View>
@@ -388,6 +442,7 @@ export default function TrainingScheduleScreen() {
           )}
         </ScrollView>
       </View>
+      )}
 
       {/* Calendar View */}
       <View style={styles.calendarContainer}>
@@ -490,7 +545,7 @@ export default function TrainingScheduleScreen() {
           disabled={isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
         >
           <Ionicons name="refresh" size={18} color="white" />
-          <Text style={styles.weekResetButtonText}>주차 재설정</Text>
+          <Text style={styles.weekResetButtonText}>일정 재설정</Text>
         </TouchableOpacity>
       </View>
 
