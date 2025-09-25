@@ -33,7 +33,7 @@ export default function WeekNavigator({
   // 이전 주차로 갈 수 있는지 확인 (현재 실제 주차보다 이전으로는 갈 수 없음)
   const canGoPrevious = currentWeek > realCurrentWeek;
   // 다음 주차로 갈 수 있는지 확인 (최대 2주 뒤까지만)
-  const maxViewableWeek = Math.min(realCurrentWeek + 2, 52);
+  const maxViewableWeek = Math.min(realCurrentWeek + 1, 52);
   const canGoNext = currentWeek < maxViewableWeek;
 
 

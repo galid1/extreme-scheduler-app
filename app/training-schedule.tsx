@@ -52,11 +52,12 @@ export default function TrainingScheduleScreen() {
 
   useEffect(() => {
     // 지난 주차가 선택되어 있다면 현재 주차로 자동 이동
-    const today = new Date();
-    const startOfYear = new Date(today.getFullYear(), 0, 1);
-    const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-    const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-    if (currentWeek < realCurrentWeek) {
+    // currentWeek가 0이거나 설정되지 않은 경우에만 현재 주차로 설정
+    if (!currentWeek || currentWeek === 0) {
+      const today = new Date();
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
+      const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+      const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
       setCurrentWeek(realCurrentWeek);
     }
   }, []);
@@ -106,7 +107,6 @@ export default function TrainingScheduleScreen() {
       }
 
       setTrainingSessions(allSessions);
-      setCurrentWeek(currentWeekOfYear);
     } catch (error) {
       console.error('Error fetching training sessions:', error);
     } finally {
@@ -455,27 +455,35 @@ export default function TrainingScheduleScreen() {
         <TouchableOpacity
           style={[
             styles.weekResetButton,
-            (!canSendNotification(currentWeek) || isPastWeek(currentWeek) || isCurrentWeek(currentWeek)) && styles.weekResetButtonDisabled
+            (isPastWeek(currentWeek) || isCurrentWeek(currentWeek)) && styles.weekResetButtonDisabled
           ]}
           onPress={() => {
-            if (!isPastWeek(currentWeek) && !isCurrentWeek(currentWeek) && weekNotificationStatus[currentWeek]) {
+            if (!isPastWeek(currentWeek) && !isCurrentWeek(currentWeek)) {
               Alert.alert(
                 `${currentWeek}주차 재설정`,
-                `${currentWeek}주차 알림 상태를 재설정하시겠습니까?`,
+                `${currentWeek}주차 트레이닝 일정을 재설정 하시겠습니까?`,
                 [
                   { text: '취소', style: 'cancel' },
                   {
                     text: '재설정',
                     onPress: () => {
+                      // Store에 재설정할 주차 정보 저장
                       resetWeek(currentWeek);
-                      Alert.alert('재설정 완료', `${currentWeek}주차 알림 상태가 재설정되었습니다.`);
+                      // 자동 스케줄링 화면으로 이동 (주차 정보 전달)
+                      router.push({
+                        pathname: '/auto-scheduling',
+                        params: {
+                          weekToReset: currentWeek,
+                          resetMode: true
+                        }
+                      });
                     }
                   }
                 ]
               );
             }
           }}
-          disabled={!weekNotificationStatus[currentWeek] || isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
+          disabled={isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
         >
           <Ionicons name="refresh" size={18} color="white" />
           <Text style={styles.weekResetButtonText}>주차 재설정</Text>

@@ -8,10 +8,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/src/store/useAuthStore';
+import { useTrainingStore } from '@/src/store/useTrainingStore';
 
 interface Member {
   id: string;
@@ -29,6 +31,8 @@ interface MemberSelection {
 
 export default function AutoSchedulingScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const { weekToReset, resetMode } = params;
   const { setScheduleStatus } = useAuthStore();
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<MemberSelection[]>([]);
@@ -167,6 +171,45 @@ export default function AutoSchedulingScreen() {
     // Simulate server processing
     await new Promise(resolve => setTimeout(resolve, 1700));
 
+    // Generate training sessions for selected members
+    const { setTrainingSessions } = useTrainingStore.getState();
+    const generatedSessions: any[] = [];
+
+    // Calculate next week
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+    const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+    const targetWeek = currentWeekOfYear + 1;
+
+    // Days of the week for scheduling
+    const weekDays = ['월요일', '화요일', '수요일', '목요일', '금요일'];
+    const timeSlots = [9, 10, 11, 14, 15, 16, 17, 18, 19, 20]; // Available hours
+
+    // Create sessions for each selected member
+    selectedMembers.forEach((selection) => {
+      const member = members.find(m => m.id === selection.memberId);
+      if (!member) return;
+
+      // Distribute sessions across the week
+      for (let i = 0; i < selection.sessionCount; i++) {
+        const dayIndex = Math.floor(Math.random() * weekDays.length);
+        const hourIndex = Math.floor(Math.random() * timeSlots.length);
+
+        generatedSessions.push({
+          memberId: member.id,
+          memberName: member.name,
+          memberPhone: member.phoneNumber,
+          hour: timeSlots[hourIndex],
+          day: weekDays[dayIndex],
+          weekOfYear: targetWeek,
+        });
+      }
+    });
+
+    // Save sessions to store
+    setTrainingSessions(generatedSessions);
+
     // Update schedule status to SCHEDULED
     setScheduleStatus('SCHEDULED');
 
@@ -175,6 +218,17 @@ export default function AutoSchedulingScreen() {
   };
 
   const handleConfirmSchedule = () => {
+    // Always show next week's schedule
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+    const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+    const nextWeek = currentWeekOfYear + 1;
+
+    // Store에 다음 주차 설정
+    const { setCurrentWeek } = useTrainingStore.getState();
+    setCurrentWeek(nextWeek);
+
     // Navigate to training schedule view and replace the navigation stack
     router.replace('/training-schedule');
   };
@@ -258,7 +312,9 @@ export default function AutoSchedulingScreen() {
         >
           <Ionicons name="arrow-back" size={24} color="#3B82F6" />
         </TouchableOpacity>
-        <Text style={styles.title}>자동 스케줄링</Text>
+        <Text style={styles.title}>
+          자동 스케줄링
+        </Text>
         <View style={{ width: 44 }} />
       </View>
 
