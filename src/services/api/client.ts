@@ -4,12 +4,36 @@
  */
 
 import { config } from '../../config/environment';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class ApiClient {
   private baseURL: string;
+  private authToken: string | null = null;
 
   constructor() {
     this.baseURL = config.API_URL;
+    this.loadToken();
+  }
+
+  private async loadToken() {
+    try {
+      this.authToken = await AsyncStorage.getItem('accessToken');
+    } catch (error) {
+      console.error('Failed to load auth token:', error);
+    }
+  }
+
+  public async setAuthToken(token: string | null) {
+    this.authToken = token;
+    if (token) {
+      await AsyncStorage.setItem('accessToken', token);
+    } else {
+      await AsyncStorage.removeItem('accessToken');
+    }
+  }
+
+  public getAuthToken(): string | null {
+    return this.authToken;
   }
 
   private async request<T>(
@@ -18,19 +42,30 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
 
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    // Add auth token if available
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+    }
+
     const defaultOptions: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     };
 
     try {
       const response = await fetch(url, defaultOptions);
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message ||
+          `API Error: ${response.status} ${response.statusText}`
+        );
       }
 
       const data = await response.json();

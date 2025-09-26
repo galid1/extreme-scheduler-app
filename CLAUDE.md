@@ -147,3 +147,195 @@ npm run lint
 ## 페이지 생성 시 주의사항
 새로운 페이지를 생성할 때 상단에 (tabs) 관련 내용이나 탭 네비게이션 코드를 추가하지 마세요.
 각 페이지는 독립적인 화면으로 구성되어야 합니다.
+
+## API
+# Extreme Scheduler API Test Curl Commands
+
+## Base URL
+BASE_URL=http://localhost:8080
+
+## Auth APIs
+
+### 1. SMS 인증코드 발송
+curl -X POST "${BASE_URL}/api/v1/auths/sms/send" \
+-H "Content-Type: application/json" \
+-d '{
+"phoneNumber": "010-1234-5678",
+"deviceId": "test-device-001"
+}'
+
+### 2. 로그인 (인증코드 확인)
+curl -X POST "${BASE_URL}/api/v1/auths/sign-in" \
+-H "Content-Type: application/json" \
+-d '{
+"phoneNumber": "010-1234-5678",
+"identificationCode": "123456"
+}'
+
+### 3. 회원가입
+curl -X POST "${BASE_URL}/api/v1/auths/sign-up" \
+-H "Content-Type: application/json" \
+-d '{
+"tempTokenForSignUp": "temp-token-xxx",
+"name": "홍길동",
+"birthDate": "1990-01-01",
+"gender": "MALE",
+"phoneNumber": "010-1234-5678",
+"accountType": "MEMBER",
+"profileImageUrl": "https://example.com/profile.jpg",
+"pushTokenInfo": {
+"token": "fcm-token-string",
+"deviceId": "device-001",
+"platform": "IOS"
+}
+}'
+
+## Member APIs (회원 전용 - Authorization 헤더 필요)
+
+### 토큰 변수 설정 (로그인 후 받은 토큰 사용)
+MEMBER_TOKEN="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+TRAINER_TOKEN="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+### 4. 트레이너 검색 (회원용)
+curl -X GET "${BASE_URL}/api/v1/members/trainer-search?phoneNumber=010-9876-5432" \
+-H "Authorization: ${MEMBER_TOKEN}"
+
+### 5. 트레이너 배정 요청 (회원용)
+curl -X POST "${BASE_URL}/api/v1/members/trainer-assignment-requests" \
+-H "Authorization: ${MEMBER_TOKEN}" \
+-H "Content-Type: application/json" \
+-d '{
+"trainerAccountId": 123
+}'
+
+### 6. 내 배정 요청 목록 조회 (회원용)
+curl -X GET "${BASE_URL}/api/v1/members/trainer-assignment-requests?page=0&size=10" \
+-H "Authorization: ${MEMBER_TOKEN}"
+
+## Member Schedule APIs (회원 스케줄 관리)
+
+### 7. 회원 스케줄 상태를 READY로 변경
+curl -X POST "${BASE_URL}/api/v1/members/schedules/ready" \
+-H "Authorization: ${MEMBER_TOKEN}"
+
+### 8. 회원 스케줄 상태를 UNREADY로 변경
+curl -X POST "${BASE_URL}/api/v1/members/schedules/unready" \
+-H "Authorization: ${MEMBER_TOKEN}"
+
+### 9. 회원 스케줄 등록 (정기 + 일회성 통합)
+curl -X POST "${BASE_URL}/api/v1/members/schedules/register" \
+-H "Authorization: ${MEMBER_TOKEN}" \
+-H "Content-Type: application/json" \
+-d '{
+"periodicScheduleLines": [
+{
+"dayOfWeek": "MONDAY",
+"startHour": 9,
+"endHour": 12
+},
+{
+"dayOfWeek": "WEDNESDAY",
+"startHour": 14,
+"endHour": 16
+}
+],
+"onetimeScheduleLines": [
+{
+"scheduleDate": "2024-01-15",
+"startHour": 10,
+"endHour": 11
+},
+{
+"scheduleDate": "2024-01-20",
+"startHour": 15,
+"endHour": 17
+}
+]
+}'
+
+## Trainer APIs (트레이너 전용)
+
+### 10. 트레이너에게 온 배정 요청 목록 조회
+curl -X GET "${BASE_URL}/api/v1/trainers/assignment-requests?status=PENDING" \
+-H "Authorization: ${TRAINER_TOKEN}"
+
+### 11. 배정 요청 수락 (트레이너)
+curl -X PUT "${BASE_URL}/api/v1/trainers/assignment-requests/456/accept" \
+-H "Authorization: ${TRAINER_TOKEN}"
+
+### 12. 배정 요청 거절 (트레이너)
+curl -X PUT "${BASE_URL}/api/v1/trainers/assignment-requests/456/reject" \
+-H "Authorization: ${TRAINER_TOKEN}" \
+-H "Content-Type: application/json" \
+-d '{
+"rejectReason": "현재 신규 회원을 받지 않습니다"
+}'
+
+### 13. 회원을 트레이너에게 직접 배정 (트레이너)
+curl -X POST "${BASE_URL}/api/v1/trainers/members" \
+-H "Authorization: ${TRAINER_TOKEN}" \
+-H "Content-Type: application/json" \
+-d '{
+"memberAccountId": 789
+}'
+
+## Trainer Schedule APIs (트레이너 스케줄 관리)
+
+### 14. 트레이너 스케줄 등록 (정기 + 일회성 통합)
+curl -X POST "${BASE_URL}/api/v1/trainers/schedules" \
+-H "Authorization: ${TRAINER_TOKEN}" \
+-H "Content-Type: application/json" \
+-d '{
+"periodicScheduleLines": [
+{
+"dayOfWeek": "MONDAY",
+"startHour": 9,
+"endHour": 18
+},
+{
+"dayOfWeek": "TUESDAY",
+"startHour": 9,
+"endHour": 18
+}
+],
+"onetimeScheduleLines": [
+{
+"scheduleDate": "2024-01-15",
+"startHour": 9,
+"endHour": 12
+}
+]
+}'
+
+### 15. 트레이너 스케줄 시간 수정 (여러 개 동시 수정)
+curl -X PUT "${BASE_URL}/api/v1/trainers/schedules/time" \
+-H "Authorization: ${TRAINER_TOKEN}" \
+-H "Content-Type: application/json" \
+-d '{
+"scheduleLines": [
+{
+"scheduleId": 101,
+"startHour": 10,
+"endHour": 12
+},
+{
+"scheduleId": 102,
+"startHour": 14,
+"endHour": 17
+}
+]
+}'
+
+### 16. 자동 스케줄링 실행 (트레이너)
+curl -X POST "${BASE_URL}/api/v1/trainers/schedules/auto-scheduling" \
+-H "Authorization: ${TRAINER_TOKEN}" \
+-H "Content-Type: application/json" \
+-d '{
+"memberAccountIds": [789, 790, 791],
+"startDate": "2024-01-01",
+"endDate": "2024-01-31"
+}'
+
+### 17. 자동 스케줄링 알림 발송 (트레이너)
+curl -X POST "${BASE_URL}/api/v1/trainers/auto-scheduling/notification" \
+-H "Authorization: ${TRAINER_TOKEN}"

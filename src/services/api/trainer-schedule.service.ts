@@ -1,0 +1,45 @@
+/**
+ * Trainer Schedule Service
+ * 트레이너 스케줄 관련 API 호출 서비스
+ */
+
+import apiClient from './client';
+import {
+  RegisterScheduleRequest,
+  UpdateScheduleTimeRequest,
+  AutoSchedulingRequest,
+} from '../../types/api';
+
+class TrainerScheduleService {
+  /**
+   * 트레이너 스케줄 등록 (정기 + 일회성 통합)
+   */
+  async registerSchedule(request: RegisterScheduleRequest): Promise<void> {
+    await apiClient.post('/api/v1/trainers/schedules', request);
+  }
+
+  /**
+   * 트레이너 스케줄 시간 수정 (여러 개 동시 수정)
+   */
+  async updateScheduleTime(request: UpdateScheduleTimeRequest): Promise<void> {
+    await apiClient.put('/api/v1/trainers/schedules/time', request);
+  }
+
+  /**
+   * 자동 스케줄링 실행
+   */
+  async executeAutoScheduling(request: AutoSchedulingRequest): Promise<void> {
+    await apiClient.post('/api/v1/trainers/schedules/auto-scheduling', request);
+  }
+
+  /**
+   * 자동 스케줄링 알림 발송
+   */
+  async sendAutoSchedulingNotification(): Promise<void> {
+    await apiClient.post('/api/v1/trainers/auto-scheduling/notification');
+  }
+
+}
+
+export const trainerScheduleService = new TrainerScheduleService();
+export default trainerScheduleService;
