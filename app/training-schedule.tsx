@@ -47,6 +47,9 @@ export default function TrainingScheduleScreen() {
   const calendarScrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
+    // 개발 테스트를 위해 Store 초기화 (필요 시 주석 해제)
+    // resetTraining();
+
     fetchTrainingSessions();
   }, []);
 
@@ -153,51 +156,62 @@ export default function TrainingScheduleScreen() {
   const fetchTrainingSessions = async () => {
     setIsLoading(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Store에서 기존 세션 가져오기
+      const { trainingSessions: existingSessions } = useTrainingStore.getState();
 
-      // Generate mock data for multiple weeks
-      const generateSessionsForWeek = (weekOfYear: number) => {
-        const baseMembers = [
-          { memberId: 'member_001', memberName: '김민수', memberPhone: '010-1234-5678', hour: 9, day: '월', weekOfYear },
-          { memberId: 'member_002', memberName: '이영희', memberPhone: '010-2345-6789', hour: 10, day: '월', weekOfYear },
-          { memberId: 'member_003', memberName: '박철수', memberPhone: '010-3456-7890', hour: 11, day: '월', weekOfYear },
-          { memberId: 'member_004', memberName: '정미영', memberPhone: '010-4567-8901', hour: 14, day: '화', weekOfYear },
-          { memberId: 'member_005', memberName: '최준호', memberPhone: '010-5678-9012', hour: 15, day: '화', weekOfYear },
-          { memberId: 'member_006', memberName: '강서연', memberPhone: '010-6789-0123', hour: 16, day: '화', weekOfYear },
-          { memberId: 'member_007', memberName: '박준호', memberPhone: '010-7890-1234', hour: 9, day: '수', weekOfYear },
-          { memberId: 'member_008', memberName: '최수진', memberPhone: '010-8901-2345', hour: 11, day: '수', weekOfYear },
-          { memberId: 'member_009', memberName: '이동혁', memberPhone: '010-9012-3456', hour: 13, day: '수', weekOfYear },
-          { memberId: 'member_010', memberName: '김지은', memberPhone: '010-0123-4567', hour: 15, day: '수', weekOfYear },
-          { memberId: 'member_011', memberName: '장민호', memberPhone: '010-1234-0987', hour: 10, day: '목', weekOfYear },
-          { memberId: 'member_012', memberName: '윤서연', memberPhone: '010-2345-0987', hour: 14, day: '목', weekOfYear },
-          { memberId: 'member_013', memberName: '한소연', memberPhone: '010-3456-0987', hour: 16, day: '목', weekOfYear },
-          { memberId: 'member_014', memberName: '오지훈', memberPhone: '010-4567-0987', hour: 9, day: '금', weekOfYear },
-          { memberId: 'member_015', memberName: '신유나', memberPhone: '010-5678-0987', hour: 11, day: '금', weekOfYear },
-        ];
+      // 이미 세션이 있으면 사용, 없으면 mock 데이터 생성
+      if (existingSessions && existingSessions.length > 0) {
+        // 기존 데이터 사용 (재설정 후 돌아왔을 때)
+        console.log('Using existing sessions:', existingSessions.length);
+        console.log('Session days:', [...new Set(existingSessions.map(s => s.day))]);
+        console.log('Session weeks:', [...new Set(existingSessions.map(s => s.weekOfYear))]);
+      } else {
+        // Mock 데이터 생성 (최초 진입 시)
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        return baseMembers;
-      };
+        // Generate mock data for multiple weeks
+        const generateSessionsForWeek = (weekOfYear: number) => {
+          const baseMembers = [
+            { memberId: 'member_001', memberName: '김민수', memberPhone: '010-1234-5678', hour: 9, day: '월', weekOfYear },
+            { memberId: 'member_002', memberName: '이영희', memberPhone: '010-2345-6789', hour: 10, day: '월', weekOfYear },
+            { memberId: 'member_003', memberName: '박철수', memberPhone: '010-3456-7890', hour: 11, day: '월', weekOfYear },
+            { memberId: 'member_004', memberName: '정미영', memberPhone: '010-4567-8901', hour: 14, day: '화', weekOfYear },
+            { memberId: 'member_005', memberName: '최준호', memberPhone: '010-5678-9012', hour: 15, day: '화', weekOfYear },
+            { memberId: 'member_006', memberName: '강서연', memberPhone: '010-6789-0123', hour: 16, day: '화', weekOfYear },
+            { memberId: 'member_007', memberName: '박준호', memberPhone: '010-7890-1234', hour: 9, day: '수', weekOfYear },
+            { memberId: 'member_008', memberName: '최수진', memberPhone: '010-8901-2345', hour: 11, day: '수', weekOfYear },
+            { memberId: 'member_009', memberName: '이동혁', memberPhone: '010-9012-3456', hour: 13, day: '수', weekOfYear },
+            { memberId: 'member_010', memberName: '김지은', memberPhone: '010-0123-4567', hour: 15, day: '수', weekOfYear },
+            { memberId: 'member_011', memberName: '장민호', memberPhone: '010-1234-0987', hour: 10, day: '목', weekOfYear },
+            { memberId: 'member_012', memberName: '윤서연', memberPhone: '010-2345-0987', hour: 14, day: '목', weekOfYear },
+            { memberId: 'member_013', memberName: '한소연', memberPhone: '010-3456-0987', hour: 16, day: '목', weekOfYear },
+            { memberId: 'member_014', memberName: '오지훈', memberPhone: '010-4567-0987', hour: 9, day: '금', weekOfYear },
+            { memberId: 'member_015', memberName: '신유나', memberPhone: '010-5678-0987', hour: 11, day: '금', weekOfYear },
+          ];
 
-      // Get current week of year
-      const today = new Date();
-      const startOfYear = new Date(today.getFullYear(), 0, 1);
-      const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-      const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+          return baseMembers;
+        };
 
-      // Generate sessions for the week stored in state or current week
-      const weekToGenerate = currentWeek || currentWeekOfYear;
+        // Get current week of year
+        const today = new Date();
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+        const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
-      // Generate sessions for selected week and next 3 weeks
-      const allSessions: any[] = [];
-      for (let i = 0; i < 4; i++) {
-        const weekNum = weekToGenerate + i;
-        if (weekNum <= 52) { // Max 52 weeks in a year
-          allSessions.push(...generateSessionsForWeek(weekNum));
+        // Generate sessions for the week stored in state or current week
+        const weekToGenerate = currentWeek || currentWeekOfYear;
+
+        // Generate sessions for selected week and next 3 weeks
+        const allSessions: any[] = [];
+        for (let i = 0; i < 4; i++) {
+          const weekNum = weekToGenerate + i;
+          if (weekNum <= 52) { // Max 52 weeks in a year
+            allSessions.push(...generateSessionsForWeek(weekNum));
+          }
         }
-      }
 
-      setTrainingSessions(allSessions);
+        setTrainingSessions(allSessions);
+      }
     } catch (error) {
       console.error('Error fetching training sessions:', error);
     } finally {

@@ -172,18 +172,25 @@ export default function AutoSchedulingScreen() {
     await new Promise(resolve => setTimeout(resolve, 1700));
 
     // Generate training sessions for selected members
-    const { setTrainingSessions } = useTrainingStore.getState();
+    const { setTrainingSessions, trainingSessions } = useTrainingStore.getState();
     const generatedSessions: any[] = [];
 
-    // Calculate next week
-    const today = new Date();
-    const startOfYear = new Date(today.getFullYear(), 0, 1);
-    const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-    const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-    const targetWeek = currentWeekOfYear + 1;
+    // Calculate target week
+    let targetWeek;
+    if (resetMode && weekToReset) {
+      // 재설정 모드: 해당 주차로
+      targetWeek = Number(weekToReset);
+    } else {
+      // 일반 모드: 다음 주차로
+      const today = new Date();
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
+      const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+      const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+      targetWeek = currentWeekOfYear + 1;
+    }
 
-    // Days of the week for scheduling
-    const weekDays = ['월요일', '화요일', '수요일', '목요일', '금요일'];
+    // Days of the week for scheduling (짧은 형식으로 변경)
+    const weekDays = ['월', '화', '수', '목', '금'];
     const timeSlots = [9, 10, 11, 14, 15, 16, 17, 18, 19, 20]; // Available hours
 
     // Create sessions for each selected member
@@ -208,7 +215,14 @@ export default function AutoSchedulingScreen() {
     });
 
     // Save sessions to store
-    setTrainingSessions(generatedSessions);
+    if (resetMode && weekToReset) {
+      // 재설정 모드: 기존 세션에서 해당 주차만 제거하고 새 세션 추가
+      const existingSessions = trainingSessions.filter(s => s.weekOfYear !== targetWeek);
+      setTrainingSessions([...existingSessions, ...generatedSessions]);
+    } else {
+      // 일반 모드: 기존 세션에 추가
+      setTrainingSessions([...trainingSessions, ...generatedSessions]);
+    }
 
     // Update schedule status to SCHEDULED
     setScheduleStatus('SCHEDULED');
