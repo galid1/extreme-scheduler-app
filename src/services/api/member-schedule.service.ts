@@ -10,13 +10,6 @@ import {
 
 class MemberScheduleService {
   /**
-   * 회원 스케줄 상태를 READY로 변경
-   */
-  async setScheduleReady(): Promise<void> {
-    await apiClient.post('/api/v1/members/schedules/ready');
-  }
-
-  /**
    * 회원 스케줄 상태를 UNREADY로 변경
    */
   async setScheduleUnready(): Promise<void> {

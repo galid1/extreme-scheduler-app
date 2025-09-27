@@ -17,6 +17,8 @@ import {
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { memberScheduleService } from '@/src/services/api';
+import type { RegisterScheduleRequest, DayOfWeek } from '@/src/types/api';
 
 interface TrainerProfile {
   id: string;
@@ -61,6 +63,7 @@ export default function HomeScreen() {
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
   const [assignmentRequests, setAssignmentRequests] = useState<TrainerAssignmentRequestDto[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
+  const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -267,7 +270,7 @@ export default function HomeScreen() {
           )}
           <Text style={styles.schedulePageTitle}>
             {showScheduleEdit
-              ? '일정 수정 요청'
+              ? '일정 수정'
               : accountType === 'TRAINER'
                 ? '운영 가능한 일정을 등록하세요'
                 : '차주의 원하는 일정을 등록하세요'}
@@ -522,35 +525,104 @@ export default function HomeScreen() {
                 ? styles.scheduleSubmitButtonActive
                 : styles.scheduleSubmitButtonDisabled,
             ]}
-            onPress={() => {
+            onPress={async () => {
               if (Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)) {
                 // If a day is expanded, collapse it first
                 if (expandedDay) {
                   setExpandedDay(null);
                 } else {
-                  // Proceed with submission
-                  if (showScheduleEdit) {
-                    // Save the updated schedule to store
-                    setSavedSchedule(selectedTimes);
-                    // Close the edit view
-                    setShowScheduleEdit(false);
-                  } else {
-                    // Save initial schedule to store and update status
+                  // Convert day names to DayOfWeek enum
+                  const dayMapping: { [key: string]: DayOfWeek } = {
+                    '월': 'MONDAY',
+                    '화': 'TUESDAY',
+                    '수': 'WEDNESDAY',
+                    '목': 'THURSDAY',
+                    '금': 'FRIDAY',
+                    '토': 'SATURDAY',
+                    '일': 'SUNDAY',
+                  };
+
+                  try {
+                    setIsSubmittingSchedule(true);
+
+                    // Prepare schedule data for API
+                    const request: RegisterScheduleRequest = {
+                      periodicScheduleLines: [],
+                      onetimeScheduleLines: []
+                    };
+
+                    // Get current date for one-time schedules
+                    const today = new Date();
+                    const getNextDate = (dayOfWeek: string) => {
+                      const targetDay = ['일', '월', '화', '수', '목', '금', '토'].indexOf(dayOfWeek);
+                      const currentDay = today.getDay();
+                      const daysUntilTarget = (targetDay - currentDay + 7) % 7 || 7; // If same day, schedule for next week
+                      const nextDate = new Date(today);
+                      nextDate.setDate(today.getDate() + daysUntilTarget);
+                      return nextDate.toISOString().split('T')[0];
+                    };
+
+                    // Process selected times
+                    Object.entries(selectedTimes).forEach(([day, slots]) => {
+                      if (slots && slots.length > 0) {
+                        slots.forEach(slot => {
+                          if (slot.state === 'recurring') {
+                            // Periodic schedule
+                            request.periodicScheduleLines?.push({
+                              dayOfWeek: dayMapping[day],
+                              startHour: slot.hour,
+                              endHour: slot.hour + 1, // Assuming 1-hour slots
+                            });
+                          } else if (slot.state === 'once') {
+                            // One-time schedule
+                            request.onetimeScheduleLines?.push({
+                              scheduleDate: getNextDate(day),
+                              startHour: slot.hour,
+                              endHour: slot.hour + 1, // Assuming 1-hour slots
+                            });
+                          }
+                        });
+                      }
+                    });
+
+                    // Call API
+                    await memberScheduleService.registerSchedule(request);
+
+                    // Save to local store and update status
                     setSavedSchedule(selectedTimes);
                     setScheduleStatus('READY');
+
+                    if (showScheduleEdit) {
+                      setShowScheduleEdit(false);
+                      Alert.alert('성공', '일정 수정이 완료되었습니다.');
+                    } else {
+                      Alert.alert('성공', '일정 등록이 완료되었습니다. 트레이너의 확인을 기다려주세요.');
+                    }
+                  } catch (error: any) {
+                    console.error('Schedule registration error:', error);
+                    Alert.alert(
+                      '등록 실패',
+                      error.message || '일정 등록에 실패했습니다. 다시 시도해주세요.'
+                    );
+                  } finally {
+                    setIsSubmittingSchedule(false);
                   }
                 }
               }
             }}
-            disabled={!Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)}
+            disabled={!Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0) || isSubmittingSchedule}
           >
-            <Text style={styles.scheduleSubmitButtonText}>
-              {expandedDay
-                ? '완료'
-                : showScheduleEdit
-                  ? '수정 요청 완료'
-                  : '일정 등록 완료'}
-            </Text>
+            {isSubmittingSchedule ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.scheduleSubmitButtonText}>
+                {expandedDay
+                  ? '완료'
+                  : showScheduleEdit
+                    ? '수정 요청 완료'
+                    : '일정 등록 완료'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -655,7 +727,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/trainer-profile')}
           >
             <Text style={styles.trainerBadgeText}>담당 트레이너</Text>
-            <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.8)" />
+            <Ionicons name="chevron-forward" size={14} color="#999" />
           </TouchableOpacity>
         )}
       </View>
@@ -678,7 +750,7 @@ export default function HomeScreen() {
                 >
                   <View style={styles.schedulePreviewHeader}>
                     <Text style={styles.schedulePreviewTitle}>등록된 일정</Text>
-                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+                    <Ionicons name="chevron-forward" size={20} color="#1E40AF" />
                   </View>
                   {['월', '화', '수', '목', '금', '토', '일']
                     .filter(day => savedSchedule[day]?.length > 0)
@@ -692,17 +764,53 @@ export default function HomeScreen() {
                     ))}
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                style={styles.modifyScheduleButton}
-                onPress={() => {
-                  // Load saved schedule from store for editing
-                  setSelectedTimes(savedSchedule || {});
-                  setShowScheduleEdit(true);
-                }}
-              >
-                <Ionicons name="create-outline" size={20} color="white" />
-                <Text style={styles.modifyScheduleButtonText}>일정 수정 요청</Text>
-              </TouchableOpacity>
+              <View style={styles.scheduleButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.modifyScheduleButton, { flex: 1 }]}
+                  onPress={() => {
+                    // Load saved schedule from store for editing
+                    setSelectedTimes(savedSchedule || {});
+                    setShowScheduleEdit(true);
+                  }}
+                >
+                  <Ionicons name="create-outline" size={20} color="white" />
+                  <Text style={styles.modifyScheduleButtonText}>일정 수정</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.unreadyButton, { flex: 1 }]}
+                  onPress={async () => {
+                    Alert.alert(
+                      '일정 취소',
+                      '등록한 일정을 취소하시겠습니까?',
+                      [
+                        { text: '아니오', style: 'cancel' },
+                        {
+                          text: '예',
+                          style: 'destructive',
+                          onPress: async () => {
+                            try {
+                              await memberScheduleService.setScheduleUnready();
+                              setScheduleStatus('NOT_READY');
+                              setSavedSchedule({});
+                              Alert.alert('완료', '일정이 취소되었습니다.');
+                            } catch (error: any) {
+                              console.error('Unready error:', error);
+                              Alert.alert(
+                                '취소 실패',
+                                error.message || '일정 취소에 실패했습니다.'
+                              );
+                            }
+                          }
+                        }
+                      ]
+                    );
+                  }}
+                >
+                  <Ionicons name="close-circle-outline" size={20} color="white" />
+                  <Text style={styles.unreadyButtonText}>일정 취소</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         )}
@@ -977,11 +1085,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#999',
   },
   trainerBadgeText: {
-    color: '#666',
+    color: '#999',
     fontSize: 12,
+    fontWeight: '700',
     marginRight: 4,
   },
   trainerScheduleContainer: {
@@ -1338,18 +1447,36 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 20,
   },
+  scheduleButtonsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
   modifyScheduleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#3B82F6',
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     gap: 8,
   },
   modifyScheduleButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  unreadyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF4444',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  unreadyButtonText: {
+    color: 'white',
+    fontSize: 15,
     fontWeight: '600',
   },
   schedulePreview: {
