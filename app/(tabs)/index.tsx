@@ -218,64 +218,24 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>담당 트레이너의 전화번호를 입력하세요</Text>
-                <TextInput
-                  style={styles.phoneInput}
-                  placeholder="010-0000-0000"
-                  placeholderTextColor="rgba(255,255,255,0.6)"
-                  keyboardType="number-pad"
-                  value={formatPhoneNumber(trainerPhone)}
-                  onChangeText={handlePhoneChange}
-                  maxLength={13}
-                />
+                <Text style={styles.inputLabel}>담당 트레이너를 검색하고 요청을 보내세요</Text>
 
-                {isSearching && (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator color="white" />
-                    <Text style={styles.loadingText}>트레이너 정보를 검색중입니다...</Text>
-                  </View>
-                )}
+                <TouchableOpacity
+                  style={styles.searchButton}
+                  onPress={() => router.push('/trainer-search')}
+                >
+                  <Ionicons name="search" size={24} color="white" />
+                  <Text style={styles.searchButtonText}>트레이너 검색하기</Text>
+                  <Ionicons name="arrow-forward" size={20} color="white" />
+                </TouchableOpacity>
 
-                {trainerProfile && !isSearching && (
-                  <View style={styles.profileCard}>
-                    <View style={styles.profileHeader}>
-                      <View style={styles.profileIcon}>
-                        <Ionicons name="person-circle" size={60} color="white" />
-                      </View>
-                      <View style={styles.profileInfo}>
-                        <Text style={styles.profileName}>{trainerProfile.name}</Text>
-                        <Text style={styles.profileExperience}>{trainerProfile.experience}</Text>
-                        <View style={styles.ratingContainer}>
-                          <Ionicons name="star" size={16} color="#FFD700" />
-                          <Text style={styles.ratingText}>{trainerProfile.rating}</Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    <View style={styles.specialtiesContainer}>
-                      <Text style={styles.specialtiesTitle}>전문 분야</Text>
-                      <View style={styles.specialtiesList}>
-                        {trainerProfile.specialties.map((specialty, index) => (
-                          <View key={index} style={styles.specialtyTag}>
-                            <Text style={styles.specialtyText}>{specialty}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.confirmButton}
-                      onPress={handleAssignTrainer}
-                      disabled={isAssigning}
-                    >
-                      {isAssigning ? (
-                        <ActivityIndicator color="white" />
-                      ) : (
-                        <Text style={styles.confirmButtonText}>확인</Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                )}
+                <View style={styles.infoCard}>
+                  <Ionicons name="information-circle" size={20} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.infoText}>
+                    트레이너의 전화번호로 검색하여 담당 요청을 보낼 수 있습니다.
+                    트레이너가 승인하면 일정 등록이 가능해집니다.
+                  </Text>
+                </View>
               </View>
             </ScrollView>
           </SafeAreaView>
@@ -1782,5 +1742,41 @@ const styles = StyleSheet.create({
   trainingInfoText: {
     fontSize: 14,
     color: '#475569',
+  },
+  searchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginVertical: 20,
+    gap: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  searchButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  infoText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    lineHeight: 20,
+    flex: 1,
   },
 });
