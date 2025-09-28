@@ -7,27 +7,17 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-
-type TrainerAssignmentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
-
-interface TrainerAssignmentRequestDto {
-  requestId: number;
-  memberAccountId: string;
-  memberName?: string;
-  memberPhone?: string;
-  status: TrainerAssignmentRequestStatus;
-  requestedAt: string;
-  processedAt?: string;
-  rejectReason?: string;
-}
+import { trainerService } from '@/src/services/api';
+import { useAssignmentStore } from '@/src/store/useAssignmentStore';
+import type { AssignmentRequestDto } from '@/src/types/api';
 
 export default function AssignmentRequestsScreen() {
   const router = useRouter();
-  const [requests, setRequests] = useState<TrainerAssignmentRequestDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { assignmentRequests, setAssignmentRequests, isLoadingRequests, setIsLoadingRequests } = useAssignmentStore();
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -35,62 +25,15 @@ export default function AssignmentRequestsScreen() {
   }, []);
 
   const fetchRequests = async () => {
-    setIsLoading(true);
+    setIsLoadingRequests(true);
     try {
-      // Mock API call - replace with actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockRequests: TrainerAssignmentRequestDto[] = [
-        {
-          requestId: 1,
-          memberAccountId: 'member_001',
-          memberName: '김민수',
-          memberPhone: '010-1234-5678',
-          status: 'PENDING',
-          requestedAt: new Date().toISOString(),
-        },
-        {
-          requestId: 2,
-          memberAccountId: 'member_002',
-          memberName: '이영희',
-          memberPhone: '010-2345-6789',
-          status: 'PENDING',
-          requestedAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-        {
-          requestId: 3,
-          memberAccountId: 'member_003',
-          memberName: '박철수',
-          memberPhone: '010-3456-7890',
-          status: 'PENDING',
-          requestedAt: new Date(Date.now() - 7200000).toISOString(),
-        },
-        {
-          requestId: 4,
-          memberAccountId: 'member_004',
-          memberName: '정수진',
-          memberPhone: '010-4567-8901',
-          status: 'APPROVED',
-          requestedAt: new Date(Date.now() - 86400000).toISOString(),
-          processedAt: new Date(Date.now() - 43200000).toISOString(),
-        },
-        {
-          requestId: 5,
-          memberAccountId: 'member_005',
-          memberName: '최동욱',
-          memberPhone: '010-5678-9012',
-          status: 'REJECTED',
-          requestedAt: new Date(Date.now() - 172800000).toISOString(),
-          processedAt: new Date(Date.now() - 86400000).toISOString(),
-          rejectReason: '일정 불일치',
-        },
-      ];
-
-      setRequests(mockRequests);
+      const response = await trainerService.getAssignmentRequests();
+      setAssignmentRequests(response.content);
     } catch (error) {
       console.error('Error fetching requests:', error);
+      Alert.alert('오류', '요청 목록을 불러오는데 실패했습니다.');
     } finally {
-      setIsLoading(false);
+      setIsLoadingRequests(false);
     }
   };
 
@@ -98,23 +41,21 @@ export default function AssignmentRequestsScreen() {
     setProcessingIds(prev => new Set([...prev, requestId]));
 
     try {
-      // Mock API call - replace with actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (action === 'approve') {
+        await trainerService.acceptAssignmentRequest(requestId);
+        Alert.alert('성공', '회원 배정 요청을 수락했습니다.');
+      } else {
+        // You might want to show a dialog to get the reject reason
+        const rejectReason = '트레이너 일정이 가득 참';
+        await trainerService.rejectAssignmentRequest(requestId, rejectReason);
+        Alert.alert('완료', '회원 배정 요청을 거절했습니다.');
+      }
 
-      setRequests(prev =>
-        prev.map(req =>
-          req.requestId === requestId
-            ? {
-                ...req,
-                status: action === 'approve' ? 'APPROVED' : 'REJECTED',
-                processedAt: new Date().toISOString(),
-                rejectReason: action === 'reject' ? '트레이너가 거절함' : undefined
-              }
-            : req
-        )
-      );
+      // Refresh the list after action
+      await fetchRequests();
     } catch (error) {
       console.error(`Error ${action}ing request:`, error);
+      Alert.alert('오류', '요청 처리 중 오류가 발생했습니다.');
     } finally {
       setProcessingIds(prev => {
         const newSet = new Set(prev);
@@ -141,8 +82,8 @@ export default function AssignmentRequestsScreen() {
     }
   };
 
-  const pendingRequests = requests.filter(r => r.status === 'PENDING');
-  const processedRequests = requests.filter(r => r.status !== 'PENDING');
+  const pendingRequests = assignmentRequests.filter(r => r.status === 'PENDING');
+  const processedRequests = assignmentRequests.filter(r => r.status !== 'PENDING');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -158,7 +99,7 @@ export default function AssignmentRequestsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {isLoading ? (
+        {isLoadingRequests ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#3B82F6" />
             <Text style={styles.loadingText}>요청 목록을 불러오는 중...</Text>
@@ -242,15 +183,15 @@ export default function AssignmentRequestsScreen() {
                     <View style={styles.statusBadge}>
                       <View style={[
                         styles.statusIndicator,
-                        request.status === 'APPROVED' ? styles.approvedIndicator : styles.rejectedIndicator
+                        request.status === 'ACCEPTED' ? styles.approvedIndicator : styles.rejectedIndicator
                       ]}>
                         <Ionicons
-                          name={request.status === 'APPROVED' ? 'checkmark-circle' : 'close-circle'}
+                          name={request.status === 'ACCEPTED' ? 'checkmark-circle' : 'close-circle'}
                           size={16}
                           color="#1F2937"
                         />
                         <Text style={styles.statusText}>
-                          {request.status === 'APPROVED' ? '승인됨' : '거절됨'}
+                          {request.status === 'ACCEPTED' ? '승인됨' : '거절됨'}
                         </Text>
                       </View>
                       {request.rejectReason && (
@@ -262,7 +203,7 @@ export default function AssignmentRequestsScreen() {
               </View>
             )}
 
-            {requests.length === 0 && (
+            {assignmentRequests.length === 0 && (
               <View style={styles.emptyContainer}>
                 <Ionicons name="people-outline" size={60} color="#D1D5DB" />
                 <Text style={styles.emptyText}>요청이 없습니다</Text>

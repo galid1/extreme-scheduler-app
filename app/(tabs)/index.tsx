@@ -18,8 +18,9 @@ import {
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { memberScheduleService, memberService, apiClient, trainerScheduleService } from '@/src/services/api';
-import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
+import { memberScheduleService, memberService, apiClient, trainerScheduleService, trainerService } from '@/src/services/api';
+import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse, AssignmentRequestDto, RequestStatus } from '@/src/types/api';
+import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -28,22 +29,11 @@ interface TimeSlotSelection {
   state: TimeSlotState;
 }
 
-type TrainerAssignmentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
-
-interface TrainerAssignmentRequestDto {
-  requestId: number;
-  memberAccountId: string;
-  memberName?: string;
-  memberPhone?: string;
-  status: TrainerAssignmentRequestStatus;
-  requestedAt: string;
-  processedAt?: string;
-  rejectReason?: string;
-}
 
 export default function HomeScreen() {
   const router = useRouter();
   const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus, savedSchedule, setSavedSchedule, notificationSent, setNotificationSent } = useAuthStore();
+  const { assignmentRequests, setAssignmentRequests, isLoadingRequests, setIsLoadingRequests } = useAssignmentStore();
   const [trainerPhone, setTrainerPhone] = useState('');
   const [trainerProfile, setTrainerProfile] = useState<TrainerSearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -54,8 +44,6 @@ export default function HomeScreen() {
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
-  const [assignmentRequests, setAssignmentRequests] = useState<TrainerAssignmentRequestDto[]>([]);
-  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
 
   // Load saved schedule on mount for editing
@@ -75,38 +63,8 @@ export default function HomeScreen() {
   const fetchAssignmentRequests = async () => {
     setIsLoadingRequests(true);
     try {
-      // Mock API call - replace with actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock data matching the DTO structure
-      const mockRequests: TrainerAssignmentRequestDto[] = [
-        {
-          requestId: 1,
-          memberAccountId: 'member_001',
-          memberName: '김민수',
-          memberPhone: '010-1234-5678',
-          status: 'PENDING',
-          requestedAt: new Date().toISOString(),
-        },
-        {
-          requestId: 2,
-          memberAccountId: 'member_002',
-          memberName: '이영희',
-          memberPhone: '010-2345-6789',
-          status: 'PENDING',
-          requestedAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-        {
-          requestId: 3,
-          memberAccountId: 'member_003',
-          memberName: '박철수',
-          memberPhone: '010-3456-7890',
-          status: 'PENDING',
-          requestedAt: new Date(Date.now() - 7200000).toISOString(),
-        },
-      ];
-
-      setAssignmentRequests(mockRequests);
+      const response = await trainerService.getAssignmentRequests();
+      setAssignmentRequests(response.content);
     } catch (error) {
       console.error('Error fetching assignment requests:', error);
     } finally {
@@ -116,19 +74,18 @@ export default function HomeScreen() {
 
   const handleRequestAction = async (requestId: number, action: 'approve' | 'reject') => {
     try {
-      // Mock API call - replace with actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (action === 'approve') {
+        await trainerService.acceptAssignmentRequest(requestId);
+      } else {
+        // For reject, you might want to prompt for a reason
+        await trainerService.rejectAssignmentRequest(requestId, '트레이너 일정이 가득 참');
+      }
 
-      // Update local state
-      setAssignmentRequests(prev =>
-        prev.map(req =>
-          req.requestId === requestId
-            ? { ...req, status: action === 'approve' ? 'APPROVED' : 'REJECTED', processedAt: new Date().toISOString() }
-            : req
-        )
-      );
+      // Refresh the list after action
+      await fetchAssignmentRequests();
     } catch (error) {
       console.error(`Error ${action}ing request:`, error);
+      Alert.alert('오류', `요청 처리 중 오류가 발생했습니다.`);
     }
   };
 

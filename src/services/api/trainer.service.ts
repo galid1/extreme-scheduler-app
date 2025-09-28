@@ -5,7 +5,7 @@
 
 import apiClient from './client';
 import {
-  AssignmentRequest,
+  TrainerAssignmentRequestListResponse,
   RejectAssignmentRequest,
   AddMemberToTrainerRequest,
   PageResponse,
@@ -20,9 +20,12 @@ class TrainerService {
    * @param size 페이지 크기
    */
   async getAssignmentRequests(
-  ): Promise<AssignmentRequest> {
-    return apiClient.get<AssignmentRequest>(
-      `/api/v1/trainers/assignment-requests`
+    status?: RequestStatus
+  ): Promise<TrainerAssignmentRequestListResponse> {
+    const params = status ? { status } : {};
+    return apiClient.get<TrainerAssignmentRequestListResponse>(
+      `/api/v1/trainers/assignment-requests`,
+      { params }
     );
   }
 

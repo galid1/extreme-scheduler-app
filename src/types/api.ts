@@ -62,13 +62,17 @@ export interface TrainerSearchResponse {
 }
 
 // Assignment Request Types
-export interface AssignmentRequest {
+export interface AssignmentRequestDto {
   requestId: number;
   memberAccountId: number;
-  memberName: string;
-  memberPhone: string;
+  memberName: string | null;
+  memberPhone: string | null;
   status: RequestStatus;
   requestedAt: string;
+}
+
+export interface TrainerAssignmentRequestListResponse {
+  content: AssignmentRequestDto[];
 }
 
 export interface CreateAssignmentRequest {
