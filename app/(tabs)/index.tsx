@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,12 @@ import {
   Keyboard,
   Alert,
   Image,
+  AppState,
 } from 'react-native';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { memberScheduleService, memberService, apiClient, trainerScheduleService, trainerService } from '@/src/services/api';
+import { memberScheduleService, memberService, apiClient, trainerScheduleService, trainerService, authService } from '@/src/services/api';
 import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 
@@ -32,27 +33,23 @@ interface TimeSlotSelection {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { account, trainer, member, setTrainerAccountId, setScheduleStatus, savedSchedule, setSavedSchedule } = useAuthStore();
+  const { account, trainer, member, setTrainerAccountId, setScheduleStatus, savedSchedule, setSavedSchedule, setAccountData } = useAuthStore();
   const accountType = account?.accountType;
   const name = account?.privacyInfo?.name;
   const trainerAccountId = member?.trainerAccountId;
   const scheduleStatus = trainer?.scheduleStatus || member?.scheduleStatus;
-  const { assignmentRequests, setAssignmentRequests, isLoadingRequests, setIsLoadingRequests } = useAssignmentStore();
+  const { assignmentRequests, setAssignmentRequests, setIsLoadingRequests } = useAssignmentStore();
   const [trainerPhone, setTrainerPhone] = useState('');
   const [trainerProfile, setTrainerProfile] = useState<TrainerSearchResponse | null>(null);
+  const appStateRef = useRef(AppState.currentState);
   const [isSearching, setIsSearching] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
-
-console.log("@@@@@@@@@@@@@@@")
-    console.log("accountType:", accountType)
-    console.log("scheduleStatus:", scheduleStatus)
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -60,6 +57,42 @@ console.log("@@@@@@@@@@@@@@@")
       setSelectedTimes(savedSchedule);
     }
   }, [showScheduleEdit]);
+
+  // Update member status when app comes to foreground
+  useEffect(() => {
+    const fetchLatestUserData = async () => {
+      if (accountType === 'MEMBER' && account) {
+        try {
+          const userResponse = await authService.getCurrentUser();
+          if (userResponse.member) {
+            setAccountData({
+              account: userResponse.account,
+              member: userResponse.member,
+              trainer: userResponse.trainer
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching latest user data:', error);
+        }
+      }
+    };
+
+    // Listen for app state changes
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (
+        appStateRef.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        console.log('App has come to the foreground!');
+        fetchLatestUserData();
+      }
+      appStateRef.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [accountType, account]);
 
   // Fetch trainer assignment requests for trainers
   useEffect(() => {
@@ -772,10 +805,36 @@ console.log("@@@@@@@@@@@@@@@")
               <View style={styles.scheduleButtonsContainer}>
                 <TouchableOpacity
                   style={[styles.modifyScheduleButton, { flex: 1 }]}
-                  onPress={() => {
-                    // Load saved schedule from store for editing
-                    setSelectedTimes(savedSchedule || {});
-                    setShowScheduleEdit(true);
+                  onPress={async () => {
+                    try {
+                      // Fetch latest member data to check schedule status
+                      const userResponse = await authService.getCurrentUser();
+
+                      // Update member data in store
+                      if (userResponse.member) {
+                        setAccountData({
+                          account: userResponse.account,
+                          member: userResponse.member,
+                          trainer: userResponse.trainer
+                        });
+                      }
+
+                      if (userResponse.member?.scheduleStatus === 'SCHEDULED') {
+                        Alert.alert(
+                          '일정 수정 불가',
+                          '이미 스케줄링이 완료되었습니다. 일정을 수정할 수 없습니다.',
+                          [{ text: '확인', style: 'default' }]
+                        );
+                        return;
+                      }
+
+                      // Load saved schedule from store for editing
+                      setSelectedTimes(savedSchedule || {});
+                      setShowScheduleEdit(true);
+                    } catch (error) {
+                      console.error('Error checking schedule status:', error);
+                      Alert.alert('오류', '일정 상태 확인에 실패했습니다.');
+                    }
                   }}
                 >
                   <Ionicons name="create-outline" size={20} color="white" />
@@ -785,31 +844,58 @@ console.log("@@@@@@@@@@@@@@@")
                 <TouchableOpacity
                   style={[styles.unreadyButton, { flex: 1 }]}
                   onPress={async () => {
-                    Alert.alert(
-                      '일정 취소',
-                      '등록한 일정을 취소하시겠습니까?',
-                      [
-                        { text: '아니오', style: 'cancel' },
-                        {
-                          text: '예',
-                          style: 'destructive',
-                          onPress: async () => {
-                            try {
-                              await memberScheduleService.setScheduleUnready();
-                              setScheduleStatus('NOT_READY');
-                              setSavedSchedule({});
-                              Alert.alert('완료', '일정이 취소되었습니다.');
-                            } catch (error: any) {
-                              console.error('Unready error:', error);
-                              Alert.alert(
-                                '취소 실패',
-                                error.message || '일정 취소에 실패했습니다.'
-                              );
+                    try {
+                      // Fetch latest member data to check schedule status
+                      const userResponse = await authService.getCurrentUser();
+
+                      // Update member data in store
+                      if (userResponse.member) {
+                        setAccountData({
+                          account: userResponse.account,
+                          member: userResponse.member,
+                          trainer: userResponse.trainer
+                        });
+                      }
+
+                      if (userResponse.member?.scheduleStatus === 'SCHEDULED') {
+                        Alert.alert(
+                          '일정 취소 불가',
+                          '이미 스케줄링이 완료되었습니다. 일정을 취소할 수 없습니다.',
+                          [{ text: '확인', style: 'default' }]
+                        );
+                        return;
+                      }
+
+                      // Show confirmation dialog
+                      Alert.alert(
+                        '일정 취소',
+                        '등록한 일정을 취소하시겠습니까?',
+                        [
+                          { text: '아니오', style: 'cancel' },
+                          {
+                            text: '예',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                await memberScheduleService.setScheduleUnready();
+                                setScheduleStatus('NOT_READY');
+                                setSavedSchedule({});
+                                Alert.alert('완료', '일정이 취소되었습니다.');
+                              } catch (error: any) {
+                                console.error('Unready error:', error);
+                                Alert.alert(
+                                  '취소 실패',
+                                  error.message || '일정 취소에 실패했습니다.'
+                                );
+                              }
                             }
                           }
-                        }
-                      ]
-                    );
+                        ]
+                      );
+                    } catch (error) {
+                      console.error('Error checking schedule status:', error);
+                      Alert.alert('오류', '일정 상태 확인에 실패했습니다.');
+                    }
                   }}
                 >
                   <Ionicons name="close-circle-outline" size={20} color="white" />
@@ -817,6 +903,41 @@ console.log("@@@@@@@@@@@@@@@")
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        )}
+
+        {/* Show member's scheduled state */}
+        {accountType === 'MEMBER' && trainerAccountId && scheduleStatus === 'SCHEDULED' && (
+          <View style={styles.scheduledStateContainer}>
+            <View style={styles.scheduledStateCard}>
+              <View style={styles.scheduledStateHeader}>
+                <Ionicons name="information-circle" size={48} color="#3B82F6" />
+                <Text style={styles.scheduledStateTitle}>스케줄링 완료</Text>
+              </View>
+              <Text style={styles.scheduledStateMessage}>
+                이번 주는 트레이너와의 일정이 맞지 않아{' '}
+                스케줄된 세션이 없습니다.
+              </Text>
+              <Text style={styles.scheduledStateSubMessage}>
+                다음 주에는 트레이너와 일정을 조율하여{' '}
+                트레이닝 세션이 배정될 예정입니다.
+              </Text>
+              <View style={styles.scheduledStateInfo}>
+                <Ionicons name="calendar-outline" size={20} color="#6B7280" />
+                <Text style={styles.scheduledStateInfoText}>
+                  매주 일요일에 다음 주 일정이 확정됩니다
+                </Text>
+              </View>
+            </View>
+
+            {/* Button to contact trainer */}
+            <TouchableOpacity
+              style={styles.contactTrainerButton}
+              onPress={() => router.push('/trainer-profile')}
+            >
+              <Ionicons name="chatbubbles-outline" size={20} color="#3B82F6" />
+              <Text style={styles.contactTrainerButtonText}>담당 트레이너 연락처 확인</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -1913,6 +2034,71 @@ const styles = StyleSheet.create({
   autoScheduleButtonText: {
     color: 'white',
     fontSize: 18,
+    fontWeight: '600',
+  },
+  scheduledStateContainer: {
+    padding: 20,
+    gap: 16,
+  },
+  scheduledStateCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scheduledStateHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  scheduledStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  scheduledStateMessage: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#4B5563',
+    marginBottom: 8,
+  },
+  scheduledStateSubMessage: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#6B7280',
+    marginBottom: 16,
+  },
+  scheduledStateInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  scheduledStateInfoText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  contactTrainerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  contactTrainerButtonText: {
+    color: '#3B82F6',
+    fontSize: 16,
     fontWeight: '600',
   },
   viewScheduleButton: {
