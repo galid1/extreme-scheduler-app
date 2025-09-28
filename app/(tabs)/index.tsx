@@ -19,7 +19,7 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { memberScheduleService, memberService, apiClient, trainerScheduleService, trainerService } from '@/src/services/api';
-import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse, AssignmentRequestDto, RequestStatus } from '@/src/types/api';
+import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
