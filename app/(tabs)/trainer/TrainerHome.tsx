@@ -35,6 +35,7 @@ export default function TrainerHome() {
   const router = useRouter();
   const { account, trainer, setScheduleStatus, savedSchedule, setSavedSchedule, setAccountData } = useAuthStore();
   const name = account?.privacyInfo?.name;
+  const status = trainer?.status
   const scheduleStatus = trainer?.scheduleStatus;
   const { assignmentRequests, setAssignmentRequests, setIsLoadingRequests } = useAssignmentStore();
   const appStateRef = useRef(AppState.currentState);
@@ -43,6 +44,7 @@ export default function TrainerHome() {
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -106,7 +108,67 @@ export default function TrainerHome() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const userResponse = await authService.getCurrentUser();
+      if (userResponse.trainer) {
+        setAccountData({
+          account: userResponse.account,
+          member: userResponse.member,
+          trainer: userResponse.trainer
+        });
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      Alert.alert('오류', '상태 업데이트에 실패했습니다.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
+  // Show pending approval screen for PENDING status
+  if (status === 'PENDING') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.pendingContainer}>
+          <View style={styles.pendingCard}>
+            <Ionicons name="time-outline" size={80} color="#3B82F6" />
+            <Text style={styles.pendingTitle}>관리자 승인 대기중</Text>
+            <Text style={styles.pendingMessage}>
+              트레이너 계정이 승인 대기 중입니다.{' '}
+              관리자의 승인 후 서비스를 이용하실 수 있습니다.
+            </Text>
+            <Text style={styles.pendingSubMessage}>
+              승인까지 보통 1-2일 정도 소요됩니다.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.refreshButton}
+              onPress={handleRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <Ionicons name="refresh-outline" size={20} color="white" />
+                  <Text style={styles.refreshButtonText}>새로고침</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.pendingInfoBox}>
+              <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
+              <Text style={styles.pendingInfoText}>
+                승인 상태는 자동으로 업데이트됩니다.
+              </Text>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // Show schedule registration as full page for NOT_READY status or when editing
   if (scheduleStatus === 'NOT_READY' || showScheduleEdit) {
@@ -1809,5 +1871,73 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     flex: 1,
+  },
+  pendingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  pendingCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+    maxWidth: 400,
+    width: '100%',
+  },
+  pendingTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  pendingMessage: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#4B5563',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  pendingSubMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    gap: 8,
+    minWidth: 120,
+  },
+  refreshButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  pendingInfoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  pendingInfoText: {
+    fontSize: 13,
+    color: '#6B7280',
   },
 });
