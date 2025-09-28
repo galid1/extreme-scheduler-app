@@ -80,23 +80,6 @@ console.log("@@@@@@@@@@@@@@@")
     }
   };
 
-  const handleRequestAction = async (requestId: number, action: 'approve' | 'reject') => {
-    try {
-      if (action === 'approve') {
-        await trainerService.acceptAssignmentRequest(requestId);
-      } else {
-        // For reject, you might want to prompt for a reason
-        await trainerService.rejectAssignmentRequest(requestId, '트레이너 일정이 가득 참');
-      }
-
-      // Refresh the list after action
-      await fetchAssignmentRequests();
-    } catch (error) {
-      console.error(`Error ${action}ing request:`, error);
-      Alert.alert('오류', `요청 처리 중 오류가 발생했습니다.`);
-    }
-  };
-
   const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
     if (cleaned.length <= 3) return cleaned;
@@ -126,9 +109,6 @@ console.log("@@@@@@@@@@@@@@@")
     setIsSearching(true);
     setSearchError(null);
     try {
-      // 개발 테스트용 - 임시로 토큰 설정
-      await apiClient.setAuthToken('4');
-
       // Phone number for API (숫자만 전송)
       const response = await memberService.searchTrainer(trainerPhone);
       setTrainerProfile(response);

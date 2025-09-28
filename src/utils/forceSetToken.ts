@@ -13,13 +13,13 @@ export const forceSetToken = async () => {
 
     // 2. Store 상태 직접 업데이트
     const store = useAuthStore.getState();
-    store.setToken("c31a080a-b7a9-47d9-9c5a-8b4125816ac2");
+    // store.setToken("c31a080a-b7a9-47d9-9c5a-8b4125816ac2"); // trainer
+    store.setToken("76a0af7c-8702-4d00-b50a-f3a5507a12ad"); // member
 
     // 4. Store 상태 확인
     const newState = useAuthStore.getState();
     console.log('New store state:', {
       token: newState.token,
-      isAuthenticated: newState.isAuthenticated,
     });
 
     return true;

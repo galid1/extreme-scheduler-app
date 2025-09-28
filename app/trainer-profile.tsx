@@ -1,59 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuthStore } from '@/src/store/useAuthStore';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, SafeAreaView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {useRouter} from 'expo-router';
+import {Ionicons} from '@expo/vector-icons';
+import {useAuthStore} from '@/src/store/useAuthStore';
 import ProfileCard from '@/src/components/ProfileCard';
-
-interface TrainerProfile {
-  id: string;
-  name: string;
-  phoneNumber: string;
-  experience: string;
-  specialties: string[];
-  rating: number;
-}
+import memberService from "@/src/services/api/member.service";
+import {TrainerSearchResponse} from "@/src/types/api";
 
 export default function TrainerProfileScreen() {
   const router = useRouter();
-  const { trainerAccountId } = useAuthStore();
-  const [trainerProfile, setTrainerProfile] = useState<TrainerProfile | null>(null);
+  const { member } = useAuthStore();
+  const [trainerProfile, setTrainerProfile] = useState<TrainerSearchResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchTrainerProfile();
-  }, [trainerAccountId]);
+  }, [member?.trainerAccountId]);
 
   const fetchTrainerProfile = async () => {
     setIsLoading(true);
     try {
       // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Mock trainer data
-      setTrainerProfile({
-        id: trainerAccountId || 'trainer_001',
-        name: '김트레이너',
-        phoneNumber: '010-1234-5678',
-        experience: '5년 경력',
-        specialties: ['웨이트 트레이닝', '다이어트', '재활'],
-        rating: 4.8,
-      });
+      const response = await memberService.getAssignedTrainer()
+      setTrainerProfile(response)
     } catch (error) {
       console.error('Error fetching trainer profile:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
 
   if (isLoading) {
     return (
@@ -102,6 +77,7 @@ export default function TrainerProfileScreen() {
       <View style={styles.content}>
         <ProfileCard
           name={trainerProfile.name}
+          profileImageUrl={trainerProfile.profileImageUrl}
           phoneNumber={trainerProfile.phoneNumber}
           accountType="TRAINER"
           experience={trainerProfile.experience}

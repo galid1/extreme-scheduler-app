@@ -3,11 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface ProfileCardProps {
   name: string;
+  profileImageUrl?: string;
   phoneNumber?: string;
   accountType?: 'MEMBER' | 'TRAINER';
   experience?: string;
@@ -19,6 +21,7 @@ interface ProfileCardProps {
 
 export default function ProfileCard({
   name,
+  profileImageUrl,
   phoneNumber,
   accountType,
   experience,
@@ -28,12 +31,20 @@ export default function ProfileCard({
   textColor = 'white',
 }: ProfileCardProps) {
   const isTrainer = accountType === 'TRAINER' || experience || specialties || rating;
+  console.log(`AAAAAAAAAAAAAAA: ${profileImageUrl}`)
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <View style={styles.profileHeader}>
         <View style={styles.profileIcon}>
-          <Ionicons name="person-circle" size={80} color={textColor} />
+          {profileImageUrl ? (
+            <Image
+              source={{ uri: profileImageUrl }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <Ionicons name="person-circle" size={80} color={textColor} />
+          )}
         </View>
         <View style={styles.profileInfo}>
           <Text style={[styles.userName, { color: textColor }]}>{name}</Text>
@@ -98,6 +109,13 @@ const styles = StyleSheet.create({
   },
   profileIcon: {
     marginRight: 16,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   profileInfo: {
     flex: 1,

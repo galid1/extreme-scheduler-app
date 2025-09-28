@@ -192,14 +192,14 @@ export type TrainerScheduleStatus = 'NOT_READY' | 'READY';
 export type TrainerStatus = 'PENDING' | 'ACTIVE';
 export type MemberScheduleStatus = 'NOT_READY' | 'READY' | 'SCHEDULED';
 
-export interface CurrentTrainerResponse {
+export interface TrainerResponse {
   accountId: number;
   scheduleStatus: TrainerScheduleStatus;
   status: TrainerStatus;
   memberAccountIdList: number[];
 }
 
-export interface CurrentMemberResponse {
+export interface MemberResponse {
   accountId: number;
   trainerAccountId?: number;
   scheduleStatus: MemberScheduleStatus;
@@ -211,6 +211,6 @@ export interface CurrentAccountRequest {
 
 export interface CurrentAccountResponse {
   account: Account;
-  member?: CurrentMemberResponse;
-  trainer?: CurrentTrainerResponse;
+  member?: MemberResponse;
+  trainer?: TrainerResponse;
 }

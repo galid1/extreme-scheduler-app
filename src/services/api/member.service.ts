@@ -22,6 +22,12 @@ class MemberService {
     );
   }
 
+  async getAssignedTrainer(): Promise<TrainerSearchResponse | null> {
+    return apiClient.get<TrainerSearchResponse | null>(
+      `/api/v1/members/assigned-trainer`
+    );
+  }
+
   /**
    * 트레이너 배정 요청 (회원용)
    * @param trainerAccountId 트레이너 계정 ID

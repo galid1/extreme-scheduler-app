@@ -3,9 +3,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Account,
-  CurrentTrainerResponse,
-  CurrentMemberResponse,
-  AccountType,
+  TrainerResponse,
+  MemberResponse,
   TrainerScheduleStatus,
   MemberScheduleStatus
 } from '@/src/types/api';
@@ -22,8 +21,8 @@ interface AuthState {
 
   // Full account data from API
   account: Account | null;
-  trainer: CurrentTrainerResponse | null;
-  member: CurrentMemberResponse | null;
+  trainer: TrainerResponse | null;
+  member: MemberResponse | null;
 
   // Schedule data for both member and trainer
   savedSchedule: { [key: string]: TimeSlotSelection[] };
@@ -32,8 +31,8 @@ interface AuthState {
   setToken: (token: string) => void;
   setAccountData: (data: {
     account: Account;
-    trainer?: CurrentTrainerResponse;
-    member?: CurrentMemberResponse;
+    trainer?: TrainerResponse;
+    member?: MemberResponse;
   }) => void;
   setSavedSchedule: (schedule: { [key: string]: TimeSlotSelection[] }) => void;
   setScheduleStatus: (status: TrainerScheduleStatus | MemberScheduleStatus) => void;
@@ -68,9 +67,6 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setScheduleStatus: (status) => {
-          console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-          console.log("SET SCEHDULE STATUS", status);
-
         set((state) => {
           if (state.trainer) {
             return {
