@@ -20,17 +20,9 @@ class TrainerService {
    * @param size 페이지 크기
    */
   async getAssignmentRequests(
-    status?: RequestStatus,
-    page: number = 0,
-    size: number = 10
-  ): Promise<PageResponse<AssignmentRequest>> {
-    const params = new URLSearchParams();
-    params.append('page', page.toString());
-    params.append('size', size.toString());
-    if (status) params.append('status', status);
-
-    return apiClient.get<PageResponse<AssignmentRequest>>(
-      `/api/v1/trainers/assignment-requests?${params.toString()}`
+  ): Promise<AssignmentRequest> {
+    return apiClient.get<AssignmentRequest>(
+      `/api/v1/trainers/assignment-requests`
     );
   }
 

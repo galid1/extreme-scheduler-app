@@ -66,13 +66,9 @@ export interface AssignmentRequest {
   requestId: number;
   memberAccountId: number;
   memberName: string;
-  memberPhoneNumber: string;
-  trainerAccountId: number;
-  trainerName: string;
+  memberPhone: string;
   status: RequestStatus;
   requestedAt: string;
-  respondedAt?: string;
-  rejectReason?: string;
 }
 
 export interface CreateAssignmentRequest {
