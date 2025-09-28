@@ -167,3 +167,36 @@ export interface ApiError {
   path?: string;
   details?: Record<string, any>;
 }
+
+// Current Account Types
+export interface Account {
+  accountId: number;
+  name: string;
+  phoneNumber: string;
+  accountType: AccountType;
+  birthDate: string;
+  gender: Gender;
+  profileImageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Trainer {
+  trainerId: number;
+  accountId: number;
+}
+
+export interface Member {
+  memberId: number;
+  accountId: number;
+}
+
+export interface CurrentAccountRequest {
+  authToken: string;
+}
+
+export interface CurrentAccountResponse {
+  account: Account;
+  trainer?: Trainer;
+  member?: Member;
+}

@@ -8,7 +8,8 @@
       "Bash(npm start)",
       "Bash(npx expo start:*)",
       "Bash(rm:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

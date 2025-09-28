@@ -6,25 +6,97 @@ import { useEffect } from 'react';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/src/store/useAuthStore';
+import authService from '@/src/services/api/auth.service';
+import apiClient from '@/src/services/api/client';
+import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setTestToken } from '@/src/utils/setTestToken';
+import { forceSetToken } from '@/src/utils/forceSetToken';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const segments = useSegments();
-  const { isAuthenticated, checkAuth } = useAuthStore();
+  const { checkAuth, setAccountData, token, account } = useAuthStore();
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Wait for store to hydrate from AsyncStorage
+  useEffect(() => {
+    // Force set token for testing
+    const initializeAuth = async () => {
+      try {
+        console.log('=== Force Setting Token ===');
+        await forceSetToken();
+        setIsHydrated(true);
+        console.log('===========================');
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      }
+    };
+
+    // Run initialization immediately
+    initializeAuth();
+  }, []);
 
   useEffect(() => {
-    const inAuthGroup = segments[0] === '(auth)';
-    const authenticated = checkAuth();
-
-    if (!authenticated && !inAuthGroup) {
-      // Redirect to auth if not authenticated
-      setTimeout(() => router.replace('/(auth)/phone-auth'), 0);
-    } else if (authenticated && inAuthGroup) {
-      // Redirect to tabs if authenticated
-      setTimeout(() => router.replace('/(tabs)'), 0);
+    if (!isHydrated) {
+      console.log('Waiting for store hydration...');
+      return;
     }
-  }, [segments, isAuthenticated, checkAuth, router]);
+
+    const loadUserData = async () => {
+      const inAuthGroup = segments[0] === '(auth)';
+      const authStore = useAuthStore.getState();
+      const isAuthenticated = checkAuth();
+
+      console.log('=== Auth Debug (After Hydration) ===');
+      console.log('isHydrated:', isHydrated);
+      console.log('isAuthenticated:', isAuthenticated);
+      console.log('token:', authStore.token);
+      console.log('isAuthenticatedInStore:', authStore.isAuthenticated);
+      console.log('inAuthGroup:', inAuthGroup);
+      console.log('segments:', segments);
+      console.log('account:', authStore.account);
+      console.log('====================================');
+
+      if (!isAuthenticated && !inAuthGroup) {
+        // Redirect to auth if not authenticated
+        console.log('Redirecting to phone-auth...');
+        setTimeout(() => router.replace('/(auth)/phone-auth'), 0);
+      } else if (isAuthenticated) {
+        // Load user data if token exists but account data is not loaded
+        if (!authStore.account && authStore.token) {
+          console.log('Loading user data from server...');
+          try {
+            // Set token in API client
+            await apiClient.setAuthToken(authStore.token);
+
+            // Get current user data
+            const userResponse = await authService.getCurrentUser();
+            setAccountData({
+              account: userResponse.account,
+              trainer: userResponse.trainer,
+              member: userResponse.member,
+            });
+            console.log('User data loaded successfully');
+          } catch (error) {
+            console.error('Failed to load user data:', error);
+            // If failed to load user data, might be invalid token
+            // You may want to clear the token and redirect to login
+          }
+        } else {
+          console.log('Account data already exists or no token');
+        }
+
+        if (inAuthGroup) {
+          // Redirect to tabs if authenticated and in auth group
+          setTimeout(() => router.replace('/(tabs)'), 0);
+        }
+      }
+    };
+
+    loadUserData();
+  }, [segments, checkAuth, router, token, account, isHydrated]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

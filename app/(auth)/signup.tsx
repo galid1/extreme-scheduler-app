@@ -15,8 +15,11 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/src/store/useAuthStore';
+import authService from '@/src/services/api/auth.service';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 
 const { height } = Dimensions.get('window');
 
@@ -38,7 +41,8 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { phoneNumber, setToken, setUserInfo } = useAuthStore();
+  const { phoneNumber, setToken, setUserInfo, setAccountData } = useAuthStore();
+  const params = useLocalSearchParams<{ tempToken?: string }>();
 
   const [completedSteps, setCompletedSteps] = useState<SignupStep[]>([]);
   const [name, setName] = useState('');
@@ -158,30 +162,62 @@ export default function SignupScreen() {
       const day = birthDate.substring(4, 6);
       const formattedBirthDate = `${fullYear}-${month}-${day}`;
 
+      // Get push token if permission granted
+      let pushTokenData = undefined;
+      try {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status === 'granted') {
+          const token = await Notifications.getExpoPushTokenAsync();
+          pushTokenData = {
+            token: token.data,
+            deviceId: Device.modelId || 'unknown-device',
+            platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID' as any,
+          };
+        }
+      } catch (error) {
+        console.log('Failed to get push token:', error);
+      }
+
+      const formattedPhone = phoneNumber ? `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3, 7)}-${phoneNumber.slice(7)}` : '';
+
       const signupData = {
+        tempTokenForSignUp: params.tempToken || 'temp-token-' + Date.now(),
         name,
         birthDate: formattedBirthDate,
         gender: getGenderFromDigit(genderDigit),
-        phoneNumber: phoneNumber || '',
+        phoneNumber: formattedPhone,
         accountType,
+        pushTokenInfo: pushTokenData,
       };
 
-      console.log('Signup data:', signupData);
+      const response = await authService.signUp(signupData);
 
-      // TODO: Implement actual signup API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (response.accessToken) {
+        // Save token and user info
+        setToken(response.accessToken);
+        setUserInfo({
+          name: response.name,
+          accountType: response.accountType,
+        });
 
-      // Save user info to store
-      setUserInfo({
-        name,
-        accountType,
-      });
+        // Get full account data
+        try {
+          const userResponse = await authService.getCurrentUser(response.accessToken);
+          setAccountData({
+            account: userResponse.account,
+            trainer: userResponse.trainer,
+            member: userResponse.member,
+          });
+        } catch (error) {
+          console.error('Failed to get user data:', error);
+        }
 
-      // Simulate successful signup
-      setToken('dummy_token_with_signup');
-      router.replace('/(tabs)');
-    } catch {
-      Alert.alert('오류', '회원가입에 실패했습니다.');
+        // Navigate to home
+        router.replace('/(tabs)');
+      }
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      Alert.alert('오류', error.response?.data?.message || '회원가입에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }

@@ -11,6 +11,8 @@ import {
   SignInResponse,
   SignUpRequest,
   SignUpResponse,
+  CurrentAccountRequest,
+  CurrentAccountResponse,
 } from '../../types/api';
 
 class AuthService {
@@ -147,6 +149,24 @@ class AuthService {
   async isAuthenticated(): Promise<boolean> {
     const authData = await this.getStoredAuthData();
     return !!authData?.accessToken;
+  }
+
+  /**
+   * 현재 사용자 정보 가져오기
+   */
+  async getCurrentUser(token?: string): Promise<CurrentAccountResponse> {
+    const authToken = token || (await this.getStoredAuthData())?.accessToken;
+
+    if (!authToken) {
+      throw new Error('No auth token available');
+    }
+
+    const request: CurrentAccountRequest = {
+      authToken,
+    };
+
+    const response = await apiClient.post<CurrentAccountResponse>('/api/v1/auths/me', request);
+    return response;
   }
 }
 

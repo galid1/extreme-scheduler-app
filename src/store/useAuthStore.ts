@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AccountType, ScheduleStatus } from '@/src/types/user';
+import { Account, Trainer, Member } from '@/src/types/api';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -16,6 +17,11 @@ interface AuthState {
   phoneNumber: string | null;
   name: string | null;
   accountType: AccountType;
+  accountId: number | null;
+  // Full account data
+  account: Account | null;
+  trainer: Trainer | null;
+  member: Member | null;
   // Schedule status for both member and trainer
   scheduleStatus: ScheduleStatus;
 
@@ -35,6 +41,11 @@ interface AuthState {
     name: string;
     accountType: AccountType;
   }) => void;
+  setAccountData: (data: {
+    account: Account;
+    trainer?: Trainer;
+    member?: Member;
+  }) => void;
   setTrainerAccountId: (id: string | null) => void;
   setScheduleStatus: (status: ScheduleStatus) => void;
   setSavedSchedule: (schedule: { [key: string]: TimeSlotSelection[] }) => void;
@@ -46,11 +57,17 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      token: null,
-      isAuthenticated: false,
+        // c31a080a-b7a9-47d9-9c5a-8b4125816ac2 trainer
+        // 초기값은 null로 설정 - AsyncStorage에서 로드됨
+      token: "c31a080a-b7a9-47d9-9c5a-8b4125816ac2",
+      isAuthenticated: true,
       phoneNumber: null,
       name: null,
       accountType: 'MEMBER',
+      accountId: null,
+      account: null,
+      trainer: null,
+      member: null,
       trainerAccountId: null,
       scheduleStatus: 'NOT_READY',
       savedSchedule: {},
@@ -74,6 +91,20 @@ export const useAuthStore = create<AuthState>()(
           scheduleStatus: 'NOT_READY',
           // Reset schedule when switching accounts
           savedSchedule: {},
+        });
+      },
+
+      setAccountData: (data) => {
+        set({
+          account: data.account,
+          trainer: data.trainer || null,
+          member: data.member || null,
+          accountId: data.account.accountId,
+          name: data.account.name,
+          phoneNumber: data.account.phoneNumber,
+          accountType: data.account.accountType,
+          // Set trainerAccountId if member has an assigned trainer
+          trainerAccountId: data.member?.assignedTrainerAccountId?.toString() || null,
         });
       },
 
@@ -104,6 +135,10 @@ export const useAuthStore = create<AuthState>()(
           phoneNumber: null,
           name: null,
           accountType: 'MEMBER',
+          accountId: null,
+          account: null,
+          trainer: null,
+          member: null,
           trainerAccountId: null,
           scheduleStatus: 'NOT_READY',
           savedSchedule: {},
