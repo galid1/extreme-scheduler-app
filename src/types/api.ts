@@ -54,21 +54,11 @@ export interface SignUpResponse {
   name: string;
 }
 
-// Trainer Types
-export interface TrainerInfo {
-  accountId: number;
-  name: string;
-  phoneNumber: string;
-  profileImageUrl?: string;
-  experience?: string;
-  specialties?: string[];
-  rating?: number;
-  memberCount?: number;
-}
-
 export interface TrainerSearchResponse {
-  trainer: TrainerInfo;
-  isAlreadyAssigned: boolean;
+    trainerAccountId: number;
+    name: string;
+    phoneNumber: string;
+    profileImageUrl?: string;
 }
 
 // Assignment Request Types

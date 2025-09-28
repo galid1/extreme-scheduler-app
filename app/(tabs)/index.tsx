@@ -13,21 +13,13 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
+  Image,
 } from 'react-native';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { memberScheduleService } from '@/src/services/api';
-import type { RegisterScheduleRequest, DayOfWeek } from '@/src/types/api';
-
-interface TrainerProfile {
-  id: string;
-  name: string;
-  phoneNumber: string;
-  experience: string;
-  specialties: string[];
-  rating: number;
-}
+import { memberScheduleService, memberService, apiClient } from '@/src/services/api';
+import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -53,9 +45,10 @@ export default function HomeScreen() {
   const router = useRouter();
   const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus, savedSchedule, setSavedSchedule, notificationSent, setNotificationSent } = useAuthStore();
   const [trainerPhone, setTrainerPhone] = useState('');
-  const [trainerProfile, setTrainerProfile] = useState<TrainerProfile | null>(null);
+  const [trainerProfile, setTrainerProfile] = useState<TrainerSearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
@@ -150,6 +143,10 @@ export default function HomeScreen() {
     const cleaned = text.replace(/\D/g, '');
     if (cleaned.length <= 11) {
       setTrainerPhone(cleaned);
+      setSearchError(null);
+      if (cleaned.length < 11) {
+        setTrainerProfile(null);
+      }
     }
   };
 
@@ -157,29 +154,27 @@ export default function HomeScreen() {
   useEffect(() => {
     if (trainerPhone.length === 11) {
       searchTrainer();
-    } else {
-      setTrainerProfile(null);
     }
   }, [trainerPhone]);
 
   const searchTrainer = async () => {
     setIsSearching(true);
+    setSearchError(null);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 개발 테스트용 - 임시로 토큰 설정
+      await apiClient.setAuthToken('4');
 
-      // Mock trainer data
-      setTrainerProfile({
-        id: 'trainer_001',
-        name: '김트레이너',
-        phoneNumber: trainerPhone,
-        experience: '5년 경력',
-        specialties: ['웨이트 트레이닝', '다이어트', '재활'],
-        rating: 4.8,
-      });
-    } catch (error) {
+      // Phone number for API (숫자만 전송)
+      const response = await memberService.searchTrainer(trainerPhone);
+      setTrainerProfile(response);
+    } catch (error: any) {
       console.error('Error searching trainer:', error);
       setTrainerProfile(null);
+      if (error.response?.status === 404) {
+        setSearchError('해당 전화번호의 트레이너를 찾을 수 없습니다.');
+      } else {
+        setSearchError('트레이너 검색 중 오류가 발생했습니다.');
+      }
     } finally {
       setIsSearching(false);
     }
@@ -190,17 +185,29 @@ export default function HomeScreen() {
 
     setIsAssigning(true);
     try {
-      // Mock API call to assign trainer
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Send trainer assignment request
+      await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
 
       // Update store with trainer ID
-      setTrainerAccountId(trainerProfile.id);
+      setTrainerAccountId(trainerProfile.trainerAccountId.toString());
+
+      Alert.alert(
+        '요청 완료',
+        '담당 트레이너 지정 요청이 전송되었습니다. 트레이너가 승인하면 일정 등록이 가능합니다.',
+        [{ text: '확인' }]
+      );
 
       // Clear the form
       setTrainerPhone('');
       setTrainerProfile(null);
-    } catch (error) {
+      setSearchError(null);
+    } catch (error: any) {
       console.error('Error assigning trainer:', error);
+      Alert.alert(
+        '요청 실패',
+        error.message || '담당 트레이너 지정 요청에 실패했습니다.',
+        [{ text: '확인' }]
+      );
     } finally {
       setIsAssigning(false);
     }
@@ -210,7 +217,7 @@ export default function HomeScreen() {
   if (accountType === 'MEMBER' && !trainerAccountId) {
     return (
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: '#3B82F6' }}
+        style={{ flex: 1, backgroundColor: '#F8FAFC' }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -221,24 +228,73 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>담당 트레이너를 검색하고 요청을 보내세요</Text>
+                <Text style={styles.inputLabel}>트레이너 전화번호로 검색하세요</Text>
 
-                <TouchableOpacity
-                  style={styles.searchButton}
-                  onPress={() => router.push('/trainer-search')}
-                >
-                  <Ionicons name="search" size={24} color="white" />
-                  <Text style={styles.searchButtonText}>트레이너 검색하기</Text>
-                  <Ionicons name="arrow-forward" size={20} color="white" />
-                </TouchableOpacity>
-
-                <View style={styles.infoCard}>
-                  <Ionicons name="information-circle" size={20} color="rgba(255,255,255,0.8)" />
-                  <Text style={styles.infoText}>
-                    트레이너의 전화번호로 검색하여 담당 요청을 보낼 수 있습니다.
-                    트레이너가 승인하면 일정 등록이 가능해집니다.
-                  </Text>
+                <View style={styles.phoneInputContainer}>
+                  <TextInput
+                    style={styles.phoneInput}
+                    placeholder="010-0000-0000"
+                    placeholderTextColor="#9CA3AF"
+                    value={formatPhoneNumber(trainerPhone)}
+                    onChangeText={handlePhoneChange}
+                    keyboardType="phone-pad"
+                    maxLength={13}
+                  />
+                  {isSearching && (
+                    <ActivityIndicator size="small" color="#3B82F6" style={styles.searchingIndicator} />
+                  )}
                 </View>
+
+                  {trainerProfile &&
+                  (<View>
+                      <Text>
+                          {trainerProfile?.trainer?.trainerAccountId}
+                      </Text>
+                  </View>)
+                  }
+
+                {searchError && (
+                  <View style={styles.errorCard}>
+                    <Ionicons name="alert-circle" size={20} color="#EF4444" />
+                    <Text style={styles.errorText}>{searchError}</Text>
+                  </View>
+                )}
+
+                {trainerProfile?.profileImageUrl && (
+                  <View style={styles.profileCard}>
+                    <View style={styles.profileHeader}>
+                      <View style={styles.profileIcon}>
+                        {trainerProfile?.profileImageUrl ? (
+                          <Image
+                            source={{ uri: trainerProfile?.profileImageUrl }}
+                            style={styles.profileImage}
+                          />
+                        ) : (
+                          <Ionicons name="person-circle" size={50} color="#3B82F6" />
+                        )}
+                      </View>
+                      <View style={styles.profileInfo}>
+                        <Text style={styles.profileName}>{trainerProfile?.name}</Text>
+                        <Text style={styles.profilePhone}>{formatPhoneNumber(trainerProfile?.phoneNumber)}</Text>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.assignButton, isAssigning && styles.assignButtonDisabled]}
+                      onPress={handleAssignTrainer}
+                      disabled={isAssigning || trainerProfile.isAlreadyAssigned}
+                    >
+                      {isAssigning ? (
+                        <ActivityIndicator color="white" />
+                      ) : (
+                        <>
+                          <Ionicons name="person-add" size={20} color="white" />
+                          <Text style={styles.assignButtonText}>담당 트레이너 지정 요청</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </ScrollView>
           </SafeAreaView>
@@ -974,16 +1030,28 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 12,
   },
-  phoneInput: {
-    borderWidth: 1,
-    borderColor: '#3B82F6',
+  phoneInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
     backgroundColor: 'white',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 4,
+    marginTop: 12,
+  },
+  phoneIcon: {
+    marginRight: 12,
+  },
+  phoneInput: {
+    flex: 1,
     fontSize: 18,
-    color: '#333',
-    textAlign: 'center',
+    color: '#1F2937',
+    paddingVertical: 12,
+  },
+  searchingIndicator: {
+    marginLeft: 12,
   },
   loadingContainer: {
     marginTop: 20,
@@ -995,12 +1063,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   profileCard: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -1016,8 +1092,23 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#333',
+    color: '#1F2937',
     marginBottom: 4,
+  },
+  profilePhone: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  gymBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  gymText: {
+    fontSize: 13,
+    color: '#6B7280',
   },
   profileExperience: {
     fontSize: 14,
@@ -1057,6 +1148,39 @@ const styles = StyleSheet.create({
   specialtyText: {
     color: '#3B82F6',
     fontSize: 12,
+  },
+  assignButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+  },
+  assignButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  assignButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  errorCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    flex: 1,
   },
   confirmButton: {
     backgroundColor: '#3B82F6',
@@ -1874,17 +1998,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'white',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
     marginVertical: 20,
     gap: 12,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: '#3B82F6',
+    shadowColor: '#3B82F6',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchButtonText: {
-    color: 'white',
+    color: '#3B82F6',
     fontSize: 16,
     fontWeight: '600',
     flex: 1,
@@ -1892,16 +2024,16 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#EFF6FF',
     borderRadius: 12,
     padding: 16,
     marginTop: 20,
     gap: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#BFDBFE',
   },
   infoText: {
-    color: 'rgba(255,255,255,0.9)',
+    color: '#1E40AF',
     fontSize: 14,
     lineHeight: 20,
     flex: 1,
