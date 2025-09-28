@@ -8,7 +8,6 @@ export type Gender = 'MALE' | 'FEMALE';
 export type Platform = 'IOS' | 'ANDROID';
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 export type RequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
-export type ScheduleStatus = 'READY' | 'UNREADY';
 
 // Auth Types
 export interface SendSmsRequest {
@@ -69,6 +68,7 @@ export interface AssignmentRequestDto {
   memberPhone: string | null;
   status: RequestStatus;
   requestedAt: string;
+  rejectReason?: string;
 }
 
 export interface TrainerAssignmentRequestListResponse {
@@ -129,6 +129,12 @@ export interface Schedule {
   updatedAt: string;
 }
 
+// Schedule Response Types
+export interface GetFreeTimeScheduleResponse {
+  periodicScheduleList: Schedule[];
+  onetimeScheduleList: Schedule[];
+}
+
 // Training Session Types
 export interface TrainingSession {
   sessionId: number;
@@ -159,36 +165,44 @@ export interface AddMemberToTrainerRequest {
   memberAccountId: number;
 }
 
-// API Error Response
-export interface ApiError {
-  code: string;
-  message: string;
-  timestamp: string;
-  path?: string;
-  details?: Record<string, any>;
-}
-
 // Current Account Types
-export interface Account {
-  accountId: number;
+export interface PrivacyInfo {
   name: string;
-  phoneNumber: string;
-  accountType: AccountType;
   birthDate: string;
   gender: Gender;
+  phoneNumber: string;
+}
+
+export interface PushTokenInfo {
+  token: string;
+  deviceId: string;
+  platform: Platform;
+  lastUpdatedAt: string;
+}
+
+export interface Account {
+  id: number;
+  accountType: AccountType;
   profileImageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
+  privacyInfo: PrivacyInfo;
+  pushToken?: PushTokenInfo;
 }
 
-export interface Trainer {
-  trainerId: number;
+export type TrainerScheduleStatus = 'NOT_READY' | 'READY';
+export type TrainerStatus = 'PENDING' | 'ACTIVE';
+export type MemberScheduleStatus = 'NOT_READY' | 'READY' | 'SCHEDULED';
+
+export interface CurrentTrainerResponse {
   accountId: number;
+  scheduleStatus: TrainerScheduleStatus;
+  status: TrainerStatus;
+  memberAccountIdList: number[];
 }
 
-export interface Member {
-  memberId: number;
+export interface CurrentMemberResponse {
   accountId: number;
+  trainerAccountId?: number;
+  scheduleStatus: MemberScheduleStatus;
 }
 
 export interface CurrentAccountRequest {
@@ -197,6 +211,6 @@ export interface CurrentAccountRequest {
 
 export interface CurrentAccountResponse {
   account: Account;
-  trainer?: Trainer;
-  member?: Member;
+  member?: CurrentMemberResponse;
+  trainer?: CurrentTrainerResponse;
 }

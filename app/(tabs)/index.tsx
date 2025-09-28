@@ -32,7 +32,11 @@ interface TimeSlotSelection {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { accountType, trainerAccountId, setTrainerAccountId, name, scheduleStatus, setScheduleStatus, savedSchedule, setSavedSchedule, notificationSent, setNotificationSent } = useAuthStore();
+  const { account, trainer, member, setTrainerAccountId, setScheduleStatus, savedSchedule, setSavedSchedule } = useAuthStore();
+  const accountType = account?.accountType;
+  const name = account?.privacyInfo?.name;
+  const trainerAccountId = member?.trainerAccountId;
+  const scheduleStatus = trainer?.scheduleStatus || member?.scheduleStatus;
   const { assignmentRequests, setAssignmentRequests, isLoadingRequests, setIsLoadingRequests } = useAssignmentStore();
   const [trainerPhone, setTrainerPhone] = useState('');
   const [trainerProfile, setTrainerProfile] = useState<TrainerSearchResponse | null>(null);
@@ -45,6 +49,10 @@ export default function HomeScreen() {
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
+
+console.log("@@@@@@@@@@@@@@@")
+    console.log("accountType:", accountType)
+    console.log("scheduleStatus:", scheduleStatus)
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -146,7 +154,7 @@ export default function HomeScreen() {
       await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
 
       // Update store with trainer ID
-      setTrainerAccountId(trainerProfile.trainerAccountId.toString());
+      setTrainerAccountId(trainerProfile.trainerAccountId);
 
       Alert.alert(
         '요청 완료',

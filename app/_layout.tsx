@@ -17,7 +17,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const segments = useSegments();
-  const { checkAuth, setAccountData, token, account } = useAuthStore();
+  const { setAccountData, token, account } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Wait for store to hydrate from AsyncStorage
@@ -47,23 +47,21 @@ export default function RootLayout() {
     const loadUserData = async () => {
       const inAuthGroup = segments[0] === '(auth)';
       const authStore = useAuthStore.getState();
-      const isAuthenticated = checkAuth();
 
       console.log('=== Auth Debug (After Hydration) ===');
       console.log('isHydrated:', isHydrated);
-      console.log('isAuthenticated:', isAuthenticated);
       console.log('token:', authStore.token);
-      console.log('isAuthenticatedInStore:', authStore.isAuthenticated);
       console.log('inAuthGroup:', inAuthGroup);
       console.log('segments:', segments);
       console.log('account:', authStore.account);
       console.log('====================================');
 
-      if (!isAuthenticated && !inAuthGroup) {
+      // Check if user is not authenticated (no token and no account)
+      if (!authStore.token && !authStore.account && !inAuthGroup) {
         // Redirect to auth if not authenticated
         console.log('Redirecting to phone-auth...');
         setTimeout(() => router.replace('/(auth)/phone-auth'), 0);
-      } else if (isAuthenticated) {
+      } else if (authStore.token) {
         // Load user data if token exists but account data is not loaded
         if (!authStore.account && authStore.token) {
           console.log('Loading user data from server...');
@@ -73,6 +71,7 @@ export default function RootLayout() {
 
             // Get current user data
             const userResponse = await authService.getCurrentUser();
+            console.log(`@@@@@################# : ${JSON.stringify(userResponse)}`)
             setAccountData({
               account: userResponse.account,
               trainer: userResponse.trainer,
@@ -86,6 +85,9 @@ export default function RootLayout() {
           }
         } else {
           console.log('Account data already exists or no token');
+          console.log("Account:", JSON.stringify(authStore.account));
+          console.log("Trainer:", JSON.stringify(authStore.trainer));
+          console.log("Member:", JSON.stringify(authStore.member));
         }
 
         if (inAuthGroup) {
@@ -96,7 +98,7 @@ export default function RootLayout() {
     };
 
     loadUserData();
-  }, [segments, checkAuth, router, token, account, isHydrated]);
+  }, [segments, router, token, account, isHydrated]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

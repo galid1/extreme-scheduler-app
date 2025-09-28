@@ -8,9 +8,17 @@ import {
   RegisterScheduleRequest,
   UpdateScheduleTimeRequest,
   AutoSchedulingRequest,
+  GetFreeTimeScheduleResponse,
 } from '../../types/api';
 
 class TrainerScheduleService {
+  /**
+   * 트레이너 스케줄 조회
+   */
+  async getSchedule(): Promise<GetFreeTimeScheduleResponse> {
+    return apiClient.get<GetFreeTimeScheduleResponse>('/api/v1/trainers/schedules');
+  }
+
   /**
    * 트레이너 스케줄 등록 (정기 + 일회성 통합)
    */

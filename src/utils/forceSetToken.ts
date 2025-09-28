@@ -15,20 +15,11 @@ export const forceSetToken = async () => {
     const store = useAuthStore.getState();
     store.setToken("c31a080a-b7a9-47d9-9c5a-8b4125816ac2");
 
-    // 3. 추가 정보 설정
-    store.setUserInfo({
-      name: "테스트 사용자",
-      accountType: 'TRAINER'
-    });
-
-    console.log('Token set directly in store');
-
     // 4. Store 상태 확인
     const newState = useAuthStore.getState();
     console.log('New store state:', {
       token: newState.token,
       isAuthenticated: newState.isAuthenticated,
-      checkAuth: newState.checkAuth()
     });
 
     return true;

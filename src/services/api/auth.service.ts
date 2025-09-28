@@ -144,14 +144,6 @@ class AuthService {
   }
 
   /**
-   * 인증 상태 확인
-   */
-  async isAuthenticated(): Promise<boolean> {
-    const authData = await this.getStoredAuthData();
-    return !!authData?.accessToken;
-  }
-
-  /**
    * 현재 사용자 정보 가져오기
    */
   async getCurrentUser(token?: string): Promise<CurrentAccountResponse> {
@@ -164,6 +156,7 @@ class AuthService {
     const request: CurrentAccountRequest = {
       authToken,
     };
+
 
     const response = await apiClient.post<CurrentAccountResponse>('/api/v1/auths/me', request);
     return response;

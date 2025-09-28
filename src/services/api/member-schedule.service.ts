@@ -6,9 +6,17 @@
 import apiClient from './client';
 import {
   RegisterScheduleRequest,
+  GetFreeTimeScheduleResponse,
 } from '../../types/api';
 
 class MemberScheduleService {
+  /**
+   * 회원 스케줄 조회
+   */
+  async getSchedule(): Promise<GetFreeTimeScheduleResponse> {
+    return apiClient.get<GetFreeTimeScheduleResponse>('/api/v1/members/schedules');
+  }
+
   /**
    * 회원 스케줄 상태를 UNREADY로 변경
    */
