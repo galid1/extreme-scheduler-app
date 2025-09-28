@@ -18,7 +18,7 @@ import {
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { memberScheduleService, memberService, apiClient } from '@/src/services/api';
+import { memberScheduleService, memberService, apiClient, trainerScheduleService } from '@/src/services/api';
 import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
@@ -641,8 +641,12 @@ export default function HomeScreen() {
                       }
                     });
 
-                    // Call API
-                    await memberScheduleService.registerSchedule(request);
+                    // Call API based on account type
+                    if (accountType === 'TRAINER') {
+                      await trainerScheduleService.registerSchedule(request);
+                    } else {
+                      await memberScheduleService.registerSchedule(request);
+                    }
 
                     // Save to local store and update status
                     setSavedSchedule(selectedTimes);
