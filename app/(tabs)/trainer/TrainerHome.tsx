@@ -516,9 +516,19 @@ export default function TrainerHome() {
                     if (!mockMode) {
                       // Register trainer schedule only in non-mock mode
                       await trainerScheduleService.registerSchedule(request);
+
+                      // Fetch updated user data after schedule registration
+                      const userResponse = await authService.getCurrentUser();
+                      if (userResponse.trainer) {
+                        setAccountData({
+                          account: userResponse.account,
+                          member: userResponse.member,
+                          trainer: userResponse.trainer
+                        });
+                      }
                     }
 
-                    // Save to local store and update status
+                    // Save to local store
                     setSavedSchedule(selectedTimes);
 
                     if (showScheduleEdit) {
