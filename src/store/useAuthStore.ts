@@ -92,27 +92,6 @@ export const useAuthStore = create<AuthState>()(
         set({ savedSchedule: schedule });
       },
 
-      setScheduleStatus: (status) => {
-        set((state) => {
-          if (state.trainer) {
-            return {
-              trainer: {
-                ...state.trainer,
-                scheduleStatus: status as TrainerScheduleStatus
-              }
-            };
-          } else if (state.member) {
-            return {
-              member: {
-                ...state.member,
-                scheduleStatus: status as MemberScheduleStatus
-              }
-            };
-          }
-          return {};
-        });
-      },
-
       setTrainerAccountId: (id) => {
         set((state) => {
           if (state.member) {

@@ -11,7 +11,8 @@ export enum MemberScheduleStatus {
 
 export enum TrainerScheduleStatus {
   NOT_READY = 'NOT_READY',
-  READY = 'READY'
+  READY = 'READY',
+  SCHEEULDED = 'SCHEDULED',
 }
 
 export enum Gender {

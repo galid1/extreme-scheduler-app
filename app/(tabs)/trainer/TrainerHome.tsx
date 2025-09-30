@@ -36,7 +36,7 @@ interface TimeSlotSelection {
 
 export default function TrainerHome() {
   const router = useRouter();
-  const { account, trainer, setScheduleStatus, savedSchedule, setSavedSchedule, setAccountData } = useAuthStore();
+  const { account, trainer, savedSchedule, setSavedSchedule, setAccountData } = useAuthStore();
   const name = account?.privacyInfo?.name;
   const status = trainer?.status
   const scheduleStatus = trainer?.scheduleStatus;
@@ -518,7 +518,6 @@ export default function TrainerHome() {
 
                     // Save to local store and update status
                     setSavedSchedule(selectedTimes);
-                    setScheduleStatus(TrainerScheduleStatus.READY);
 
                     if (showScheduleEdit) {
                       setShowScheduleEdit(false);
@@ -759,7 +758,7 @@ export default function TrainerHome() {
       )}
 
       {/* View Schedule Button for Trainers with SCHEDULED status */}
-      {false && (
+      {trainer.scheduleStatus === TrainerScheduleStatus.SCHEEULDED && (
         <View style={styles.autoScheduleButtonContainer}>
           <TouchableOpacity
             style={styles.viewScheduleButton}
