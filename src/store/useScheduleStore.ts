@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import { useConfigStore } from './useConfigStore';
+import { mockSchedules } from '@/src/mock/mockData';
 
 export interface Schedule {
   id: string;
@@ -31,6 +33,8 @@ interface ScheduleStore {
   deleteSchedule: (id: string) => void;
   setSelectedDate: (date: Date) => void;
   getSchedulesByDate: (date: Date) => Schedule[];
+  setSchedules: (schedules: Schedule[]) => void;
+  loadMockData: () => void;
 }
 
 export const useScheduleStore = create<ScheduleStore>()(
@@ -83,6 +87,14 @@ export const useScheduleStore = create<ScheduleStore>()(
               scheduleDate.getDate() === date.getDate()
             );
           });
+        },
+
+        setSchedules: (schedules) => {
+          set({ schedules });
+        },
+
+        loadMockData: () => {
+          set({ schedules: mockSchedules });
         },
       }),
       {

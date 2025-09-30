@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
   },
   descriptionContainer: {
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
   },
   memberNameDisabled: {
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 10,
     color: '#3B82F6',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   memberPhone: {
     fontSize: 14,
@@ -678,7 +678,7 @@ const styles = StyleSheet.create({
   },
   proceedButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'white',
   },
   proceedButtonDisabled: {
@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
   },
   processingTitle: {
     fontSize: 28,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
     marginTop: 30,
     marginBottom: 12,
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 28,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
     marginTop: 20,
     marginBottom: 12,
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'white',
   },
   sessionCountContainer: {
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
   },
   sessionCountText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#3B82F6',
   },
 });

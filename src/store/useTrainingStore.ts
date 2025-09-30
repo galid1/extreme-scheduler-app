@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useConfigStore } from './useConfigStore';
+import { mockTrainingSessions } from '@/src/mock/mockData';
 
 export interface TrainingSession {
   memberId: string;
@@ -44,6 +46,7 @@ interface TrainingState {
   isNextWeek: (week: number) => boolean;
   resetWeek: (week: number) => void;
   resetTraining: () => void;
+  loadMockData: () => void;
 }
 
 export const useTrainingStore = create<TrainingState>()(
@@ -150,6 +153,15 @@ export const useTrainingStore = create<TrainingState>()(
           currentWeek: 1,
           selectedMember: null,
           weekNotificationStatus: {},
+        });
+      },
+
+      loadMockData: () => {
+        set({
+          trainingSessions: mockTrainingSessions,
+          currentWeek: 3,
+          totalWeeks: 12,
+          weekNotificationStatus: { 1: true, 2: true },
         });
       },
     }),

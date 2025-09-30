@@ -8,6 +8,8 @@ import {
   TrainerScheduleStatus,
   MemberScheduleStatus
 } from '@/src/types/api';
+import { useConfigStore } from './useConfigStore';
+import { mockAccount, mockTrainer, mockMember, mockMemberAccount, mockSavedSchedule } from '@/src/mock/mockData';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -18,6 +20,8 @@ interface TimeSlotSelection {
 
 interface AuthState {
   token: string | null;
+  phoneNumber: string | null;
+  tempToken: string | null;
 
   // Full account data from API
   account: Account | null;
@@ -29,6 +33,9 @@ interface AuthState {
 
   // Actions
   setToken: (token: string) => void;
+  setPhoneNumber: (phoneNumber: string) => void;
+  setTempToken: (tempToken: string) => void;
+  setUserInfo: (info: { name: string; accountType: string }) => void;
   setAccountData: (data: {
     account: Account;
     trainer?: TrainerResponse;
@@ -38,6 +45,10 @@ interface AuthState {
   setScheduleStatus: (status: TrainerScheduleStatus | MemberScheduleStatus) => void;
   setTrainerAccountId: (id: number | null) => void;
   logout: () => void;
+  /**
+   * @deprecated Use MockDataManager.initializeAllStores() instead
+   */
+  loadMockData: (isTrainer?: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -45,6 +56,8 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       // 초기값은 null로 설정 - AsyncStorage에서 로드됨
       token: null,
+      phoneNumber: null,
+      tempToken: null,
       account: null,
       trainer: null,
       member: null,
@@ -52,6 +65,19 @@ export const useAuthStore = create<AuthState>()(
 
       setToken: (token) => {
         set({ token });
+      },
+
+      setPhoneNumber: (phoneNumber) => {
+        set({ phoneNumber });
+      },
+
+      setTempToken: (tempToken) => {
+        set({ tempToken });
+      },
+
+      setUserInfo: (info) => {
+        // This is a placeholder for compatibility
+        console.log('User info set:', info);
       },
 
       setAccountData: (data) => {
@@ -104,11 +130,37 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         set({
           token: null,
+          phoneNumber: null,
+          tempToken: null,
           account: null,
           trainer: null,
           member: null,
           savedSchedule: {},
         });
+      },
+
+      /**
+       * @deprecated Use MockDataManager.initializeAllStores() instead
+       */
+      loadMockData: (isTrainer = true) => {
+        console.warn('loadMockData is deprecated. Use MockDataManager.initializeAllStores() instead');
+        if (isTrainer) {
+          set({
+            token: 'mock-trainer-token',
+            account: mockAccount,
+            trainer: mockTrainer,
+            member: null,
+            savedSchedule: mockSavedSchedule,
+          });
+        } else {
+          set({
+            token: 'mock-member-token',
+            account: mockMemberAccount,
+            trainer: null,
+            member: mockMember,
+            savedSchedule: mockSavedSchedule,
+          });
+        }
       },
     }),
     {
@@ -121,7 +173,7 @@ export const useAuthStore = create<AuthState>()(
 // Helper selectors
 export const useAccountType = () => useAuthStore((state) => state.account?.accountType);
 export const useName = () => useAuthStore((state) => state.account?.privacyInfo?.name);
-export const usePhoneNumber = () => useAuthStore((state) => state.account?.privacyInfo?.phoneNumber);
+export const useStoredPhoneNumber = () => useAuthStore((state) => state.account?.privacyInfo?.phoneNumber);
 export const useAccountId = () => useAuthStore((state) => state.account?.id);
 export const useTrainerAccountId = () => useAuthStore((state) => state.member?.trainerAccountId);
 export const useScheduleStatus = () => useAuthStore((state) => {

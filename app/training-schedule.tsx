@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
   },
   membersSummary: {
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'rgba(255,255,255,0.9)',
     marginBottom: 12,
     paddingHorizontal: 16,
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
   memberName: {
     color: 'white',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 4,
   },
   sessionTimesList: {
@@ -675,11 +675,11 @@ const styles = StyleSheet.create({
   nextBadgeText: {
     color: 'white',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   upcomingTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
   },
   upcomingScrollContent: {
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
   },
   upcomingTime: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
   },
   upcomingMemberInfo: {
@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
   },
   upcomingMemberName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
   },
   nextText: {
@@ -811,7 +811,7 @@ const styles = StyleSheet.create({
   dayHeaderText: {
     color: '#333',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   calendarBody: {
     flex: 1,
@@ -838,12 +838,12 @@ const styles = StyleSheet.create({
   periodText: {
     color: '#666',
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   timeText: {
     color: '#333',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   dayCell: {
     flex: 1,
@@ -874,7 +874,7 @@ const styles = StyleSheet.create({
   sessionMemberName: {
     color: 'white',
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   bottomButtonsContainer: {
     position: 'absolute',
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
   notificationButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   weekResetButton: {
     flex: 1,
@@ -930,6 +930,6 @@ const styles = StyleSheet.create({
   weekResetButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

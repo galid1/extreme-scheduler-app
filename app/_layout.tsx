@@ -6,6 +6,7 @@ import {useEffect, useState} from 'react';
 
 import {useColorScheme} from '@/hooks/use-color-scheme';
 import {useAuthStore} from '@/src/store/useAuthStore';
+import {useConfigStore} from '@/src/store/useConfigStore';
 import authService from '@/src/services/api/auth.service';
 import apiClient from '@/src/services/api/client';
 import {forceSetToken} from '@/src/utils/forceSetToken';
@@ -15,6 +16,7 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const { setAccountData, token, account } = useAuthStore();
+  const { mockMode } = useConfigStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Wait for store to hydrate from AsyncStorage
@@ -61,24 +63,29 @@ export default function RootLayout() {
       } else if (authStore.token) {
         // Load user data if token exists but account data is not loaded
         if (!authStore.account && authStore.token) {
-          console.log('Loading user data from server...');
-          try {
-            // Set token in API client
-            await apiClient.setAuthToken(authStore.token);
+          // Skip API call if in mock mode or has mock token
+          if (mockMode || authStore.token.includes('mock-')) {
+            console.log('Mock mode detected, skipping API call');
+          } else {
+            console.log('Loading user data from server...');
+            try {
+              // Set token in API client
+              await apiClient.setAuthToken(authStore.token);
 
-            // Get current user data
-            const userResponse = await authService.getCurrentUser();
-            console.log(`@@@@@################# : ${JSON.stringify(userResponse)}`)
-            setAccountData({
-              account: userResponse.account,
-              trainer: userResponse.trainer,
-              member: userResponse.member,
-            });
-            console.log('User data loaded successfully');
-          } catch (error) {
-            console.error('Failed to load user data:', error);
-            // If failed to load user data, might be invalid token
-            // You may want to clear the token and redirect to login
+              // Get current user data
+              const userResponse = await authService.getCurrentUser();
+              console.log(`@@@@@################# : ${JSON.stringify(userResponse)}`)
+              setAccountData({
+                account: userResponse.account,
+                trainer: userResponse.trainer,
+                member: userResponse.member,
+              });
+              console.log('User data loaded successfully');
+            } catch (error) {
+              console.error('Failed to load user data:', error);
+              // If failed to load user data, might be invalid token
+              // You may want to clear the token and redirect to login
+            }
           }
         } else {
           console.log('Account data already exists or no token');

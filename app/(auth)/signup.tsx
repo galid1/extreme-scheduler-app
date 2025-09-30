@@ -20,6 +20,8 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 import authService from '@/src/services/api/auth.service';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import { useConfigStore } from '@/src/store/useConfigStore';
+import { MockDataManager } from '@/src/mock/mockDataManager';
 
 const { height } = Dimensions.get('window');
 
@@ -42,6 +44,7 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 export default function SignupScreen() {
   const router = useRouter();
   const { phoneNumber, setToken, setUserInfo, setAccountData } = useAuthStore();
+  const { mockMode } = useConfigStore();
   const params = useLocalSearchParams<{ tempToken?: string }>();
 
   const [completedSteps, setCompletedSteps] = useState<SignupStep[]>([]);
@@ -190,9 +193,20 @@ export default function SignupScreen() {
         pushTokenInfo: pushTokenData,
       };
 
-      const response = await authService.signUp(signupData);
+      let response;
 
-      if (response.accessToken) {
+      if (mockMode) {
+        // In mock mode, initialize mock data directly
+        const role = accountType === 'TRAINER' ? 'trainer' : 'member';
+        await MockDataManager.initializeAllStores(role);
+        Alert.alert('성공', '회원가입이 완료되었습니다 (Mock Mode)');
+        router.replace('/(tabs)');
+        return;
+      } else {
+        response = await authService.signUp(signupData);
+      }
+
+      if (response && response.accessToken) {
         // Save token and user info
         setToken(response.accessToken);
         setUserInfo({
@@ -235,7 +249,7 @@ export default function SignupScreen() {
           <View style={{ marginTop: 40, paddingHorizontal: 24, marginBottom: 20 }}>
             <Text style={{
               fontSize: 26,
-              fontWeight: '600',
+              fontWeight: '700',
               color: '#3B82F6',
               textAlign: 'center'
             }}>
@@ -276,7 +290,7 @@ export default function SignupScreen() {
                 fontSize: 16,
                 color: '#333',
                 marginBottom: 12,
-                fontWeight: '500'
+                fontWeight: '600'
               }}>
                 이름을 입력해주세요
               </Text>
@@ -327,7 +341,7 @@ export default function SignupScreen() {
                   fontSize: 16,
                   color: '#333',
                   marginBottom: 12,
-                  fontWeight: '500'
+                  fontWeight: '600'
                 }}>
                   생년월일을 입력해주세요
                 </Text>
@@ -404,7 +418,7 @@ export default function SignupScreen() {
                     fontSize: 12,
                     marginTop: 4,
                     textAlign: 'center',
-                    fontWeight: '500'
+                    fontWeight: '600'
                   }}>
                     올바른 날짜를 입력해주세요 (예: 990229는 불가능)
                   </Text>
@@ -435,7 +449,7 @@ export default function SignupScreen() {
                   fontSize: 16,
                   color: '#333',
                   marginBottom: 12,
-                  fontWeight: '500'
+                  fontWeight: '600'
                 }}>
                   계정 유형을 선택해주세요
                 </Text>
@@ -459,7 +473,7 @@ export default function SignupScreen() {
                         color: accountType === type ? 'white' : '#333',
                         fontSize: 18,
                         textAlign: 'center',
-                        fontWeight: accountType === type ? '600' : '400',
+                        fontWeight: accountType === type ? '700' : '500',
                       }}>
                         {ACCOUNT_TYPE_LABELS[type]}
                       </Text>
@@ -494,7 +508,7 @@ export default function SignupScreen() {
                   color: 'white',
                   textAlign: 'center',
                   fontSize: 16,
-                  fontWeight: '600',
+                  fontWeight: '700',
                 }}>
                   다음
                 </Text>
@@ -516,7 +530,7 @@ export default function SignupScreen() {
                   color: 'white',
                   textAlign: 'center',
                   fontSize: 16,
-                  fontWeight: '600',
+                  fontWeight: '700',
                 }}>
                   다음
                 </Text>
@@ -541,7 +555,7 @@ export default function SignupScreen() {
                     color: 'white',
                     textAlign: 'center',
                     fontSize: 18,
-                    fontWeight: '600',
+                    fontWeight: '700',
                   }}>
                     가입 완료
                   </Text>

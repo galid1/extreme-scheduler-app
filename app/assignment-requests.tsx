@@ -14,10 +14,13 @@ import { useRouter } from 'expo-router';
 import { trainerService } from '@/src/services/api';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 import type { AssignmentRequestDto } from '@/src/types/api';
+import { useConfigStore } from '@/src/store/useConfigStore';
+import { RequestStatus } from '@/src/types/enums';
 
 export default function AssignmentRequestsScreen() {
   const router = useRouter();
-  const { assignmentRequests, setAssignmentRequests, isLoadingRequests, setIsLoadingRequests } = useAssignmentStore();
+  const { assignmentRequests, setAssignmentRequests, isLoadingRequests, setIsLoadingRequests, updateRequestStatus } = useAssignmentStore();
+  const { mockMode } = useConfigStore();
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -27,8 +30,13 @@ export default function AssignmentRequestsScreen() {
   const fetchRequests = async () => {
     setIsLoadingRequests(true);
     try {
-      const response = await trainerService.getAssignmentRequests();
-      setAssignmentRequests(response.content);
+      if (mockMode) {
+        // Mock data is already loaded by MockDataManager
+        // No need to fetch anything in mock mode
+      } else {
+        const response = await trainerService.getAssignmentRequests();
+        setAssignmentRequests(response.content);
+      }
     } catch (error) {
       console.error('Error fetching requests:', error);
       Alert.alert('오류', '요청 목록을 불러오는데 실패했습니다.');
@@ -41,18 +49,29 @@ export default function AssignmentRequestsScreen() {
     setProcessingIds(prev => new Set([...prev, requestId]));
 
     try {
-      if (action === 'approve') {
-        await trainerService.acceptAssignmentRequest(requestId);
-        Alert.alert('성공', '회원 배정 요청을 수락했습니다.');
+      if (mockMode) {
+        // Update mock data directly
+        if (action === 'approve') {
+          updateRequestStatus(requestId, RequestStatus.ACCEPTED);
+          Alert.alert('성공', '회원 배정 요청을 수락했습니다.');
+        } else {
+          const rejectReason = '트레이너 일정이 가득 참';
+          updateRequestStatus(requestId, RequestStatus.REJECTED, rejectReason);
+          Alert.alert('완료', '회원 배정 요청을 거절했습니다.');
+        }
       } else {
-        // You might want to show a dialog to get the reject reason
-        const rejectReason = '트레이너 일정이 가득 참';
-        await trainerService.rejectAssignmentRequest(requestId, rejectReason);
-        Alert.alert('완료', '회원 배정 요청을 거절했습니다.');
+        // Call actual API
+        if (action === 'approve') {
+          await trainerService.acceptAssignmentRequest(requestId);
+          Alert.alert('성공', '회원 배정 요청을 수락했습니다.');
+        } else {
+          const rejectReason = '트레이너 일정이 가득 참';
+          await trainerService.rejectAssignmentRequest(requestId, rejectReason);
+          Alert.alert('완료', '회원 배정 요청을 거절했습니다.');
+        }
+        // Refresh the list after action
+        await fetchRequests();
       }
-
-      // Refresh the list after action
-      await fetchRequests();
     } catch (error) {
       console.error(`Error ${action}ing request:`, error);
       Alert.alert('오류', '요청 처리 중 오류가 발생했습니다.');
@@ -235,7 +254,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
   },
   content: {
@@ -258,7 +277,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 12,
   },
@@ -289,7 +308,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 2,
   },
@@ -321,7 +340,7 @@ const styles = StyleSheet.create({
   acceptButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   rejectButton: {
     flexDirection: 'row',
@@ -337,7 +356,7 @@ const styles = StyleSheet.create({
   rejectButtonText: {
     color: '#6B7280',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -366,7 +385,7 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#1F2937',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   rejectReason: {
     fontSize: 11,

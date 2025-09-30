@@ -23,6 +23,8 @@ import { memberScheduleService, memberService, apiClient, trainerScheduleService
 import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
 import { MemberScheduleStatus } from '@/src/types/enums';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
+import MockModeToggle from '@/src/components/MockModeToggle';
+import { useConfigStore } from '@/src/store/useConfigStore';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -49,6 +51,7 @@ export default function MemberHome() {
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
+  const { mockMode } = useConfigStore();
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -60,7 +63,7 @@ export default function MemberHome() {
   // Update member status when app comes to foreground
   useEffect(() => {
     const fetchLatestUserData = async () => {
-      if (account) {
+      if (account && !mockMode) {
         try {
           const userResponse = await authService.getCurrentUser();
           if (userResponse.member) {
@@ -123,9 +126,19 @@ export default function MemberHome() {
     setIsSearching(true);
     setSearchError(null);
     try {
-      // Phone number for API (숫자만 전송)
-      const response = await memberService.searchTrainer(trainerPhone);
-      setTrainerProfile(response);
+      // Mock mode handling
+      if (mockMode) {
+        setTrainerProfile({
+          trainerAccountId: 1,
+          name: '김트레이너',
+          phoneNumber: trainerPhone,
+          profileImageUrl: 'https://via.placeholder.com/150'
+        });
+      } else {
+        // Phone number for API (숫자만 전송)
+        const response = await memberService.searchTrainer(trainerPhone);
+        setTrainerProfile(response);
+      }
     } catch (error: any) {
       console.error('Error searching trainer:', error);
       setTrainerProfile(null);
@@ -144,8 +157,10 @@ export default function MemberHome() {
 
     setIsAssigning(true);
     try {
-      // Send trainer assignment request
-      await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
+      if (!mockMode) {
+        // Send trainer assignment request only in non-mock mode
+        await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
+      }
 
       // Update store with trainer ID
       setTrainerAccountId(trainerProfile.trainerAccountId);
@@ -592,12 +607,15 @@ export default function MemberHome() {
                       }
                     });
 
-                    // Call member API
-                    await memberScheduleService.registerSchedule(request);
+                    // Check mock mode
+                    if (!mockMode) {
+                      // Call member API only in non-mock mode
+                      await memberScheduleService.registerSchedule(request);
+                    }
 
                     // Save to local store and update status
                     setSavedSchedule(selectedTimes);
-                    setScheduleStatus('READY');
+                    setScheduleStatus(MemberScheduleStatus.READY);
 
                     if (showScheduleEdit) {
                       setShowScheduleEdit(false);
@@ -726,6 +744,7 @@ export default function MemberHome() {
   // Default home screen for trainers or members with assigned trainer
   return (
     <SafeAreaView style={styles.container}>
+      <MockModeToggle />
       <View style={styles.topHeader}>
         <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
         {trainerAccountId && (
@@ -777,6 +796,10 @@ export default function MemberHome() {
                   onPress={async () => {
                     try {
                       // Fetch latest member data to check schedule status
+                      // Skip API call in mock mode
+                      if (mockMode) {
+                        return;
+                      }
                       const userResponse = await authService.getCurrentUser();
 
                       // Update member data in store
@@ -815,6 +838,10 @@ export default function MemberHome() {
                   onPress={async () => {
                     try {
                       // Fetch latest member data to check schedule status
+                      // Skip API call in mock mode
+                      if (mockMode) {
+                        return;
+                      }
                       const userResponse = await authService.getCurrentUser();
 
                       // Update member data in store
@@ -846,8 +873,10 @@ export default function MemberHome() {
                             style: 'destructive',
                             onPress: async () => {
                               try {
-                                await memberScheduleService.setScheduleUnready();
-                                setScheduleStatus('NOT_READY');
+                                if (!mockMode) {
+                                  await memberScheduleService.setScheduleUnready();
+                                }
+                                setScheduleStatus(MemberScheduleStatus.NOT_READY);
                                 setSavedSchedule({});
                                 Alert.alert('완료', '일정이 취소되었습니다.');
                               } catch (error: any) {
@@ -936,7 +965,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
     marginBottom: 8,
   },
@@ -1013,7 +1042,7 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 4,
   },
@@ -1051,7 +1080,7 @@ const styles = StyleSheet.create({
   },
   specialtiesTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#333',
     marginBottom: 10,
   },
@@ -1087,7 +1116,7 @@ const styles = StyleSheet.create({
   assignButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   errorCard: {
     flexDirection: 'row',
@@ -1113,7 +1142,7 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   topHeader: {
     flexDirection: 'row',
@@ -1160,7 +1189,7 @@ const styles = StyleSheet.create({
   },
   dashboardTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 16,
   },
@@ -1184,7 +1213,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '600',
     color: '#6B7280',
     marginTop: 4,
       borderBottomWidth: 1,
@@ -1194,7 +1223,7 @@ const styles = StyleSheet.create({
   },
   scheduleTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'white',
     marginBottom: 20,
     textAlign: 'center',
@@ -1222,10 +1251,10 @@ const styles = StyleSheet.create({
   dayButtonText: {
     color: '#333',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   dayButtonTextActive: {
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#3B82F6',
   },
   dayButtonRight: {
@@ -1244,7 +1273,7 @@ const styles = StyleSheet.create({
   dayCountText: {
     color: 'white',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   timeSlots: {
     marginTop: 10,
@@ -1272,7 +1301,7 @@ const styles = StyleSheet.create({
   },
   timeSlotTextSelected: {
     color: 'white',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   timeSlotOnce: {
     backgroundColor: 'rgba(91, 153, 247, 0.3)',
@@ -1325,7 +1354,7 @@ const styles = StyleSheet.create({
   stateOptionText: {
     color: '#999',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   stateOptionTextActive: {
     color: 'white',
@@ -1350,7 +1379,7 @@ const styles = StyleSheet.create({
   timeSlotIndicatorText: {
     color: 'white',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   submitButton: {
     backgroundColor: '#5B99F7',
@@ -1362,7 +1391,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   scheduleHeader: {
     paddingTop: 40,
@@ -1379,7 +1408,7 @@ const styles = StyleSheet.create({
   },
   schedulePageTitle: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
     textAlign: 'center',
     marginBottom: 8,
@@ -1416,7 +1445,7 @@ const styles = StyleSheet.create({
   dayFullButtonText: {
     color: 'white',
     fontSize: 17,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   timeFullSlots: {
     marginTop: 8,
@@ -1447,7 +1476,7 @@ const styles = StyleSheet.create({
   },
   timeFullSlotTextSelected: {
     color: 'white',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   scheduleBottomBar: {
     padding: 20,
@@ -1470,7 +1499,7 @@ const styles = StyleSheet.create({
   scheduleSubmitButtonText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   readyStateContainer: {
     alignItems: 'center',
@@ -1479,7 +1508,7 @@ const styles = StyleSheet.create({
   },
   readyStateTitle: {
     fontSize: 22,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
     marginTop: 20,
     marginBottom: 8,
@@ -1509,7 +1538,7 @@ const styles = StyleSheet.create({
   modifyScheduleButtonText: {
     color: 'white',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   unreadyButton: {
     flexDirection: 'row',
@@ -1523,7 +1552,7 @@ const styles = StyleSheet.create({
   unreadyButtonText: {
     color: 'white',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   schedulePreview: {
     backgroundColor: '#EFF6FF',
@@ -1557,7 +1586,7 @@ const styles = StyleSheet.create({
   schedulePreviewDayName: {
     fontSize: 14,
     color: '#1E40AF',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   schedulePreviewTimes: {
     fontSize: 12,
@@ -1569,7 +1598,7 @@ const styles = StyleSheet.create({
   timePeriodLabel: {
     color: '#333',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 8,
     marginLeft: 4,
     paddingVertical: 4,
@@ -1602,7 +1631,7 @@ const styles = StyleSheet.create({
   helpIndicatorText: {
     color: 'white',
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   helpText: {
     color: '#666',
@@ -1639,7 +1668,7 @@ const styles = StyleSheet.create({
   stateIndicatorText: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   stateIndicatorTextActive: {
     color: 'white',
@@ -1659,7 +1688,7 @@ const styles = StyleSheet.create({
   },
   scheduleDetailTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
   },
   scheduleCalendarContainer: {
@@ -1684,7 +1713,7 @@ const styles = StyleSheet.create({
   dayColumnText: {
     color: '#333',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   dayColumnBadge: {
     backgroundColor: '#EFF6FF',
@@ -1698,7 +1727,7 @@ const styles = StyleSheet.create({
   dayColumnBadgeText: {
     color: '#3B82F6',
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   calendarBody: {
     flex: 1,
@@ -1725,13 +1754,13 @@ const styles = StyleSheet.create({
   timeLabelPeriod: {
     color: '#666',
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 2,
   },
   timeLabelText: {
     color: '#333',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   timeCell: {
     flex: 1,
@@ -1791,7 +1820,7 @@ const styles = StyleSheet.create({
   },
   memberRequestsTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'white',
     marginBottom: 12,
   },
@@ -1812,7 +1841,7 @@ const styles = StyleSheet.create({
   },
   memberRequestName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'white',
   },
   memberRequestBadge: {
@@ -1826,7 +1855,7 @@ const styles = StyleSheet.create({
   memberRequestBadgeText: {
     fontSize: 10,
     color: 'white',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   memberRequestSubtext: {
     fontSize: 13,
@@ -1847,7 +1876,7 @@ const styles = StyleSheet.create({
   memberRequestAcceptText: {
     color: 'white',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   memberRequestReject: {
     flex: 1,
@@ -1861,7 +1890,7 @@ const styles = StyleSheet.create({
   memberRequestRejectText: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   autoScheduleButtonContainer: {
     position: 'absolute',
@@ -1886,7 +1915,7 @@ const styles = StyleSheet.create({
   autoScheduleButtonText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   scheduledStateContainer: {
     padding: 20,
@@ -1910,7 +1939,7 @@ const styles = StyleSheet.create({
   },
   scheduledStateTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
   },
   scheduledStateMessage: {
@@ -1951,7 +1980,7 @@ const styles = StyleSheet.create({
   contactTrainerButtonText: {
     color: '#3B82F6',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   viewScheduleButton: {
     flexDirection: 'row',
@@ -1973,7 +2002,7 @@ const styles = StyleSheet.create({
   trainingInfoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-      fontWeight: '600',
+      fontWeight: '700',
     gap: 8,
     marginBottom: 8,
   },
@@ -2005,7 +2034,7 @@ const styles = StyleSheet.create({
   searchButtonText: {
     color: '#3B82F6',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     flex: 1,
     textAlign: 'center',
   },

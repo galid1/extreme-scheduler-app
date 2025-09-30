@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
   },
   statsBar: {
@@ -404,11 +404,12 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#3B82F6',
   },
   statLabel: {
     fontSize: 12,
+    fontWeight: 700,
     color: '#6B7280',
     marginTop: 4,
   },
@@ -432,7 +433,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 12,
   },
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 2,
   },
@@ -489,7 +490,7 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#1F2937',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   memberStats: {
     marginTop: 16,
@@ -509,7 +510,7 @@ const styles = StyleSheet.create({
   statRowValue: {
     fontSize: 13,
     color: '#1F2937',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   memberActions: {
     flexDirection: 'row',
@@ -529,6 +530,6 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

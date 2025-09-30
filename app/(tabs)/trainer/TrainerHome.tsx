@@ -23,6 +23,8 @@ import { trainerScheduleService, trainerService, authService } from '@/src/servi
 import type { RegisterScheduleRequest, DayOfWeek } from '@/src/types/api';
 import { TrainerScheduleStatus } from '@/src/types/enums';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
+import MockModeToggle from '@/src/components/MockModeToggle';
+import { useConfigStore } from '@/src/store/useConfigStore';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -46,6 +48,7 @@ export default function TrainerHome() {
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { mockMode } = useConfigStore();
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -57,7 +60,7 @@ export default function TrainerHome() {
   // Update trainer status when app comes to foreground
   useEffect(() => {
     const fetchLatestUserData = async () => {
-      if (account) {
+      if (account && !mockMode) {
         try {
           const userResponse = await authService.getCurrentUser();
           if (userResponse.trainer) {
@@ -100,8 +103,13 @@ export default function TrainerHome() {
   const fetchAssignmentRequests = async () => {
     setIsLoadingRequests(true);
     try {
-      const response = await trainerService.getAssignmentRequests();
-      setAssignmentRequests(response.content);
+      if (mockMode) {
+        // Mock data is already loaded by MockDataManager
+        // No need to fetch anything in mock mode
+      } else {
+        const response = await trainerService.getAssignmentRequests();
+        setAssignmentRequests(response.content);
+      }
     } catch (error) {
       console.error('Error fetching assignment requests:', error);
     } finally {
@@ -199,17 +207,17 @@ export default function TrainerHome() {
           </Text>
           <View style={styles.helpContainer}>
             <View style={styles.helpItem}>
-              <View style={[styles.helpIndicator, { backgroundColor: 'rgba(91, 153, 247, 0.3)' }]}>
-                <Text style={styles.helpIndicatorText}>일회</Text>
-              </View>
-              <Text style={styles.helpText}>한 번만</Text>
-            </View>
-            <View style={styles.helpItem}>
               <View style={[styles.helpIndicator, { backgroundColor: 'rgba(139, 92, 246, 0.3)' }]}>
                 <Ionicons name="repeat" size={12} color="white" />
                 <Text style={styles.helpIndicatorText}>반복</Text>
               </View>
               <Text style={styles.helpText}>매주 반복</Text>
+            </View>
+            <View style={styles.helpItem}>
+              <View style={[styles.helpIndicator, { backgroundColor: 'rgba(91, 153, 247, 0.3)' }]}>
+                <Text style={styles.helpIndicatorText}>일회</Text>
+              </View>
+              <Text style={styles.helpText}>한 번만</Text>
             </View>
           </View>
         </View>
@@ -280,23 +288,23 @@ export default function TrainerHome() {
 
                                 if (existingIndex >= 0) {
                                   const currentState = dayTimes[existingIndex].state;
-                                  if (currentState === 'once') {
-                                    // Change to recurring
+                                  if (currentState === 'recurring') {
+                                    // Change to once
                                     const updated = [...dayTimes];
-                                    updated[existingIndex] = { hour, state: 'recurring' };
+                                    updated[existingIndex] = { hour, state: 'once' };
                                     setSelectedTimes({ ...selectedTimes, [day]: updated });
                                   } else {
-                                    // Remove (recurring -> none)
+                                    // Remove (once -> none)
                                     setSelectedTimes({
                                       ...selectedTimes,
                                       [day]: dayTimes.filter(t => t.hour !== hour),
                                     });
                                   }
                                 } else {
-                                  // Add as once
+                                  // Add as recurring
                                   setSelectedTimes({
                                     ...selectedTimes,
-                                    [day]: [...dayTimes, { hour, state: 'once' }].sort((a, b) => a.hour - b.hour),
+                                    [day]: [...dayTimes, { hour, state: 'recurring' }].sort((a, b) => a.hour - b.hour),
                                   });
                                 }
                               }}
@@ -313,26 +321,26 @@ export default function TrainerHome() {
                                 <View style={styles.timeSlotStateOptions}>
                                   <View style={[
                                     styles.stateOptionBadge,
+                                    state === 'recurring' && styles.stateOptionActiveRecurring
+                                  ]}>
+                                    <Ionicons
+                                      name="repeat"
+                                      size={14}
+                                      color={state === 'recurring' ? 'white' : '#cbd5e1'}
+                                    />
+                                    <Text style={[
+                                      styles.stateOptionText,
+                                      state === 'recurring' && styles.stateOptionTextActive
+                                    ]}>반복</Text>
+                                  </View>
+                                  <View style={[
+                                    styles.stateOptionBadge,
                                     state === 'once' && styles.stateOptionActive
                                   ]}>
                                     <Text style={[
                                       styles.stateOptionText,
                                       state === 'once' && styles.stateOptionTextActive
                                     ]}>일회</Text>
-                                  </View>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'recurring' && styles.stateOptionActiveRecurring
-                                  ]}>
-                                    <Ionicons
-                                      name="repeat"
-                                      size={14}
-                                      color={state === 'recurring' ? 'white' : 'rgba(255,255,255,0.3)'}
-                                    />
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'recurring' && styles.stateOptionTextActive
-                                    ]}>반복</Text>
                                   </View>
                                 </View>
                               </View>
@@ -363,23 +371,23 @@ export default function TrainerHome() {
 
                                 if (existingIndex >= 0) {
                                   const currentState = dayTimes[existingIndex].state;
-                                  if (currentState === 'once') {
-                                    // Change to recurring
+                                  if (currentState === 'recurring') {
+                                    // Change to once
                                     const updated = [...dayTimes];
-                                    updated[existingIndex] = { hour, state: 'recurring' };
+                                    updated[existingIndex] = { hour, state: 'once' };
                                     setSelectedTimes({ ...selectedTimes, [day]: updated });
                                   } else {
-                                    // Remove (recurring -> none)
+                                    // Remove (once -> none)
                                     setSelectedTimes({
                                       ...selectedTimes,
                                       [day]: dayTimes.filter(t => t.hour !== hour),
                                     });
                                   }
                                 } else {
-                                  // Add as once
+                                  // Add as recurring
                                   setSelectedTimes({
                                     ...selectedTimes,
-                                    [day]: [...dayTimes, { hour, state: 'once' }].sort((a, b) => a.hour - b.hour),
+                                    [day]: [...dayTimes, { hour, state: 'recurring' }].sort((a, b) => a.hour - b.hour),
                                   });
                                 }
                               }}
@@ -398,26 +406,26 @@ export default function TrainerHome() {
                                 <View style={styles.timeSlotStateOptions}>
                                   <View style={[
                                     styles.stateOptionBadge,
+                                    state === 'recurring' && styles.stateOptionActiveRecurring
+                                  ]}>
+                                    <Ionicons
+                                      name="repeat"
+                                      size={14}
+                                      color={state === 'recurring' ? 'white' : '#cbd5e1'}
+                                    />
+                                    <Text style={[
+                                      styles.stateOptionText,
+                                      state === 'recurring' && styles.stateOptionTextActive
+                                    ]}>반복</Text>
+                                  </View>
+                                  <View style={[
+                                    styles.stateOptionBadge,
                                     state === 'once' && styles.stateOptionActive
                                   ]}>
                                     <Text style={[
                                       styles.stateOptionText,
                                       state === 'once' && styles.stateOptionTextActive
                                     ]}>일회</Text>
-                                  </View>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'recurring' && styles.stateOptionActiveRecurring
-                                  ]}>
-                                    <Ionicons
-                                      name="repeat"
-                                      size={14}
-                                      color={state === 'recurring' ? 'white' : 'rgba(255,255,255,0.3)'}
-                                    />
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'recurring' && styles.stateOptionTextActive
-                                    ]}>반복</Text>
                                   </View>
                                 </View>
                               </View>
@@ -502,12 +510,15 @@ export default function TrainerHome() {
                       }
                     });
 
-                    // Register trainer schedule
-                    await trainerScheduleService.registerSchedule(request);
+                    // Check mock mode
+                    if (!mockMode) {
+                      // Register trainer schedule only in non-mock mode
+                      await trainerScheduleService.registerSchedule(request);
+                    }
 
                     // Save to local store and update status
                     setSavedSchedule(selectedTimes);
-                    setScheduleStatus('READY');
+                    setScheduleStatus(TrainerScheduleStatus.READY);
 
                     if (showScheduleEdit) {
                       setShowScheduleEdit(false);
@@ -636,6 +647,7 @@ export default function TrainerHome() {
   // Default home screen for trainers or members with assigned trainer
   return (
     <SafeAreaView style={styles.container}>
+      <MockModeToggle />
       <View style={styles.topHeader}>
         <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
       </View>
@@ -771,6 +783,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 20,
+    paddingBottom: 100,
   },
   header: {
     marginBottom: 30,
@@ -1032,7 +1045,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '600',
     color: '#6B7280',
     marginTop: 4,
       borderBottomWidth: 1,
@@ -1070,10 +1083,10 @@ const styles = StyleSheet.create({
   dayButtonText: {
     color: '#333',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   dayButtonTextActive: {
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#3B82F6',
   },
   dayButtonRight: {
@@ -1171,12 +1184,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   stateOptionText: {
-    color: '#999',
+    color: '#cbd5e1',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   stateOptionTextActive: {
     color: 'white',
+    fontWeight: '700',
   },
   timeSlotIndicator: {
     backgroundColor: '#5B99F7',
@@ -1291,11 +1305,12 @@ const styles = StyleSheet.create({
   timeFullSlotText: {
     color: '#666',
     fontSize: 15,
+    fontWeight: '600',
     textAlign: 'center',
   },
   timeFullSlotTextSelected: {
     color: 'white',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   scheduleBottomBar: {
     padding: 20,
@@ -1409,6 +1424,7 @@ const styles = StyleSheet.create({
   },
   schedulePreviewTimes: {
     fontSize: 12,
+    fontWeight: '600',
     color: '#64748B',
   },
   timePeriodSection: {
