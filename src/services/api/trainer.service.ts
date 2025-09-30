@@ -8,6 +8,7 @@ import {
   TrainerAssignmentRequestListResponse,
   RejectAssignmentRequest,
   AddMemberToTrainerRequest,
+  GetAssignedMembersResponse,
   PageResponse,
   RequestStatus,
 } from '../../types/api';
@@ -64,6 +65,15 @@ class TrainerService {
       memberAccountId,
     };
     await apiClient.post('/api/v1/trainers/members', request);
+  }
+
+  /**
+   * 트레이너에게 배정된 회원 목록 조회
+   */
+  async getAssignedMembers(): Promise<GetAssignedMembersResponse> {
+    return apiClient.get<GetAssignedMembersResponse>(
+      '/api/v1/trainers/assigned-members'
+    );
   }
 }
 

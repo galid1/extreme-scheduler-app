@@ -131,8 +131,7 @@ export interface UpdateScheduleTimeRequest {
 
 export interface AutoSchedulingRequest {
   memberAccountIds: number[];
-  startDate: string;
-  endDate: string;
+  targetDate: string;
 }
 
 export interface Schedule {
@@ -181,6 +180,18 @@ export interface PageResponse<T> {
 // Add Member to Trainer Request
 export interface AddMemberToTrainerRequest {
   memberAccountId: number;
+}
+
+// Assigned Member Types
+export interface AssignedMemberDto {
+  accountId: number;
+  name: string;
+  phoneNumber: string;
+  scheduleStatus: MemberScheduleStatus;
+}
+
+export interface GetAssignedMembersResponse {
+  members: AssignedMemberDto[];
 }
 
 // Current Account Types
