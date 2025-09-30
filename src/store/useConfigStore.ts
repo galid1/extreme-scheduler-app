@@ -8,6 +8,10 @@ interface ConfigState {
   mockMode: boolean;
   mockRole: 'trainer' | 'member' | null;
   apiBaseUrl: string;
+  skipStates: {
+    phoneAuth: boolean;
+    signup: boolean;
+  };
 
   // Actions
   setEnvironment: (env: 'local' | 'development' | 'production') => void;
@@ -17,6 +21,7 @@ interface ConfigState {
   disableMockMode: () => void;
   switchMockRole: (role: 'trainer' | 'member') => Promise<void>;
   getIsLocalEnvironment: () => boolean;
+  setSkipState: (screen: 'phoneAuth' | 'signup', value: boolean) => void;
 }
 
 export const useConfigStore = create<ConfigState>()(
@@ -27,6 +32,10 @@ export const useConfigStore = create<ConfigState>()(
       mockMode: false,
       mockRole: null,
       apiBaseUrl: 'http://localhost:8080',
+      skipStates: {
+        phoneAuth: false,
+        signup: false,
+      },
 
       setEnvironment: (env) => {
         let apiBaseUrl = 'http://localhost:8080';
@@ -92,6 +101,15 @@ export const useConfigStore = create<ConfigState>()(
 
       getIsLocalEnvironment: () => {
         return get().environment === 'local';
+      },
+
+      setSkipState: (screen, value) => {
+        set((state) => ({
+          skipStates: {
+            ...state.skipStates,
+            [screen]: value,
+          },
+        }));
       },
     }),
     {

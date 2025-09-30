@@ -25,7 +25,7 @@ export default function RootLayout() {
     const initializeAuth = async () => {
       try {
         console.log('=== Force Setting Token ===');
-        await forceSetToken();
+        await forceSetToken(); // 로그인, 회원가입을 건너 띄고 싶은 경우에 사용 (mock mode가 아님)
         setIsHydrated(true);
         console.log('===========================');
       } catch (error) {
@@ -55,12 +55,11 @@ export default function RootLayout() {
       console.log('account:', authStore.account);
       console.log('====================================');
 
-      // Check if user is not authenticated (no token and no account)
+      // 토큰과 계정 정보가 없고, 인증 화면에 있지 않은 경우
       if (!authStore.token && !authStore.account && !inAuthGroup) {
         // Redirect to auth if not authenticated
-        console.log('Redirecting to phone-auth...');
         setTimeout(() => router.replace('/(auth)/phone-auth'), 0);
-      } else if (authStore.token) {
+      } else if (authStore.token) { // 인증을 통해, token이 존재하는 경우
         // Load user data if token exists but account data is not loaded
         if (!authStore.account && authStore.token) {
           // Skip API call if in mock mode or has mock token
@@ -94,7 +93,8 @@ export default function RootLayout() {
           console.log("Member:", JSON.stringify(authStore.member));
         }
 
-        if (inAuthGroup) {
+        // 인증 처리가 되었고, 인증 화면에 있는 경우 탭 화면으로 리다이렉트
+        if (!mockMode && inAuthGroup) {
           // Redirect to tabs if authenticated and in auth group
           setTimeout(() => router.replace('/(tabs)'), 0);
         }

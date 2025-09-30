@@ -44,7 +44,7 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 export default function SignupScreen() {
   const router = useRouter();
   const { phoneNumber, setToken, setUserInfo, setAccountData } = useAuthStore();
-  const { mockMode } = useConfigStore();
+  const { mockMode, skipStates, setSkipState } = useConfigStore();
   const params = useLocalSearchParams<{ tempToken?: string }>();
 
   const [completedSteps, setCompletedSteps] = useState<SignupStep[]>([]);
@@ -235,6 +235,35 @@ export default function SignupScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSkip = async () => {
+    setSkipState('signup', true);
+    // In mock mode, choose a role and initialize
+    Alert.alert(
+      'Mock 모드',
+      '계정 유형을 선택하세요',
+      [
+        {
+          text: '트레이너',
+          onPress: async () => {
+            await MockDataManager.initializeAllStores('trainer');
+            router.replace('/(tabs)');
+          }
+        },
+        {
+          text: '회원',
+          onPress: async () => {
+            await MockDataManager.initializeAllStores('member');
+            router.replace('/(tabs)');
+          }
+        },
+        {
+          text: '취소',
+          style: 'cancel'
+        }
+      ]
+    );
   };
 
 
@@ -493,6 +522,26 @@ export default function SignupScreen() {
             borderTopWidth: 1,
             borderTopColor: '#F3F4F6'
           }}>
+            {mockMode && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#F59E0B',
+                  borderRadius: 12,
+                  paddingVertical: 10,
+                  marginBottom: 10,
+                }}
+                onPress={handleSkip}
+              >
+                <Text style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: 14,
+                  fontWeight: '700',
+                }}>
+                  Skip (Mock Mode)
+                </Text>
+              </TouchableOpacity>
+            )}
             {/* Name Step Button */}
             {!completedSteps.includes('name') && (
               <TouchableOpacity
