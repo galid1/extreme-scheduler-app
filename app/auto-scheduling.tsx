@@ -34,7 +34,6 @@ export default function AutoSchedulingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { weekToReset, resetMode } = params;
-  const { setScheduleStatus } = useAuthStore();
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<MemberSelection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -224,9 +223,6 @@ export default function AutoSchedulingScreen() {
       // 일반 모드: 기존 세션에 추가
       setTrainingSessions([...trainingSessions, ...generatedSessions]);
     }
-
-    // Update schedule status to SCHEDULED
-    setScheduleStatus('SCHEDULED');
 
     setShowConfirmButton(true);
     setIsProcessing(false);

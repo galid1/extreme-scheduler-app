@@ -643,6 +643,7 @@ export default function TrainerHome() {
     );
   }
 
+  console.log("HERERE @@@@@@@@@@@", scheduleStatus)
   // Default home screen for trainers or members with assigned trainer
   return (
     <SafeAreaView style={styles.container}>

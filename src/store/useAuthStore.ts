@@ -42,13 +42,8 @@ interface AuthState {
     member?: MemberResponse;
   }) => void;
   setSavedSchedule: (schedule: { [key: string]: TimeSlotSelection[] }) => void;
-  setScheduleStatus: (status: TrainerScheduleStatus | MemberScheduleStatus) => void;
   setTrainerAccountId: (id: number | null) => void;
   logout: () => void;
-  /**
-   * @deprecated Use MockDataManager.initializeAllStores() instead
-   */
-  loadMockData: (isTrainer?: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -116,30 +111,6 @@ export const useAuthStore = create<AuthState>()(
           member: null,
           savedSchedule: {},
         });
-      },
-
-      /**
-       * @deprecated Use MockDataManager.initializeAllStores() instead
-       */
-      loadMockData: (isTrainer = true) => {
-        console.warn('loadMockData is deprecated. Use MockDataManager.initializeAllStores() instead');
-        if (isTrainer) {
-          set({
-            token: 'mock-trainer-token',
-            account: mockAccount,
-            trainer: mockTrainer,
-            member: null,
-            savedSchedule: mockSavedSchedule,
-          });
-        } else {
-          set({
-            token: 'mock-member-token',
-            account: mockMemberAccount,
-            trainer: null,
-            member: mockMember,
-            savedSchedule: mockSavedSchedule,
-          });
-        }
       },
     }),
     {

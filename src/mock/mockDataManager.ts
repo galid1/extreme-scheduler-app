@@ -14,7 +14,7 @@ import {
   mockTrainingSessions,
   mockSettings
 } from './mockData';
-import { AccountType } from '@/src/types/enums';
+import {AccountType, WeekScheduleStatus} from '@/src/types/enums';
 
 export class MockDataManager {
   /**
@@ -55,8 +55,6 @@ export class MockDataManager {
     trainingStore.setTrainingSessions(mockTrainingSessions);
     trainingStore.setCurrentWeek(3);
     trainingStore.setTotalWeeks(12);
-    trainingStore.setWeekNotificationSent(1, true);
-    trainingStore.setWeekNotificationSent(2, true);
 
     // Settings Store - Load mock settings
     const settingsStore = useSettingsStore.getState();

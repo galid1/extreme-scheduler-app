@@ -15,6 +15,13 @@ export enum TrainerScheduleStatus {
   SCHEEULDED = 'SCHEDULED',
 }
 
+// 자동 스케줄링 결과 상태
+export enum WeekScheduleStatus {
+    NOT_FIXED,
+    FIXED,
+    CANCELLED,
+}
+
 export enum Gender {
   MALE = 'MALE',
   FEMALE = 'FEMALE'

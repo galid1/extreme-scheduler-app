@@ -16,6 +16,7 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 import { useTrainingStore } from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView from '@/src/components/training/WeekCalendarView';
+import {WeekScheduleStatus} from "@/src/types/enums";
 
 
 export default function TrainingScheduleScreen() {
@@ -26,11 +27,11 @@ export default function TrainingScheduleScreen() {
     currentWeek,
     totalWeeks,
     selectedMember,
-    weekNotificationStatus,
+    weekScheduleStatus,
     setTrainingSessions,
     setCurrentWeek,
     setSelectedMember,
-    setWeekNotificationSent,
+    setWeekScheduleStatus,
     getSessionsForWeek: storeGetSessionsForWeek,
     canEditWeek,
     canSendNotification,
@@ -42,7 +43,7 @@ export default function TrainingScheduleScreen() {
   } = useTrainingStore();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isSendingNotification, setIsSendingNotification] = useState(false);
+  const [isFixingWeekSchedule, setIsFixingWeekSchedule] = useState(false);
   const [currentTime] = useState(new Date());
   const calendarScrollRef = useRef<ScrollView>(null);
 
@@ -475,31 +476,31 @@ export default function TrainingScheduleScreen() {
         <TouchableOpacity
           style={[
             styles.notificationButton,
-            (!canSendNotification(currentWeek) || weekNotificationStatus[currentWeek]) && styles.notificationButtonDisabled
+            (!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == WeekScheduleStatus.FIXED) && styles.notificationButtonDisabled
           ]}
           onPress={() => {
             if (canSendNotification(currentWeek)) {
               if (isCurrentWeek(currentWeek)) {
                 Alert.alert(
-                  '알림 발송 불가',
-                  '이번 주차는 알림을 발송할 수 없습니다.\n다음 주차부터 알림 발송이 가능합니다.',
+                  '일정 확정 불가',
+                  '이번 주차는 이미 일정이 확정 되었어요.\n다음 주차부터 일정 확정이 가능합니다.',
                   [{ text: '확인', style: 'default' }]
                 );
               } else {
                 Alert.alert(
-                  '알림 발송 확인',
-                  `${currentWeek}주차 트레이닝 일정을 모든 회원에게 발송하시겠습니까?`,
+                  '일정 확정 확인',
+                  `${currentWeek}주차 트레이닝 일정을 확정하고, 모든 회원에게 알림을 발송하시겠습니까?`,
                   [
                     { text: '취소', style: 'cancel' },
                     {
-                      text: '발송',
+                      text: '확정',
                       onPress: async () => {
-                        setIsSendingNotification(true);
+                        setIsFixingWeekSchedule(true);
                         // Simulate notification sending
                         await new Promise(resolve => setTimeout(resolve, 1500));
-                        setWeekNotificationSent(currentWeek, true);
-                        setIsSendingNotification(false);
-                        Alert.alert('알림 발송 완료', `${currentWeek}주차 일정 알림이 발송되었습니다.`);
+                        setWeekScheduleStatus(currentWeek, true);
+                        setIsFixingWeekSchedule(false);
+                        Alert.alert('일정 확정 및 알림 발송 완료', `${currentWeek}주차 일정이 확정되고, 알림이 발송되었습니다.`);
                       }
                     }
                   ]
@@ -507,19 +508,19 @@ export default function TrainingScheduleScreen() {
               }
             }
           }}
-          disabled={!canSendNotification(currentWeek) || weekNotificationStatus[currentWeek] || isSendingNotification}
+          disabled={!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == WeekScheduleStatus.FIXED || isFixingWeekSchedule}
         >
-          {isSendingNotification ? (
+          {isFixingWeekSchedule ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
             <>
               <Ionicons
-                name={weekNotificationStatus[currentWeek] ? "checkmark-circle" : isCurrentWeek(currentWeek) ? "lock-closed" : "notifications-outline"}
+                name={weekScheduleStatus[currentWeek] === WeekScheduleStatus.FIXED ? "checkmark-circle" : isCurrentWeek(currentWeek) ? "lock-closed" : "notifications-outline"}
                 size={18}
                 color="white"
               />
               <Text style={styles.notificationButtonText}>
-                {weekNotificationStatus[currentWeek] ? '알림발송 완료' : isCurrentWeek(currentWeek) ? '알림 불가' : '알림 발송'}
+                {weekScheduleStatus[currentWeek] === WeekScheduleStatus.FIXED ? '일정 확정' : isCurrentWeek(currentWeek) ? '일정 확정 불가' : '일정 확정'}
               </Text>
             </>
           )}
