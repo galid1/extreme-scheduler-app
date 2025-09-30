@@ -137,7 +137,7 @@ export default function PhoneAuthScreen() {
               <View style={{ marginTop: 60, paddingHorizontal: 24 }}>
                 <Text style={{
                   fontSize: 24,
-                  fontWeight: '600',
+                  fontWeight: '800',
                   color: '#3B82F6',
                   textAlign: 'center'
                 }}>
@@ -146,6 +146,7 @@ export default function PhoneAuthScreen() {
                 <Text style={{
                   fontSize: 14,
                   color: '#666',
+                    fontWeight: '600',
                   textAlign: 'center',
                   marginTop: 8
                 }}>
