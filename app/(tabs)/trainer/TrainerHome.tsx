@@ -100,6 +100,8 @@ export default function TrainerHome() {
     }
   }, [scheduleStatus]);
 
+
+
   const fetchAssignmentRequests = async () => {
     setIsLoadingRequests(true);
     try {
@@ -677,70 +679,6 @@ export default function TrainerHome() {
                 </TouchableOpacity>
               </View>
             </View>
-
-              {/* Display schedule based on status */}
-            {false ? (
-              // Show training schedule when scheduled
-              <View style={styles.trainerScheduleContainer}>
-                <TouchableOpacity
-                  style={styles.schedulePreview}
-                  onPress={() => router.push('/training-schedule')}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.schedulePreviewHeader}>
-                    <Text style={styles.schedulePreviewTitle}>트레이닝 일정</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-                  </View>
-                  <View style={styles.trainingScheduleInfo}>
-                    <View style={styles.trainingInfoItem}>
-                      <Ionicons name="people" size={16} color="#3B82F6" />
-                      <Text style={styles.trainingInfoText}>12명의 회원 일정 관리 중</Text>
-                    </View>
-                    <View style={styles.trainingInfoItem}>
-                      <Ionicons name="calendar" size={16} color="#3B82F6" />
-                      <Text style={styles.trainingInfoText}>주 48개 세션</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              // Show operation schedule when ready
-              Object.keys(savedSchedule).length > 0 && (
-                <View style={styles.trainerScheduleContainer}>
-                  <TouchableOpacity
-                    style={styles.schedulePreview}
-                    onPress={() => setShowScheduleDetail(true)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.schedulePreviewHeader}>
-                      <Text style={styles.schedulePreviewTitle}>운영 일정</Text>
-                      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-                    </View>
-                    {['월', '화', '수', '목', '금', '토', '일']
-                      .filter(day => savedSchedule[day]?.length > 0)
-                      .map((day) => (
-                        <View key={day} style={styles.schedulePreviewDay}>
-                          <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
-                          <Text style={styles.schedulePreviewTimes}>
-                            {savedSchedule[day].length}개 시간대
-                          </Text>
-                        </View>
-                      ))}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.modifyScheduleButton}
-                    onPress={() => {
-                      setSelectedTimes(savedSchedule || {});
-                      setShowScheduleEdit(true);
-                    }}
-                  >
-                    <Ionicons name="create-outline" size={20} color="white" />
-                    <Text style={styles.modifyScheduleButtonText}>운영 일정 수정</Text>
-                  </TouchableOpacity>
-                </View>
-              )
-            )}
           </>
         )}
       </ScrollView>
