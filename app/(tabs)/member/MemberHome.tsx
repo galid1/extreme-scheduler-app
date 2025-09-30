@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { memberScheduleService, memberService, apiClient, trainerScheduleService, trainerService, authService } from '@/src/services/api';
 import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
+import { MemberScheduleStatus } from '@/src/types/enums';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
@@ -263,7 +264,7 @@ export default function MemberHome() {
 
   // Show schedule registration as full page for NOT_READY status or when editing
   // Schedule editing view for members with trainer assigned
-  if (trainerAccountId && (scheduleStatus === 'NOT_READY' || showScheduleEdit)) {
+  if (trainerAccountId && (scheduleStatus === MemberScheduleStatus.NOT_READY || showScheduleEdit)) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.scheduleHeader}>
@@ -740,7 +741,7 @@ export default function MemberHome() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Show welcome or other content when schedule is ready */}
-        {trainerAccountId && scheduleStatus === 'READY' && (
+        {trainerAccountId && scheduleStatus === MemberScheduleStatus.READY && (
           <View style={styles.readyStateContainer}>
             <Ionicons name="checkmark-circle" size={60} color="#5B99F7" />
             <Text style={styles.readyStateTitle}>일정 등록 완료</Text>
@@ -787,7 +788,7 @@ export default function MemberHome() {
                         });
                       }
 
-                      if (userResponse.member?.scheduleStatus === 'SCHEDULED') {
+                      if (userResponse.member?.scheduleStatus === MemberScheduleStatus.SCHEDULED) {
                         Alert.alert(
                           '일정 수정 불가',
                           '이미 스케줄링이 완료되었습니다. 일정을 수정할 수 없습니다.',
@@ -825,7 +826,7 @@ export default function MemberHome() {
                         });
                       }
 
-                      if (userResponse.member?.scheduleStatus === 'SCHEDULED') {
+                      if (userResponse.member?.scheduleStatus === MemberScheduleStatus.SCHEDULED) {
                         Alert.alert(
                           '일정 취소 불가',
                           '이미 스케줄링이 완료되었습니다. 일정을 취소할 수 없습니다.',
@@ -875,7 +876,7 @@ export default function MemberHome() {
         )}
 
         {/* Show member's scheduled state */}
-        {trainerAccountId && scheduleStatus === 'SCHEDULED' && (
+        {trainerAccountId && scheduleStatus === MemberScheduleStatus.SCHEDULED && (
           <View style={styles.scheduledStateContainer}>
             <View style={styles.scheduledStateCard}>
               <View style={styles.scheduledStateHeader}>

@@ -69,6 +69,9 @@ extreme-scheduler-app/
 │   ├── utils/          # 유틸리티 함수
 │   ├── store/          # 전역 상태 관리
 │   ├── types/          # TypeScript 타입 정의
+│   │   ├── enums.ts   # Enum 정의 (AccountType, ScheduleStatus 등)
+│   │   ├── api.ts     # API 타입 정의
+│   │   └── user.ts    # User 타입 정의
 │   └── constants/      # 상수
 ├── assets/             # 정적 자산
 └── tests/             # 테스트 파일
@@ -105,6 +108,33 @@ npm run lint
 - 파일명: kebab-case
 - 컴포넌트명: PascalCase
 - 변수/함수명: camelCase
+
+## Enum 타입 관리 (중요)
+Enum 타입들은 `src/types/enums.ts` 파일에서 중앙 관리됩니다:
+
+### 주요 Enum 타입
+- **AccountType**: 계정 유형 (MEMBER, TRAINER)
+- **MemberScheduleStatus**: 회원 스케줄 상태 (NOT_READY, READY, SCHEDULED)
+- **TrainerScheduleStatus**: 트레이너 스케줄 상태 (NOT_READY, READY)
+- **Gender**: 성별 (MALE, FEMALE)
+- **Platform**: 플랫폼 (IOS, ANDROID)
+- **DayOfWeek**: 요일 (MONDAY ~ SUNDAY)
+- **RequestStatus**: 요청 상태 (PENDING, ACCEPTED, REJECTED)
+- **TrainerStatus**: 트레이너 상태 (PENDING, ACTIVE)
+- **TrainingSessionStatus**: 트레이닝 세션 상태 (SCHEDULED, COMPLETED, CANCELLED)
+
+### 사용 예시
+```typescript
+import { AccountType, MemberScheduleStatus } from '@/src/types/enums';
+
+if (accountType === AccountType.MEMBER) {
+  // Member logic
+}
+
+if (scheduleStatus === MemberScheduleStatus.READY) {
+  // Ready status logic
+}
+```
 
 ## 설치된 라이브러리
 - **Zustand**: 상태 관리 (persist middleware 포함)

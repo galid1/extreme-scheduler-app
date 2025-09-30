@@ -6,12 +6,13 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { AccountType } from '@/src/types/enums';
 
 interface ProfileCardProps {
   name: string;
   profileImageUrl?: string;
   phoneNumber?: string;
-  accountType?: 'MEMBER' | 'TRAINER';
+  accountType?: AccountType;
   experience?: string;
   specialties?: string[];
   rating?: number;
@@ -30,7 +31,7 @@ export default function ProfileCard({
   backgroundColor = '#3B82F6',
   textColor = 'white',
 }: ProfileCardProps) {
-  const isTrainer = accountType === 'TRAINER' || experience || specialties || rating;
+  const isTrainer = accountType === AccountType.TRAINER || experience || specialties || rating;
   console.log(`AAAAAAAAAAAAAAA: ${profileImageUrl}`)
 
   return (
@@ -56,7 +57,7 @@ export default function ProfileCard({
           {accountType && (
             <View style={styles.accountTypeBadge}>
               <Text style={[styles.accountTypeText, { color: textColor }]}>
-                {accountType === 'TRAINER' ? '트레이너' : '회원'}
+                {accountType === AccountType.TRAINER ? '트레이너' : '회원'}
               </Text>
             </View>
           )}

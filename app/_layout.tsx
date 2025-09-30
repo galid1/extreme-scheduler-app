@@ -1,17 +1,14 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import {DarkTheme, DefaultTheme, ThemeProvider} from '@react-navigation/native';
+import {Stack, useRouter, useSegments} from 'expo-router';
+import {StatusBar} from 'expo-status-bar';
 import 'react-native-reanimated';
-import { useEffect } from 'react';
+import {useEffect, useState} from 'react';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAuthStore } from '@/src/store/useAuthStore';
+import {useColorScheme} from '@/hooks/use-color-scheme';
+import {useAuthStore} from '@/src/store/useAuthStore';
 import authService from '@/src/services/api/auth.service';
 import apiClient from '@/src/services/api/client';
-import { useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setTestToken } from '@/src/utils/setTestToken';
-import { forceSetToken } from '@/src/utils/forceSetToken';
+import {forceSetToken} from '@/src/utils/forceSetToken';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

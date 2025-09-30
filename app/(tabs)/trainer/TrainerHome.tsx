@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { trainerScheduleService, trainerService, authService } from '@/src/services/api';
 import type { RegisterScheduleRequest, DayOfWeek } from '@/src/types/api';
+import { TrainerScheduleStatus } from '@/src/types/enums';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
@@ -91,7 +92,7 @@ export default function TrainerHome() {
 
   // Fetch trainer assignment requests
   useEffect(() => {
-    if (scheduleStatus === 'READY') {
+    if (scheduleStatus === TrainerScheduleStatus.READY) {
       fetchAssignmentRequests();
     }
   }, [scheduleStatus]);
@@ -171,7 +172,7 @@ export default function TrainerHome() {
   }
 
   // Show schedule registration as full page for NOT_READY status or when editing
-  if (scheduleStatus === 'NOT_READY' || showScheduleEdit) {
+  if (scheduleStatus === TrainerScheduleStatus.NOT_READY || showScheduleEdit) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.scheduleHeader}>
@@ -641,7 +642,7 @@ export default function TrainerHome() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Show trainer dashboard or schedule management */}
-        {(scheduleStatus === 'READY' || scheduleStatus === 'SCHEDULED') && (
+        {(scheduleStatus === TrainerScheduleStatus.READY) && (
           <>
             <View style={styles.trainerDashboard}>
               <Text style={styles.dashboardTitle}>담당 회원 대시보드</Text>
@@ -666,7 +667,7 @@ export default function TrainerHome() {
             </View>
 
               {/* Display schedule based on status */}
-            {scheduleStatus === 'SCHEDULED' ? (
+            {false ? (
               // Show training schedule when scheduled
               <View style={styles.trainerScheduleContainer}>
                 <TouchableOpacity
@@ -733,7 +734,7 @@ export default function TrainerHome() {
       </ScrollView>
 
       {/* Auto Scheduling Button for Trainers with READY status */}
-      {scheduleStatus === 'READY' && (
+      {scheduleStatus === TrainerScheduleStatus.READY && (
         <View style={styles.autoScheduleButtonContainer}>
           <TouchableOpacity
             style={styles.autoScheduleButton}
@@ -746,7 +747,7 @@ export default function TrainerHome() {
       )}
 
       {/* View Schedule Button for Trainers with SCHEDULED status */}
-      {scheduleStatus === 'SCHEDULED' && (
+      {false && (
         <View style={styles.autoScheduleButtonContainer}>
           <TouchableOpacity
             style={styles.viewScheduleButton}

@@ -2,12 +2,30 @@
  * API Type Definitions
  */
 
-// Common Types
-export type AccountType = 'MEMBER' | 'TRAINER';
-export type Gender = 'MALE' | 'FEMALE';
-export type Platform = 'IOS' | 'ANDROID';
-export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
-export type RequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+import {
+  AccountType,
+  Gender,
+  Platform,
+  DayOfWeek,
+  RequestStatus,
+  TrainerScheduleStatus,
+  TrainerStatus,
+  MemberScheduleStatus,
+  TrainingSessionStatus
+} from './enums';
+
+// Re-export enums for backward compatibility
+export {
+  AccountType,
+  Gender,
+  Platform,
+  DayOfWeek,
+  RequestStatus,
+  TrainerScheduleStatus,
+  TrainerStatus,
+  MemberScheduleStatus,
+  TrainingSessionStatus
+};
 
 // Auth Types
 export interface SendSmsRequest {
@@ -143,7 +161,7 @@ export interface TrainingSession {
   scheduleDate: string;
   startHour: number;
   endHour: number;
-  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
+  status: TrainingSessionStatus;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -188,9 +206,6 @@ export interface Account {
   pushToken?: PushTokenInfo;
 }
 
-export type TrainerScheduleStatus = 'NOT_READY' | 'READY';
-export type TrainerStatus = 'PENDING' | 'ACTIVE';
-export type MemberScheduleStatus = 'NOT_READY' | 'READY' | 'SCHEDULED';
 
 export interface TrainerResponse {
   accountId: number;
