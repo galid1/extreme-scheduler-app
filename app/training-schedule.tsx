@@ -15,10 +15,13 @@ import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView from '@/src/components/training/WeekCalendarView';
 import {WeekScheduleStatus} from "@/src/types/enums";
+import {useConfigStore} from '@/src/store/useConfigStore';
+import {trainerScheduleService} from '@/src/services/api';
 
 
 export default function TrainingScheduleScreen() {
   const router = useRouter();
+  const {mockMode} = useConfigStore();
   const {
     trainingSessions,
     currentWeek,
@@ -155,14 +158,14 @@ export default function TrainingScheduleScreen() {
       // Store에서 기존 세션 가져오기
       const { trainingSessions: existingSessions } = useTrainingStore.getState();
 
-      // 이미 세션이 있으면 사용, 없으면 mock 데이터 생성
+      // 이미 세션이 있으면 사용
       if (existingSessions && existingSessions.length > 0) {
         // 기존 데이터 사용 (재설정 후 돌아왔을 때)
         console.log('Using existing sessions:', existingSessions.length);
         console.log('Session days:', [...new Set(existingSessions.map(s => s.day))]);
         console.log('Session weeks:', [...new Set(existingSessions.map(s => s.weekOfYear))]);
-      } else {
-        // Mock 데이터 생성 (최초 진입 시)
+      } else if (mockMode) {
+        // Mock 모드: 가짜 데이터 생성
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // Generate mock data for multiple weeks
@@ -207,9 +210,30 @@ export default function TrainingScheduleScreen() {
         }
 
         setTrainingSessions(allSessions);
+      } else {
+        // Real API 호출
+        const response = await trainerScheduleService.getFreeSchedule();
+
+        // API 응답을 트레이닝 세션 형식으로 변환
+        // TODO: 실제 API 응답 구조에 맞게 변환 로직 구현 필요
+        // 현재는 빈 배열로 설정 (API 응답 구조 확인 후 수정)
+        console.log('API Response:', response);
+
+        // 예시: API 응답이 트레이닝 세션 형식이 아닐 경우 변환 필요
+        // const formattedSessions = response.sessions.map(session => ({
+        //   memberId: session.memberId.toString(),
+        //   memberName: session.memberName,
+        //   memberPhone: session.memberPhone,
+        //   hour: session.startHour,
+        //   day: session.dayOfWeek,
+        //   weekOfYear: session.weekNumber
+        // }));
+
+        setTrainingSessions([]);
       }
     } catch (error) {
       console.error('Error fetching training sessions:', error);
+      Alert.alert('오류', '스케줄을 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }

@@ -1,24 +1,16 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    AppState,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
-import {authService, trainerScheduleService, trainerService} from '@/src/services/api';
-import type {DayOfWeek, RegisterScheduleRequest} from '@/src/types/api';
-import {TrainerScheduleStatus} from '@/src/types/enums';
+import {authService, trainerService} from '@/src/services/api';
+import {TrainerScheduleStatus, TrainerStatus} from '@/src/types/enums';
 import {useAssignmentStore} from '@/src/store/useAssignmentStore';
 import MockModeToggle from '@/src/components/MockModeToggle';
 import {useConfigStore} from '@/src/store/useConfigStore';
+import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
+import TrainerScheduleEditor from '@/src/components/trainer/TrainerScheduleEditor';
+import TrainerScheduleDetailView from '@/src/components/trainer/TrainerScheduleDetailView';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -40,6 +32,7 @@ export default function TrainerHome() {
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
+  const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { mockMode } = useConfigStore();
@@ -133,519 +126,61 @@ export default function TrainerHome() {
   };
 
   // Show pending approval screen for PENDING status
-  if (status === 'PENDING') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.pendingContainer}>
-          <View style={styles.pendingCard}>
-            <Ionicons name="time-outline" size={80} color="#3B82F6" />
-            <Text style={styles.pendingTitle}>관리자 승인 대기중</Text>
-            <Text style={styles.pendingMessage}>
-              트레이너 계정이 승인 대기 중입니다.{' '}
-              관리자의 승인 후 서비스를 이용하실 수 있습니다.
-            </Text>
-            <Text style={styles.pendingSubMessage}>
-              승인까지 보통 1-2일 정도 소요됩니다.
-            </Text>
-
-            <TouchableOpacity
-              style={styles.refreshButton}
-              onPress={handleRefresh}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <>
-                  <Ionicons name="refresh-outline" size={20} color="white" />
-                  <Text style={styles.refreshButtonText}>새로고침</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.pendingInfoBox}>
-              <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
-              <Text style={styles.pendingInfoText}>
-                승인 상태는 자동으로 업데이트됩니다.
-              </Text>
-            </View>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
+  if (status === TrainerStatus.PENDING) {
+    return <TrainerPendingApprovalScreen onRefresh={handleRefresh} isRefreshing={isRefreshing} />;
   }
 
   // Show schedule registration as full page for NOT_READY status or when editing
-  if (scheduleStatus === TrainerScheduleStatus.NOT_READY || showScheduleEdit) {
+  if (scheduleStatus === TrainerScheduleStatus.NOT_READY || showScheduleEdit || showScheduleEditFromDetail) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.scheduleHeader}>
-          {showScheduleEdit && (
-            <TouchableOpacity
-              style={styles.scheduleBackButton}
-              onPress={() => {
-                setShowScheduleEdit(false);
-                // Restore saved schedule from store when cancelling edit
-                setSelectedTimes(savedSchedule || {});
-                setExpandedDay(null);
-              }}
-            >
-              <Ionicons name="arrow-back" size={24} color="white" />
-            </TouchableOpacity>
-          )}
-          <Text style={styles.schedulePageTitle}>
-            {showScheduleEdit
-              ? '일정 수정'
-              : '운영 가능한 일정을 등록하세요'}
-          </Text>
-          <Text style={styles.scheduleSubtitle}>
-            회원들이 수업을 신청할 수 있는 시간대를 설정합니다
-          </Text>
-          <View style={styles.helpContainer}>
-            <View style={styles.helpItem}>
-              <View style={[styles.helpIndicator, { backgroundColor: 'rgba(139, 92, 246, 0.3)' }]}>
-                <Ionicons name="repeat" size={12} color="white" />
-                <Text style={styles.helpIndicatorText}>반복</Text>
-              </View>
-              <Text style={styles.helpText}>매주 반복</Text>
-            </View>
-            <View style={styles.helpItem}>
-              <View style={[styles.helpIndicator, { backgroundColor: 'rgba(91, 153, 247, 0.3)' }]}>
-                <Text style={styles.helpIndicatorText}>일회</Text>
-              </View>
-              <Text style={styles.helpText}>한 번만</Text>
-            </View>
-          </View>
-        </View>
-
-        <ScrollView style={styles.scheduleScrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.daysContainer}>
-            {(() => {
-              const days = ['월', '화', '수', '목', '금', '토', '일'];
-              // Sort days to put expanded day first
-              const sortedDays = expandedDay
-                ? [expandedDay, ...days.filter(d => d !== expandedDay)]
-                : days;
-
-              return sortedDays.map((day) => (
-                <View key={day} style={styles.daySection}>
-                  <TouchableOpacity
-                    style={[
-                      styles.dayButton,
-                      expandedDay === day && styles.dayButtonActive,
-                    ]}
-                    onPress={() => setExpandedDay(expandedDay === day ? null : day)}
-                  >
-                    <Text style={[
-                      styles.dayButtonText,
-                      expandedDay === day && styles.dayButtonTextActive,
-                    ]}>
-                      {day}요일
-                    </Text>
-                    <View style={styles.dayButtonRight}>
-                      {selectedTimes[day]?.length > 0 && (
-                        <View style={styles.dayCountBadge}>
-                          <Text style={styles.dayCountText}>
-                            {selectedTimes[day].length}
-                          </Text>
-                        </View>
-                      )}
-                      <Ionicons
-                        name={expandedDay === day ? "chevron-up" : "chevron-down"}
-                        size={20}
-                        color="white"
-                        style={{ marginLeft: 8 }}
-                      />
-                    </View>
-                  </TouchableOpacity>
-
-                  {expandedDay === day && (
-                    <View style={styles.timeFullSlots}>
-                    <ScrollView style={styles.timeFullSlotsScroll} showsVerticalScrollIndicator={false}>
-                      {/* Morning Section */}
-                      <View style={styles.timePeriodSection}>
-                        <Text style={styles.timePeriodLabel}>오전</Text>
-                        {Array.from({ length: 12 }, (_, i) => i).map((hour) => {
-                          const timeSlot = selectedTimes[day]?.find(t => t.hour === hour);
-                          const state = timeSlot?.state || 'none';
-                          const displayHour = hour === 0 ? 12 : hour;
-
-                          return (
-                            <TouchableOpacity
-                              key={hour}
-                              style={[
-                                styles.timeFullSlot,
-                                state === 'once' && styles.timeSlotOnce,
-                                state === 'recurring' && styles.timeSlotRecurring,
-                              ]}
-                              onPress={() => {
-                                const dayTimes = selectedTimes[day] || [];
-                                const existingIndex = dayTimes.findIndex(t => t.hour === hour);
-
-                                if (existingIndex >= 0) {
-                                  const currentState = dayTimes[existingIndex].state;
-                                  if (currentState === 'recurring') {
-                                    // Change to once
-                                    const updated = [...dayTimes];
-                                    updated[existingIndex] = { hour, state: 'once' };
-                                    setSelectedTimes({ ...selectedTimes, [day]: updated });
-                                  } else {
-                                    // Remove (once -> none)
-                                    setSelectedTimes({
-                                      ...selectedTimes,
-                                      [day]: dayTimes.filter(t => t.hour !== hour),
-                                    });
-                                  }
-                                } else {
-                                  // Add as recurring
-                                  setSelectedTimes({
-                                    ...selectedTimes,
-                                    [day]: [...dayTimes, { hour, state: 'recurring' }].sort((a, b) => a.hour - b.hour),
-                                  });
-                                }
-                              }}
-                            >
-                              <View style={styles.timeSlotContent}>
-                                <Text style={[
-                                  styles.timeFullSlotText,
-                                  state !== 'none' && styles.timeSlotTextSelected,
-                                ]}>
-                                  {hour === 0
-                                    ? `오전 12:00 - 01:00`
-                                    : `오전 ${displayHour.toString().padStart(2, '0')}:00 - ${(displayHour + 1).toString().padStart(2, '0')}:00`}
-                                </Text>
-                                <View style={styles.timeSlotStateOptions}>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'recurring' && styles.stateOptionActiveRecurring
-                                  ]}>
-                                    <Ionicons
-                                      name="repeat"
-                                      size={14}
-                                      color={state === 'recurring' ? 'white' : '#cbd5e1'}
-                                    />
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'recurring' && styles.stateOptionTextActive
-                                    ]}>반복</Text>
-                                  </View>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'once' && styles.stateOptionActive
-                                  ]}>
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'once' && styles.stateOptionTextActive
-                                    ]}>일회</Text>
-                                  </View>
-                                </View>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-
-                      {/* Afternoon/Evening Section */}
-                      <View style={styles.timePeriodSection}>
-                        <Text style={styles.timePeriodLabel}>오후</Text>
-                        {Array.from({ length: 12 }, (_, i) => i + 12).map((hour) => {
-                          const timeSlot = selectedTimes[day]?.find(t => t.hour === hour);
-                          const state = timeSlot?.state || 'none';
-                          const displayHour = hour === 12 ? 12 : hour - 12;
-
-                          return (
-                            <TouchableOpacity
-                              key={hour}
-                              style={[
-                                styles.timeFullSlot,
-                                state === 'once' && styles.timeSlotOnce,
-                                state === 'recurring' && styles.timeSlotRecurring,
-                              ]}
-                              onPress={() => {
-                                const dayTimes = selectedTimes[day] || [];
-                                const existingIndex = dayTimes.findIndex(t => t.hour === hour);
-
-                                if (existingIndex >= 0) {
-                                  const currentState = dayTimes[existingIndex].state;
-                                  if (currentState === 'recurring') {
-                                    // Change to once
-                                    const updated = [...dayTimes];
-                                    updated[existingIndex] = { hour, state: 'once' };
-                                    setSelectedTimes({ ...selectedTimes, [day]: updated });
-                                  } else {
-                                    // Remove (once -> none)
-                                    setSelectedTimes({
-                                      ...selectedTimes,
-                                      [day]: dayTimes.filter(t => t.hour !== hour),
-                                    });
-                                  }
-                                } else {
-                                  // Add as recurring
-                                  setSelectedTimes({
-                                    ...selectedTimes,
-                                    [day]: [...dayTimes, { hour, state: 'recurring' }].sort((a, b) => a.hour - b.hour),
-                                  });
-                                }
-                              }}
-                            >
-                              <View style={styles.timeSlotContent}>
-                                <Text style={[
-                                  styles.timeFullSlotText,
-                                  state !== 'none' && styles.timeSlotTextSelected,
-                                ]}>
-                                  {hour === 12
-                                    ? `오후 12:00 - 01:00`
-                                    : hour === 23
-                                    ? `오후 ${displayHour.toString().padStart(2, '0')}:00 - 12:00`
-                                    : `오후 ${displayHour.toString().padStart(2, '0')}:00 - ${(displayHour + 1).toString().padStart(2, '0')}:00`}
-                                </Text>
-                                <View style={styles.timeSlotStateOptions}>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'recurring' && styles.stateOptionActiveRecurring
-                                  ]}>
-                                    <Ionicons
-                                      name="repeat"
-                                      size={14}
-                                      color={state === 'recurring' ? 'white' : '#cbd5e1'}
-                                    />
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'recurring' && styles.stateOptionTextActive
-                                    ]}>반복</Text>
-                                  </View>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'once' && styles.stateOptionActive
-                                  ]}>
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'once' && styles.stateOptionTextActive
-                                    ]}>일회</Text>
-                                  </View>
-                                </View>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </ScrollView>
-                  </View>
-                  )}
-                </View>
-              ));
-            })()}
-          </View>
-        </ScrollView>
-
-        <View style={styles.scheduleBottomBar}>
-          <TouchableOpacity
-            style={[
-              styles.scheduleSubmitButton,
-              Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)
-                ? styles.scheduleSubmitButtonActive
-                : styles.scheduleSubmitButtonDisabled,
-            ]}
-            onPress={async () => {
-              if (Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)) {
-                // If a day is expanded, collapse it first
-                if (expandedDay) {
-                  setExpandedDay(null);
-                } else {
-                  // Convert day names to DayOfWeek enum
-                  const dayMapping: { [key: string]: DayOfWeek } = {
-                    '월': 'MONDAY',
-                    '화': 'TUESDAY',
-                    '수': 'WEDNESDAY',
-                    '목': 'THURSDAY',
-                    '금': 'FRIDAY',
-                    '토': 'SATURDAY',
-                    '일': 'SUNDAY',
-                  };
-
-                  try {
-                    setIsSubmittingSchedule(true);
-
-                    // Prepare schedule data for API
-                    const request: RegisterScheduleRequest = {
-                      periodicScheduleLines: [],
-                      onetimeScheduleLines: []
-                    };
-
-                    // Get current date for one-time schedules
-                    const today = new Date();
-                    const getNextDate = (dayOfWeek: string) => {
-                      const targetDay = ['일', '월', '화', '수', '목', '금', '토'].indexOf(dayOfWeek);
-                      const currentDay = today.getDay();
-                      const daysUntilTarget = (targetDay - currentDay + 7) % 7 || 7; // If same day, schedule for next week
-                      const nextDate = new Date(today);
-                      nextDate.setDate(today.getDate() + daysUntilTarget);
-                      return nextDate.toISOString().split('T')[0];
-                    };
-
-                    // Process selected times
-                    Object.entries(selectedTimes).forEach(([day, slots]) => {
-                      if (slots && slots.length > 0) {
-                        slots.forEach(slot => {
-                          if (slot.state === 'recurring') {
-                            // Periodic schedule
-                            request.periodicScheduleLines?.push({
-                              dayOfWeek: dayMapping[day],
-                              startHour: slot.hour,
-                              endHour: slot.hour + 1, // Assuming 1-hour slots
-                            });
-                          } else if (slot.state === 'once') {
-                            // One-time schedule
-                            request.onetimeScheduleLines?.push({
-                              scheduleDate: getNextDate(day),
-                              startHour: slot.hour,
-                              endHour: slot.hour + 1, // Assuming 1-hour slots
-                            });
-                          }
-                        });
-                      }
-                    });
-
-                    // Check mock mode
-                    if (!mockMode) {
-                      // Register trainer schedule only in non-mock mode
-                      await trainerScheduleService.registerSchedule(request);
-
-                      // Fetch updated user data after schedule registration
-                      const userResponse = await authService.getCurrentUser();
-                      if (userResponse.trainer) {
-                        setAccountData({
-                          account: userResponse.account,
-                          member: userResponse.member,
-                          trainer: userResponse.trainer
-                        });
-                      }
-                    }
-
-                    // Save to local store
-                    setSavedSchedule(selectedTimes);
-
-                    if (showScheduleEdit) {
-                      setShowScheduleEdit(false);
-                      Alert.alert('성공', '일정 수정이 완료되었습니다.');
-                    } else {
-                      Alert.alert('성공', '일정 등록이 완료되었습니다.');
-                    }
-                  } catch (error: any) {
-                    console.error('Schedule registration error:', error);
-                    Alert.alert(
-                      '등록 실패',
-                      error.message || '일정 등록에 실패했습니다. 다시 시도해주세요.'
-                    );
-                  } finally {
-                    setIsSubmittingSchedule(false);
-                  }
-                }
-              }
-            }}
-            disabled={!Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0) || isSubmittingSchedule}
-          >
-            {isSubmittingSchedule ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.scheduleSubmitButtonText}>
-                {expandedDay
-                  ? '완료'
-                  : showScheduleEdit
-                    ? '수정 요청 완료'
-                    : '일정 등록 완료'}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      <TrainerScheduleEditor
+        showScheduleEdit={showScheduleEdit || showScheduleEditFromDetail}
+        savedSchedule={savedSchedule}
+        selectedTimes={selectedTimes}
+        setSelectedTimes={setSelectedTimes}
+        expandedDay={expandedDay}
+        setExpandedDay={setExpandedDay}
+        isSubmittingSchedule={isSubmittingSchedule}
+        setIsSubmittingSchedule={setIsSubmittingSchedule}
+        mockMode={mockMode}
+        fromDetail={showScheduleEditFromDetail}
+        onBackToDetail={() => {
+          setShowScheduleEditFromDetail(false);
+          setShowScheduleDetail(true);
+          setSelectedTimes(savedSchedule || {});
+          setExpandedDay(null);
+        }}
+        onCancel={() => {
+          setShowScheduleEdit(false);
+          setShowScheduleEditFromDetail(false);
+          // Restore saved schedule from store when cancelling edit
+          setSelectedTimes(savedSchedule || {});
+          setExpandedDay(null);
+        }}
+        onSuccess={(times) => {
+          setSavedSchedule(times);
+          setShowScheduleEdit(false);
+          setShowScheduleEditFromDetail(false);
+          if (showScheduleEditFromDetail) {
+            setShowScheduleDetail(true);
+          }
+        }}
+        setAccountData={setAccountData}
+      />
     );
   }
 
   // Show schedule detail view when requested
   if (showScheduleDetail) {
-    const days = ['월', '화', '수', '목', '금', '토', '일'];
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: 'white' }]}>
-        <View style={styles.scheduleDetailHeader}>
-          <TouchableOpacity
-            style={styles.scheduleDetailBackButton}
-            onPress={() => setShowScheduleDetail(false)}
-          >
-            <Ionicons name="arrow-back" size={24} color="#3B82F6" />
-          </TouchableOpacity>
-          <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
-          <View style={{ width: 44 }} />
-        </View>
-
-        <View style={styles.scheduleCalendarContainer}>
-          {/* Days header */}
-          <View style={styles.calendarHeader}>
-            <View style={styles.timeColumnHeader} />
-            {days.map((day) => (
-              <View key={day} style={styles.dayColumnHeader}>
-                <Text style={styles.dayColumnText}>{day}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Time grid */}
-          <ScrollView style={styles.calendarBody} showsVerticalScrollIndicator={false}>
-            {hours.map((hour) => {
-              const isPM = hour >= 12;
-              const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-              const period = isPM ? '오후🌙' : '오전☀️';
-
-              return (
-                <View key={hour} style={[styles.timeRow, isPM && styles.timeRowPM]}>
-                  <View style={[styles.timeLabel, isPM && styles.timeLabelPM]}>
-                    <Text style={styles.timeLabelPeriod}>{period}</Text>
-                    <Text style={styles.timeLabelText}>
-                      {displayHour}시
-                    </Text>
-                  </View>
-                  {days.map((day) => {
-                    const timeSlot = savedSchedule[day]?.find(t => t.hour === hour);
-                    const state = timeSlot?.state || 'none';
-
-                    return (
-                      <View
-                        key={`${day}-${hour}`}
-                        style={[
-                          styles.timeCell,
-                          isPM && styles.timeCellPM,
-                          state === 'once' && styles.timeCellOnce,
-                          state === 'recurring' && styles.timeCellRecurring,
-                        ]}
-                      >
-                        {state === 'recurring' && (
-                          <View style={styles.timeCellIndicator}>
-                            <Ionicons name="repeat" size={12} color="white" />
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Legend */}
-        <View style={styles.calendarLegend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: '#3B82F6', borderWidth: 1, borderColor: '#3B82F6' }]} />
-            <Text style={styles.legendText}>일회</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: '#8B5CF6', borderWidth: 1, borderColor: '#8B5CF6' }]} />
-            <Text style={styles.legendText}>매주 반복</Text>
-          </View>
-        </View>
-      </SafeAreaView>
+      <TrainerScheduleDetailView
+        savedSchedule={savedSchedule}
+        onClose={() => setShowScheduleDetail(false)}
+        onEdit={() => {
+          setShowScheduleDetail(false);
+          setShowScheduleEditFromDetail(true);
+        }}
+      />
     );
   }
 
@@ -682,6 +217,27 @@ export default function TrainerHome() {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Schedule Management Card */}
+            <View style={[styles.trainerDashboard, { marginTop: 20 }]}>
+              <Text style={styles.dashboardTitle}>운영 일정 관리</Text>
+              <View style={styles.scheduleButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.modifyScheduleButton, { flex: 1 }]}
+                  onPress={() => setShowScheduleDetail(true)}
+                >
+                  <Ionicons name="calendar" size={20} color="white" />
+                  <Text style={styles.modifyScheduleButtonText}>일정 보기</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modifyScheduleButton, { flex: 1 }]}
+                  onPress={() => setShowScheduleEdit(true)}
+                >
+                  <Ionicons name="create" size={20} color="white" />
+                  <Text style={styles.modifyScheduleButtonText}>일정 수정</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </>
         )}
       </ScrollView>
@@ -700,7 +256,7 @@ export default function TrainerHome() {
       )}
 
       {/* View Schedule Button for Trainers with SCHEDULED status */}
-      {trainer.scheduleStatus === TrainerScheduleStatus.SCHEEULDED && (
+      {trainer?.scheduleStatus === TrainerScheduleStatus.SCHEEULDED && (
         <View style={styles.autoScheduleButtonContainer}>
           <TouchableOpacity
             style={styles.viewScheduleButton}
