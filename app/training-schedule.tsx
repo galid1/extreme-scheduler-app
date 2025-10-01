@@ -1,19 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Dimensions,
-  Alert,
+    ActivityIndicator,
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/src/store/useAuthStore';
-import { useTrainingStore } from '@/src/store/useTrainingStore';
+import {Ionicons} from '@expo/vector-icons';
+import {useRouter} from 'expo-router';
+import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView from '@/src/components/training/WeekCalendarView';
 import {WeekScheduleStatus} from "@/src/types/enums";
@@ -21,7 +19,6 @@ import {WeekScheduleStatus} from "@/src/types/enums";
 
 export default function TrainingScheduleScreen() {
   const router = useRouter();
-  const { setScheduleStatus } = useAuthStore();
   const {
     trainingSessions,
     currentWeek,
@@ -33,13 +30,11 @@ export default function TrainingScheduleScreen() {
     setSelectedMember,
     setWeekScheduleStatus,
     getSessionsForWeek: storeGetSessionsForWeek,
-    canEditWeek,
     canSendNotification,
     isCurrentWeek,
     isPastWeek,
     isNextWeek,
     resetWeek,
-    resetTraining
   } = useTrainingStore();
 
   const [isLoading, setIsLoading] = useState(true);

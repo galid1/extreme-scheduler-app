@@ -362,8 +362,7 @@ curl -X POST "${BASE_URL}/api/v1/trainers/schedules/auto-scheduling" \
 -H "Content-Type: application/json" \
 -d '{
 "memberAccountIds": [789, 790, 791],
-"startDate": "2024-01-01",
-"endDate": "2024-01-31"
+"targetDate": "2024-01-01",
 }'
 
 ### 17. 자동 스케줄링 알림 발송 (트레이너)

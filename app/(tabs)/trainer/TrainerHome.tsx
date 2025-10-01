@@ -1,30 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  Alert,
-  Image,
-  AppState,
+    ActivityIndicator,
+    Alert,
+    AppState,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useAuthStore } from '@/src/store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { trainerScheduleService, trainerService, authService } from '@/src/services/api';
-import type { RegisterScheduleRequest, DayOfWeek } from '@/src/types/api';
-import { TrainerScheduleStatus } from '@/src/types/enums';
-import { useAssignmentStore } from '@/src/store/useAssignmentStore';
+import {useAuthStore} from '@/src/store/useAuthStore';
+import {Ionicons} from '@expo/vector-icons';
+import {useRouter} from 'expo-router';
+import {authService, trainerScheduleService, trainerService} from '@/src/services/api';
+import type {DayOfWeek, RegisterScheduleRequest} from '@/src/types/api';
+import {TrainerScheduleStatus} from '@/src/types/enums';
+import {useAssignmentStore} from '@/src/store/useAssignmentStore';
 import MockModeToggle from '@/src/components/MockModeToggle';
-import { useConfigStore } from '@/src/store/useConfigStore';
+import {useConfigStore} from '@/src/store/useConfigStore';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -655,7 +649,6 @@ export default function TrainerHome() {
     );
   }
 
-  console.log("HERERE @@@@@@@@@@@", scheduleStatus)
   // Default home screen for trainers or members with assigned trainer
   return (
     <SafeAreaView style={styles.container}>
