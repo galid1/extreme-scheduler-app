@@ -13,10 +13,10 @@ import {
 
 class TrainerScheduleService {
   /**
-   * 트레이너 스케줄 조회
+   * 트레이너 운영 가능 일정 조회
    */
-  async getSchedule(): Promise<GetFreeTimeScheduleResponse> {
-    return apiClient.get<GetFreeTimeScheduleResponse>('/api/v1/trainers/schedules');
+  async getFreeSchedule(): Promise<GetFreeTimeScheduleResponse> {
+    return apiClient.get<GetFreeTimeScheduleResponse>('/api/v1/trainers/schedules/free');
   }
 
   /**
