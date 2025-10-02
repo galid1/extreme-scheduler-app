@@ -5,10 +5,10 @@
 
 import apiClient from './client';
 import {
-  TrainerSearchResponse,
-  CreateAssignmentRequest,
-  AssignmentRequest,
-  PageResponse,
+    TrainerSearchResponse,
+    CreateAssignmentRequest,
+    AssignmentRequest,
+    PageResponse, AssignedTrainerResponse,
 } from '../../types/api';
 
 class MemberService {
@@ -22,8 +22,8 @@ class MemberService {
     );
   }
 
-  async getAssignedTrainer(): Promise<TrainerSearchResponse | null> {
-    return apiClient.get<TrainerSearchResponse | null>(
+  async getAssignedTrainer(): Promise<AssignedTrainerResponse | null> {
+    return apiClient.get<AssignedTrainerResponse | null>(
       `/api/v1/members/assigned-trainer`
     );
   }

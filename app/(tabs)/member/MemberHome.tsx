@@ -36,7 +36,7 @@ interface TimeSlotSelection {
 
 export default function MemberHome() {
   const router = useRouter();
-  const { account, member, setTrainerAccountId, setScheduleStatus, savedSchedule, setSavedSchedule, setAccountData } = useAuthStore();
+  const { account, member, setTrainerAccountId, savedSchedule, setSavedSchedule, setAccountData } = useAuthStore();
   const name = account?.privacyInfo?.name;
   const trainerAccountId = member?.trainerAccountId;
   const scheduleStatus = member?.scheduleStatus;

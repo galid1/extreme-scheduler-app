@@ -24,10 +24,9 @@ export default function RootLayout() {
     // Force set token for testing
     const initializeAuth = async () => {
       try {
-        console.log('=== Force Setting Token ===');
         await forceSetToken(); // 로그인, 회원가입을 건너 띄고 싶은 경우에 사용 (mock mode가 아님)
+        console.log('=== Force Setting Token ===');
         setIsHydrated(true);
-        console.log('===========================');
       } catch (error) {
         console.error('Error initializing auth:', error);
       }

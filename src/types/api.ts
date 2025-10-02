@@ -78,6 +78,14 @@ export interface TrainerSearchResponse {
     profileImageUrl?: string;
 }
 
+export interface AssignedTrainerResponse {
+    trainerAccountId: number;
+    name: string;
+    phoneNumber: string;
+    profileImageUrl?: string;
+    assignedTrainerScheduleStatus: TrainerScheduleStatus;
+}
+
 // Assignment Request Types
 export interface AssignmentRequestDto {
   requestId: number;
