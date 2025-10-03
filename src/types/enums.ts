@@ -15,10 +15,10 @@ export enum TrainerScheduleStatus {
 }
 
 // 자동 스케줄링 결과 상태
-export enum WeekScheduleStatus {
-    NOT_FIXED,
-    FIXED,
-    CANCELLED,
+export enum AutoSchedulingResultStatus {
+    NOT_FIXED = 'NOT_FIXED',
+    FIXED = 'FIXED',
+    CANCELLED = 'CANCELLED',
 }
 
 export enum Gender {

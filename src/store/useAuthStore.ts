@@ -6,7 +6,8 @@ import {
   TrainerResponse,
   MemberResponse,
   TrainerScheduleStatus,
-  MemberScheduleStatus
+  MemberScheduleStatus,
+  MemberFixedAutoSchedulingScheduleDetail
 } from '@/src/types/api';
 import { useConfigStore } from './useConfigStore';
 import { mockAccount, mockTrainer, mockMember, mockMemberAccount, mockSavedSchedule } from '@/src/mock/mockData';
@@ -31,6 +32,12 @@ interface AuthState {
   // Schedule data for both member and trainer
   savedSchedule: { [key: string]: TimeSlotSelection[] };
 
+  // Assigned trainer data for member
+  assignedTrainer: any | null;
+
+  // Auto scheduling results for member
+  autoSchedulingResults: MemberFixedAutoSchedulingScheduleDetail[] | null;
+
   // Actions
   setToken: (token: string) => void;
   setPhoneNumber: (phoneNumber: string) => void;
@@ -43,6 +50,8 @@ interface AuthState {
   }) => void;
   setSavedSchedule: (schedule: { [key: string]: TimeSlotSelection[] }) => void;
   setTrainerAccountId: (id: number | null) => void;
+  setAssignedTrainer: (trainer: any | null) => void;
+  setAutoSchedulingResults: (results: MemberFixedAutoSchedulingScheduleDetail[] | null) => void;
   logout: () => void;
 }
 
@@ -57,6 +66,8 @@ export const useAuthStore = create<AuthState>()(
       trainer: null,
       member: null,
       savedSchedule: {},
+      assignedTrainer: null,
+      autoSchedulingResults: null,
 
       setToken: (token) => {
         set({ token });
@@ -101,6 +112,14 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
+      setAssignedTrainer: (trainer) => {
+        set({ assignedTrainer: trainer });
+      },
+
+      setAutoSchedulingResults: (results) => {
+        set({ autoSchedulingResults: results });
+      },
+
       logout: () => {
         set({
           token: null,
@@ -110,6 +129,8 @@ export const useAuthStore = create<AuthState>()(
           trainer: null,
           member: null,
           savedSchedule: {},
+          assignedTrainer: null,
+          autoSchedulingResults: null,
         });
       },
     }),

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ import { MemberScheduleStatus } from '@/src/types/enums';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 import MockModeToggle from '@/src/components/MockModeToggle';
 import { useConfigStore } from '@/src/store/useConfigStore';
+import { getYearAndWeek } from '@/src/utils/dateUtils';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -36,11 +37,16 @@ interface TimeSlotSelection {
 
 export default function MemberHome() {
   const router = useRouter();
-  const { account, member, setTrainerAccountId, savedSchedule, setSavedSchedule, setAccountData } = useAuthStore();
+  const { account, member, setTrainerAccountId, savedSchedule, setSavedSchedule, setAccountData, setAssignedTrainer, assignedTrainer, autoSchedulingResults, setAutoSchedulingResults } = useAuthStore();
   const name = account?.privacyInfo?.name;
   const trainerAccountId = member?.trainerAccountId;
   const scheduleStatus = member?.scheduleStatus;
   const [trainerPhone, setTrainerPhone] = useState('');
+
+  // Helper function to check if auto scheduling is completed with results
+  const hasAutoSchedulingResults = useCallback(() => {
+    return autoSchedulingResults !== null && autoSchedulingResults.length > 0;
+  }, [autoSchedulingResults]);
   const [trainerProfile, setTrainerProfile] = useState<TrainerSearchResponse | null>(null);
   const appStateRef = useRef(AppState.currentState);
   const [isSearching, setIsSearching] = useState(false);
@@ -60,6 +66,31 @@ export default function MemberHome() {
     }
   }, [showScheduleEdit]);
 
+  // Fetch auto scheduling results
+  const fetchAutoSchedulingResults = useCallback(async () => {
+    if (!member) {
+      setAutoSchedulingResults(null);
+      return;
+    }
+
+    if (mockMode) {
+      setAutoSchedulingResults([]);
+      return;
+    }
+
+    try {
+      const { targetYear, targetWeekOfYear } = getYearAndWeek();
+      const response = await memberScheduleService.getFixedAutoSchedulingResult(
+        targetYear,
+        targetWeekOfYear
+      );
+      setAutoSchedulingResults(response.data);
+    } catch (error) {
+      console.error('Error fetching auto scheduling results:', error);
+      setAutoSchedulingResults(null);
+    }
+  }, [mockMode, member, setAutoSchedulingResults]);
+
   // Update member status when app comes to foreground
   useEffect(() => {
     const fetchLatestUserData = async () => {
@@ -72,6 +103,19 @@ export default function MemberHome() {
               member: userResponse.member,
               trainer: userResponse.trainer
             });
+
+            // Fetch assigned trainer if member has trainerAccountId
+            if (userResponse.member.trainerAccountId) {
+              try {
+                const assignedTrainerResponse = await memberService.getAssignedTrainer();
+                setAssignedTrainer(assignedTrainerResponse);
+              } catch (error) {
+                console.error('Error fetching assigned trainer:', error);
+              }
+            }
+
+            // Fetch auto scheduling results after updating member data
+            await fetchAutoSchedulingResults();
           }
         } catch (error) {
           console.error('Error fetching latest user data:', error);
@@ -94,7 +138,12 @@ export default function MemberHome() {
     return () => {
       subscription.remove();
     };
-  }, [account]);
+  }, [account, fetchAutoSchedulingResults]);
+
+  // Fetch auto scheduling results when status changes
+  useEffect(() => {
+    fetchAutoSchedulingResults();
+  }, [fetchAutoSchedulingResults]);
 
 
   const formatPhoneNumber = (text: string) => {
@@ -222,7 +271,7 @@ export default function MemberHome() {
                   {trainerProfile &&
                   (<View>
                       <Text>
-                          {trainerProfile?.trainer?.trainerAccountId}
+                          {trainerProfile?.trainerAccountId}
                       </Text>
                   </View>)
                   }
@@ -256,7 +305,7 @@ export default function MemberHome() {
                     <TouchableOpacity
                       style={[styles.assignButton, isAssigning && styles.assignButtonDisabled]}
                       onPress={handleAssignTrainer}
-                      disabled={isAssigning || trainerProfile.isAlreadyAssigned}
+                      disabled={isAssigning || !trainerProfile}
                     >
                       {isAssigning ? (
                         <ActivityIndicator color="white" />
@@ -615,7 +664,6 @@ export default function MemberHome() {
 
                     // Save to local store and update status
                     setSavedSchedule(selectedTimes);
-                    setScheduleStatus(MemberScheduleStatus.READY);
 
                     if (showScheduleEdit) {
                       setShowScheduleEdit(false);
@@ -811,7 +859,8 @@ export default function MemberHome() {
                         });
                       }
 
-                      if (userResponse.member?.scheduleStatus === MemberScheduleStatus.SCHEDULED) {
+                      // Check if there are actual scheduled results
+                      if (hasAutoSchedulingResults()) {
                         Alert.alert(
                           '일정 수정 불가',
                           '이미 스케줄링이 완료되었습니다. 일정을 수정할 수 없습니다.',
@@ -853,7 +902,8 @@ export default function MemberHome() {
                         });
                       }
 
-                      if (userResponse.member?.scheduleStatus === MemberScheduleStatus.SCHEDULED) {
+                      // Check if there are actual scheduled results
+                      if (hasAutoSchedulingResults()) {
                         Alert.alert(
                           '일정 취소 불가',
                           '이미 스케줄링이 완료되었습니다. 일정을 취소할 수 없습니다.',
@@ -874,9 +924,13 @@ export default function MemberHome() {
                             onPress: async () => {
                               try {
                                 if (!mockMode) {
-                                  await memberScheduleService.setScheduleUnready();
+                                  const { targetYear, targetWeekOfYear } = getYearAndWeek();
+
+                                  await memberScheduleService.unRegisterWeeklyFreeTimeSchedule({
+                                    targetYear,
+                                    targetWeekOfYear
+                                  });
                                 }
-                                setScheduleStatus(MemberScheduleStatus.NOT_READY);
                                 setSavedSchedule({});
                                 Alert.alert('완료', '일정이 취소되었습니다.');
                               } catch (error: any) {
@@ -905,21 +959,34 @@ export default function MemberHome() {
         )}
 
         {/* Show member's scheduled state */}
-        {trainerAccountId && scheduleStatus === MemberScheduleStatus.SCHEDULED && (
+        {trainerAccountId && autoSchedulingResults !== null && (
           <View style={styles.scheduledStateContainer}>
             <View style={styles.scheduledStateCard}>
               <View style={styles.scheduledStateHeader}>
                 <Ionicons name="information-circle" size={48} color="#3B82F6" />
                 <Text style={styles.scheduledStateTitle}>스케줄링 완료</Text>
               </View>
-              <Text style={styles.scheduledStateMessage}>
-                이번 주는 트레이너와의 일정이 맞지 않아{' '}
-                스케줄된 세션이 없습니다.
-              </Text>
-              <Text style={styles.scheduledStateSubMessage}>
-                다음 주에는 트레이너와 일정을 조율하여{' '}
-                트레이닝 세션이 배정될 예정입니다.
-              </Text>
+              {!hasAutoSchedulingResults() ? (
+                <>
+                  <Text style={styles.scheduledStateMessage}>
+                    이번 주는 트레이너와의 일정이 맞지 않아{' '}
+                    스케줄된 세션이 없습니다.
+                  </Text>
+                  <Text style={styles.scheduledStateSubMessage}>
+                    다음 주에는 트레이너와 일정을 조율하여{' '}
+                    트레이닝 세션이 배정될 예정입니다.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.scheduledStateMessage}>
+                    이번 주 트레이닝 일정이 확정되었습니다.
+                  </Text>
+                  <Text style={styles.scheduledStateSubMessage}>
+                    확정된 일정을 확인해주세요.
+                  </Text>
+                </>
+              )}
               <View style={styles.scheduledStateInfo}>
                 <Ionicons name="calendar-outline" size={20} color="#6B7280" />
                 <Text style={styles.scheduledStateInfoText}>

@@ -11,7 +11,8 @@ import {
   TrainerScheduleStatus,
   TrainerStatus,
   MemberScheduleStatus,
-  TrainingSessionStatus
+  TrainingSessionStatus,
+  AutoSchedulingResultStatus
 } from './enums';
 
 // Re-export enums for backward compatibility
@@ -24,7 +25,8 @@ export {
   TrainerScheduleStatus,
   TrainerStatus,
   MemberScheduleStatus,
-  TrainingSessionStatus
+  TrainingSessionStatus,
+  AutoSchedulingResultStatus
 };
 
 // Auth Types
@@ -83,7 +85,7 @@ export interface AssignedTrainerResponse {
     name: string;
     phoneNumber: string;
     profileImageUrl?: string;
-    assignedTrainerScheduleStatus: TrainerScheduleStatus;
+    assignedTrainerFixedSchedule: boolean;
 }
 
 // Assignment Request Types
@@ -125,6 +127,11 @@ export interface OnetimeScheduleLine {
 export interface RegisterScheduleRequest {
   periodicScheduleLines?: PeriodicScheduleLine[];
   onetimeScheduleLines?: OnetimeScheduleLine[];
+}
+
+export interface UnRegisterMemberFreeTimeScheduleRequest {
+  targetYear: number;
+  targetWeekOfYear: number;
 }
 
 export interface ScheduleTimeUpdate {
@@ -247,4 +254,16 @@ export interface CurrentAccountResponse {
   account: Account;
   member?: MemberResponse;
   trainer?: TrainerResponse;
+}
+
+// Auto Scheduling Result Types
+export interface MemberFixedAutoSchedulingScheduleDetail {
+  autoSchedulingResultId: number;
+  status: AutoSchedulingResultStatus;
+  year: number;
+  weekOfYear: number;
+}
+
+export interface GetFixedAutoSchedulingResultResponse {
+  data: MemberFixedAutoSchedulingScheduleDetail[];
 }

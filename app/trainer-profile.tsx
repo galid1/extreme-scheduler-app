@@ -4,31 +4,13 @@ import {useRouter} from 'expo-router';
 import {Ionicons} from '@expo/vector-icons';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import ProfileCard from '@/src/components/ProfileCard';
-import memberService from "@/src/services/api/member.service";
-import {TrainerSearchResponse} from "@/src/types/api";
 
 export default function TrainerProfileScreen() {
   const router = useRouter();
-  const { member } = useAuthStore();
-  const [trainerProfile, setTrainerProfile] = useState<TrainerSearchResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { assignedTrainer } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchTrainerProfile();
-  }, [member?.trainerAccountId]);
-
-  const fetchTrainerProfile = async () => {
-    setIsLoading(true);
-    try {
-      // Mock API call - replace with actual API
-      const response = await memberService.getAssignedTrainer()
-      setTrainerProfile(response)
-    } catch (error) {
-      console.error('Error fetching trainer profile:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const trainerProfile = assignedTrainer;
 
   if (isLoading) {
     return (
