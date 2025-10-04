@@ -11,6 +11,7 @@ import {useConfigStore} from '@/src/store/useConfigStore';
 import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
 import TrainerScheduleEditor from '@/src/components/trainer/TrainerScheduleEditor';
 import TrainerScheduleDetailView from '@/src/components/trainer/TrainerScheduleDetailView';
+import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -19,6 +20,19 @@ interface TimeSlotSelection {
   state: TimeSlotState;
 }
 
+
+// Helper function to get current year and week
+function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const pastDaysOfYear = (now.getTime() - startOfYear.getTime()) / 86400000;
+  const weekOfYear = Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+
+  return {
+    year: now.getFullYear(),
+    weekOfYear
+  };
+}
 
 export default function TrainerHome() {
   const router = useRouter();
@@ -35,7 +49,26 @@ export default function TrainerHome() {
   const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
   const { mockMode } = useConfigStore();
+
+  // Check registration status on mount
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      if (!mockMode) {
+        try {
+          const { year, weekOfYear } = getCurrentYearAndWeek();
+          const nextWeekOfYear = weekOfYear + 1;
+          const response = await trainerScheduleService.checkWeeklyScheduleRegistration(year, nextWeekOfYear);
+          setIsRegistered(response.registered);
+        } catch (error) {
+          console.error('Error checking registration status:', error);
+        }
+      }
+    };
+
+    checkRegistrationStatus();
+  }, [mockMode]);
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -82,10 +115,10 @@ export default function TrainerHome() {
 
   // Fetch trainer assignment requests
   useEffect(() => {
-    if (scheduleStatus === TrainerScheduleStatus.READY) {
+    if (isRegistered === true) {
       fetchAssignmentRequests();
     }
-  }, [scheduleStatus]);
+  }, [isRegistered]);
 
 
 
@@ -131,7 +164,7 @@ export default function TrainerHome() {
   }
 
   // Show schedule registration as full page for NOT_READY status or when editing
-  if (scheduleStatus === TrainerScheduleStatus.NOT_READY || showScheduleEdit || showScheduleEditFromDetail) {
+  if (isRegistered === false || showScheduleEdit || showScheduleEditFromDetail) {
     return (
       <TrainerScheduleEditor
         showScheduleEdit={showScheduleEdit || showScheduleEditFromDetail}
@@ -194,7 +227,7 @@ export default function TrainerHome() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Show trainer dashboard or schedule management */}
-        {(scheduleStatus === TrainerScheduleStatus.READY) && (
+        {(isRegistered === true) && (
           <>
             <View style={styles.trainerDashboard}>
               <Text style={styles.dashboardTitle}>담당 회원 대시보드</Text>
@@ -243,7 +276,7 @@ export default function TrainerHome() {
       </ScrollView>
 
       {/* Auto Scheduling Button for Trainers with READY status */}
-      {scheduleStatus === TrainerScheduleStatus.READY && (
+      {isRegistered === true && (
         <View style={styles.autoScheduleButtonContainer}>
           <TouchableOpacity
             style={styles.autoScheduleButton}

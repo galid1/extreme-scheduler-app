@@ -274,3 +274,9 @@ export interface WeeklyScheduleRegistrationStatusResponse {
   year: number;
   weekOfYear: number;
 }
+
+export interface TrainerWeeklyScheduleRegistrationStatusResponse {
+  registered: boolean;
+  year: number;
+  weekOfYear: number;
+}
