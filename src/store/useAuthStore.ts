@@ -7,7 +7,8 @@ import {
   MemberResponse,
   TrainerScheduleStatus,
   MemberScheduleStatus,
-  MemberFixedAutoSchedulingScheduleDetail
+  MemberFixedAutoSchedulingScheduleDetail,
+  WeeklyScheduleRegistrationStatusResponse
 } from '@/src/types/api';
 import { useConfigStore } from './useConfigStore';
 import { mockAccount, mockTrainer, mockMember, mockMemberAccount, mockSavedSchedule } from '@/src/mock/mockData';
@@ -38,6 +39,9 @@ interface AuthState {
   // Auto scheduling results for member
   autoSchedulingResults: MemberFixedAutoSchedulingScheduleDetail[] | null;
 
+  // Weekly schedule registration status for member
+  weeklyScheduleRegistration: WeeklyScheduleRegistrationStatusResponse | null;
+
   // Actions
   setToken: (token: string) => void;
   setPhoneNumber: (phoneNumber: string) => void;
@@ -52,6 +56,7 @@ interface AuthState {
   setTrainerAccountId: (id: number | null) => void;
   setAssignedTrainer: (trainer: any | null) => void;
   setAutoSchedulingResults: (results: MemberFixedAutoSchedulingScheduleDetail[] | null) => void;
+  setWeeklyScheduleRegistration: (status: WeeklyScheduleRegistrationStatusResponse | null) => void;
   logout: () => void;
 }
 
@@ -68,6 +73,7 @@ export const useAuthStore = create<AuthState>()(
       savedSchedule: {},
       assignedTrainer: null,
       autoSchedulingResults: null,
+      weeklyScheduleRegistration: null,
 
       setToken: (token) => {
         set({ token });
@@ -120,6 +126,10 @@ export const useAuthStore = create<AuthState>()(
         set({ autoSchedulingResults: results });
       },
 
+      setWeeklyScheduleRegistration: (status) => {
+        set({ weeklyScheduleRegistration: status });
+      },
+
       logout: () => {
         set({
           token: null,
@@ -131,6 +141,7 @@ export const useAuthStore = create<AuthState>()(
           savedSchedule: {},
           assignedTrainer: null,
           autoSchedulingResults: null,
+          weeklyScheduleRegistration: null,
         });
       },
     }),

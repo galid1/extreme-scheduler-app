@@ -89,7 +89,7 @@ export default function AutoSchedulingScreen() {
                         id: 'member_001',
                         name: '김민수',
                         phoneNumber: '010-1234-5678',
-                        scheduleStatus: MemberScheduleStatus.READY,
+                        scheduleStatus: 'SCHEDULED' as any,
                         registeredTimes: 8,
                         lastTrainingDate: '2024-01-15',
                     },
@@ -97,7 +97,7 @@ export default function AutoSchedulingScreen() {
                         id: 'member_002',
                         name: '이영희',
                         phoneNumber: '010-2345-6789',
-                        scheduleStatus: MemberScheduleStatus.READY,
+                        scheduleStatus: 'SCHEDULED' as any,
                         registeredTimes: 12,
                         lastTrainingDate: '2024-01-14',
                     },
@@ -105,13 +105,13 @@ export default function AutoSchedulingScreen() {
                         id: 'member_003',
                         name: '박철수',
                         phoneNumber: '010-3456-7890',
-                        scheduleStatus: MemberScheduleStatus.NOT_READY,
+                        scheduleStatus: 'SCHEDULED' as any,
                     },
                     {
                         id: 'member_004',
                         name: '정미영',
                         phoneNumber: '010-4567-8901',
-                        scheduleStatus: MemberScheduleStatus.READY,
+                        scheduleStatus: 'SCHEDULED' as any,
                         registeredTimes: 6,
                         lastTrainingDate: '2024-01-13',
                     },
@@ -119,24 +119,19 @@ export default function AutoSchedulingScreen() {
                         id: 'member_005',
                         name: '최준호',
                         phoneNumber: '010-5678-9012',
-                        scheduleStatus: MemberScheduleStatus.NOT_READY,
+                        scheduleStatus: 'SCHEDULED' as any,
                     },
                     {
                         id: 'member_006',
                         name: '강서연',
                         phoneNumber: '010-6789-0123',
-                        scheduleStatus: MemberScheduleStatus.READY,
+                        scheduleStatus: 'SCHEDULED' as any,
                         registeredTimes: 10,
                         lastTrainingDate: '2024-01-16',
                     },
                 ];
 
-                // Sort by status: READY first, then NOT_READY
-                const sortedMembers = mockMembers.sort((a, b) => {
-                    if (a.scheduleStatus === MemberScheduleStatus.READY && b.scheduleStatus === MemberScheduleStatus.NOT_READY) return -1;
-                    if (a.scheduleStatus === MemberScheduleStatus.NOT_READY && b.scheduleStatus === MemberScheduleStatus.READY) return 1;
-                    return 0;
-                });
+                const sortedMembers = mockMembers;
 
                 setMembers(sortedMembers);
             } else {
@@ -150,14 +145,7 @@ export default function AutoSchedulingScreen() {
                     scheduleStatus: member.scheduleStatus,
                 }));
 
-                // Sort by status: READY first, then NOT_READY
-                const sortedMembers = fetchedMembers.sort((a, b) => {
-                    if (a.scheduleStatus === MemberScheduleStatus.READY && b.scheduleStatus === MemberScheduleStatus.NOT_READY) return -1;
-                    if (a.scheduleStatus === MemberScheduleStatus.NOT_READY && b.scheduleStatus === MemberScheduleStatus.READY) return 1;
-                    return 0;
-                });
-
-                setMembers(sortedMembers);
+                setMembers(fetchedMembers);
             }
         } catch (error) {
             console.error('Error fetching members:', error);
@@ -398,7 +386,7 @@ export default function AutoSchedulingScreen() {
                     </View>
                 ) : (
                     members.map((member) => {
-                    const isReady = member.scheduleStatus === MemberScheduleStatus.READY;
+                    const isReady = member.scheduleStatus === 'SCHEDULED';
                     const selectedMember = selectedMembers.find(m => m.memberId === member.id);
                     const isSelected = !!selectedMember;
 

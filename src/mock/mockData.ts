@@ -55,7 +55,7 @@ export const mockMemberAccount: Account = {
 export const mockMember: MemberResponse = {
   accountId: 2,
   trainerAccountId: 1,
-  scheduleStatus: MemberScheduleStatus.READY
+  scheduleStatus: MemberScheduleStatus.SCHEDULED
 };
 
 // Mock Assignment Requests

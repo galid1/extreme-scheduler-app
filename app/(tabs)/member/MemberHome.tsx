@@ -37,7 +37,7 @@ interface TimeSlotSelection {
 
 export default function MemberHome() {
   const router = useRouter();
-  const { account, member, setTrainerAccountId, savedSchedule, setSavedSchedule, setAccountData, setAssignedTrainer, assignedTrainer, autoSchedulingResults, setAutoSchedulingResults } = useAuthStore();
+  const { account, member, setTrainerAccountId, savedSchedule, setSavedSchedule, setAccountData, setAssignedTrainer, autoSchedulingResults, setAutoSchedulingResults, weeklyScheduleRegistration, setWeeklyScheduleRegistration } = useAuthStore();
   const name = account?.privacyInfo?.name;
   const trainerAccountId = member?.trainerAccountId;
   const scheduleStatus = member?.scheduleStatus;
@@ -65,6 +65,33 @@ export default function MemberHome() {
       setSelectedTimes(savedSchedule);
     }
   }, [showScheduleEdit]);
+
+  // Fetch weekly schedule registration status
+  const fetchWeeklyScheduleRegistration = useCallback(async () => {
+    if (!member) {
+      setWeeklyScheduleRegistration(null);
+      return;
+    }
+
+    if (mockMode) {
+      setWeeklyScheduleRegistration({ registered: false, year: 2024, weekOfYear: 1 });
+      return;
+    }
+
+    try {
+      const { targetYear, targetWeekOfYear } = getYearAndWeek();
+      const nextWeekOfYear = targetWeekOfYear + 1; // 다음주
+
+      const status = await memberScheduleService.checkWeeklyScheduleRegistration(
+        targetYear,
+        nextWeekOfYear
+      );
+      setWeeklyScheduleRegistration(status);
+    } catch (error) {
+      console.error('Error fetching weekly schedule registration:', error);
+      setWeeklyScheduleRegistration(null);
+    }
+  }, [mockMode, member, setWeeklyScheduleRegistration]);
 
   // Fetch auto scheduling results
   const fetchAutoSchedulingResults = useCallback(async () => {
@@ -114,7 +141,8 @@ export default function MemberHome() {
               }
             }
 
-            // Fetch auto scheduling results after updating member data
+            // Fetch weekly schedule registration and auto scheduling results after updating member data
+            await fetchWeeklyScheduleRegistration();
             await fetchAutoSchedulingResults();
           }
         } catch (error) {
@@ -138,12 +166,13 @@ export default function MemberHome() {
     return () => {
       subscription.remove();
     };
-  }, [account, fetchAutoSchedulingResults]);
+  }, [account, fetchWeeklyScheduleRegistration, fetchAutoSchedulingResults]);
 
-  // Fetch auto scheduling results when status changes
+  // Fetch weekly schedule registration and auto scheduling results when status changes
   useEffect(() => {
+    fetchWeeklyScheduleRegistration();
     fetchAutoSchedulingResults();
-  }, [fetchAutoSchedulingResults]);
+  }, [fetchWeeklyScheduleRegistration, fetchAutoSchedulingResults]);
 
 
   const formatPhoneNumber = (text: string) => {
@@ -326,9 +355,9 @@ export default function MemberHome() {
     );
   }
 
-  // Show schedule registration as full page for NOT_READY status or when editing
+  // Show schedule registration as full page for NOT registered status or when editing
   // Schedule editing view for members with trainer assigned
-  if (trainerAccountId && (scheduleStatus === MemberScheduleStatus.NOT_READY || showScheduleEdit)) {
+  if (trainerAccountId && (weeklyScheduleRegistration?.registered === false || showScheduleEdit)) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.scheduleHeader}>
@@ -807,8 +836,8 @@ export default function MemberHome() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Show welcome or other content when schedule is ready */}
-        {trainerAccountId && scheduleStatus === MemberScheduleStatus.READY && (
+        {/* Show welcome or other content when schedule is registered */}
+        {trainerAccountId && weeklyScheduleRegistration?.registered === true && (
           <View style={styles.readyStateContainer}>
             <Ionicons name="checkmark-circle" size={60} color="#5B99F7" />
             <Text style={styles.readyStateTitle}>일정 등록 완료</Text>

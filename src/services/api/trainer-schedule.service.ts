@@ -9,6 +9,7 @@ import {
   UpdateScheduleTimeRequest,
   AutoSchedulingRequest,
   GetFreeTimeScheduleResponse,
+  TrainerWeeklyScheduleRegistrationStatusResponse,
 } from '../../types/api';
 
 class TrainerScheduleService {
@@ -31,6 +32,18 @@ class TrainerScheduleService {
    */
   async executeAutoScheduling(request: AutoSchedulingRequest): Promise<void> {
     await apiClient.post('/api/v1/trainers/schedules/auto-scheduling', request);
+  }
+
+  /**
+   * 특정 주차의 스케줄 등록 상태 확인
+   */
+  async checkWeeklyScheduleRegistration(
+    targetYear: number,
+    targetWeekOfYear: number
+  ): Promise<TrainerWeeklyScheduleRegistrationStatusResponse> {
+    return apiClient.get<TrainerWeeklyScheduleRegistrationStatusResponse>(
+      `/api/v1/trainers/schedules/registration-status?targetYear=${targetYear}&targetWeekOfYear=${targetWeekOfYear}`
+    );
   }
 }
 
