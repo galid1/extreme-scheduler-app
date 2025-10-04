@@ -8,7 +8,8 @@ import {
   GetFreeTimeScheduleResponse,
   RegisterScheduleRequest,
   UnRegisterMemberFreeTimeScheduleRequest,
-  GetFixedAutoSchedulingResultResponse
+  GetFixedAutoSchedulingResultResponse,
+  WeeklyScheduleRegistrationStatusResponse
 } from '../../types/api';
 
 class MemberScheduleService {
@@ -50,14 +51,19 @@ class MemberScheduleService {
   }
 
   /**
-   * 자동 스케줄링 결과가 있는지 확인 (빈 리스트 여부)
+   * 주간 일정 등록 상태 확인
    */
-  async hasFixedAutoSchedulingResult(
+  async checkWeeklyScheduleRegistration(
     targetYear: number,
     targetWeekOfYear: number
-  ): Promise<boolean> {
-    const response = await this.getFixedAutoSchedulingResult(targetYear, targetWeekOfYear);
-    return response.data && response.data.length > 0;
+  ): Promise<WeeklyScheduleRegistrationStatusResponse> {
+    const queryParams = new URLSearchParams({
+      targetYear: targetYear.toString(),
+      targetWeekOfYear: targetWeekOfYear.toString()
+    });
+    return apiClient.get<WeeklyScheduleRegistrationStatusResponse>(
+      `/api/v1/members/schedules/registration-status?${queryParams}`
+    );
   }
 }
 

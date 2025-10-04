@@ -267,3 +267,10 @@ export interface MemberFixedAutoSchedulingScheduleDetail {
 export interface GetFixedAutoSchedulingResultResponse {
   data: MemberFixedAutoSchedulingScheduleDetail[];
 }
+
+// Weekly Schedule Registration Status Types
+export interface WeeklyScheduleRegistrationStatusResponse {
+  registered: boolean;
+  year: number;
+  weekOfYear: number;
+}
