@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { DayOfWeek, RegisterScheduleRequest } from '@/src/types/api';
 import { trainerScheduleService } from '@/src/services/api';
 import authService from '@/src/services/api/auth.service';
+import { getNextWeekYearAndWeek, getWeekDateRange, formatDateMMDD } from '@/src/utils/dateUtils';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -52,6 +53,28 @@ export default function TrainerScheduleEditor({
   fromDetail = false,
   onBackToDetail,
 }: TrainerScheduleEditorProps) {
+  // Calculate next week info
+  const nextWeekInfo = useMemo(() => {
+    const { targetYear, targetWeekOfYear } = getNextWeekYearAndWeek();
+    const { startDate, endDate } = getWeekDateRange(targetYear, targetWeekOfYear);
+
+    // Calculate dates for each day of the week
+    const dayDates: { [key: string]: string } = {};
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      const dayIndex = date.getDay();
+      dayDates[days[dayIndex]] = formatDateMMDD(date);
+    }
+
+    return {
+      weekNumber: targetWeekOfYear,
+      dateRange: `${formatDateMMDD(startDate)} ~ ${formatDateMMDD(endDate)}`,
+      dayDates,
+    };
+  }, []);
+
   const handleTimeSlotPress = (day: string, hour: number) => {
     const dayTimes = selectedTimes[day] || [];
     const existingIndex = dayTimes.findIndex((t) => t.hour === hour);
@@ -283,10 +306,10 @@ export default function TrainerScheduleEditor({
           </TouchableOpacity>
         )}
         <Text style={styles.schedulePageTitle}>
-          {showScheduleEdit ? '일정 수정' : '운영 가능한 일정을 등록하세요'}
+          {showScheduleEdit ? '일정 수정' : '운영 가능 일정 등록'}
         </Text>
         <Text style={styles.scheduleSubtitle}>
-          회원들이 수업을 신청할 수 있는 시간대를 설정합니다
+          {nextWeekInfo.weekNumber}주차 ({nextWeekInfo.dateRange})
         </Text>
         <View style={styles.helpContainer}>
           <View style={styles.helpItem}>
@@ -329,14 +352,19 @@ export default function TrainerScheduleEditor({
                 ]}
                 onPress={() => setExpandedDay(expandedDay === day ? null : day)}
               >
-                <Text
-                  style={[
-                    styles.dayButtonText,
-                    expandedDay === day && styles.dayButtonTextActive,
-                  ]}
-                >
-                  {day}요일
-                </Text>
+                <View style={styles.dayButtonLeft}>
+                  <Text
+                    style={[
+                      styles.dayButtonText,
+                      expandedDay === day && styles.dayButtonTextActive,
+                    ]}
+                  >
+                    {day}요일
+                  </Text>
+                  <Text style={styles.dayDateText}>
+                    {nextWeekInfo.dayDates[day]}
+                  </Text>
+                </View>
                 <View style={styles.dayButtonRight}>
                   {selectedTimes[day]?.length > 0 && (
                     <View style={styles.dayCountBadge}>
@@ -497,6 +525,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#e3f2fd',
     borderColor: '#3B82F6',
   },
+  dayButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   dayButtonText: {
     color: '#333',
     fontSize: 16,
@@ -505,6 +538,11 @@ const styles = StyleSheet.create({
   dayButtonTextActive: {
     fontWeight: '700',
     color: '#3B82F6',
+  },
+  dayDateText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '500',
   },
   dayButtonRight: {
     flexDirection: 'row',
