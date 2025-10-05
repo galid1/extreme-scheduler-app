@@ -5,13 +5,10 @@
 
 import apiClient from './client';
 import {
-  TrainerAssignmentRequestListResponse,
-  RejectAssignmentRequest,
-  AddMemberToTrainerRequest,
-  GetAssignedMembersResponse,
-  GetAssignedMembersWithSchedulesResponse,
-  PageResponse,
-  RequestStatus,
+    GetAssignedMembersWithSchedulesResponse,
+    RejectAssignmentRequest,
+    RequestStatus,
+    TrainerAssignmentRequestListResponse,
 } from '../../types/api';
 
 class TrainerService {

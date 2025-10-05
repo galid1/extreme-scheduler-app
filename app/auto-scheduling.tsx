@@ -16,6 +16,7 @@ import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import {trainerScheduleService, trainerService} from '@/src/services/api';
 import {getYearAndWeek} from "@/src/utils/dateUtils";
+import {useAssignedMembersStore} from '@/src/store/useAssignedMembersStore';
 
 interface Member {
     id: string;
@@ -47,6 +48,7 @@ export default function AutoSchedulingScreen() {
     const params = useLocalSearchParams();
     const {weekToReset, resetMode} = params;
     const {mockMode} = useConfigStore();
+    const {members: storedMembers, setMembers: setStoredMembers, shouldRefetch} = useAssignedMembersStore();
     const [members, setMembers] = useState<Member[]>([]);
     const [selectedMembers, setSelectedMembers] = useState<MemberSelection[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -185,6 +187,8 @@ export default function AutoSchedulingScreen() {
                     onetimeSchedules: member.onetimeSchedules,
                 }));
 
+                // Store에 저장
+                setStoredMembers(response.members);
                 setMembers(fetchedMembers);
             }
         } catch (error) {

@@ -4,9 +4,11 @@ import {useRouter} from 'expo-router';
 import {Ionicons} from '@expo/vector-icons';
 import {trainerService} from "@/src/services/api";
 import {useAssignmentStore} from "@/src/store/useAssignmentStore";
+import {useAssignedMembersStore} from "@/src/store/useAssignedMembersStore";
 
 export default function MemberManagementScreen() {
     const {assignmentRequests, setAssignmentRequests, setIsLoadingRequests} = useAssignmentStore();
+    const { members } = useAssignedMembersStore();
     const router = useRouter();
 
     // Fetch trainer assignment requests
@@ -36,7 +38,7 @@ export default function MemberManagementScreen() {
                     onPress={() => router.push('/profile')}
                     style={styles.settingsButton}
                 >
-                    <Ionicons name="settings-outline" size={24} color="#3B82F6"/>
+                    <Ionicons name="settings-outline" size={24} color="black"/>
                 </TouchableOpacity>
             </View>
 
@@ -50,7 +52,7 @@ export default function MemberManagementScreen() {
                                 style={styles.statCard}
                                 onPress={() => router.push('/approved-members')}
                             >
-                                <Text style={styles.statNumber}>12</Text>
+                                <Text style={styles.statNumber}>{members.length}</Text>
                                 <Text style={styles.statLabel}>회원</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
