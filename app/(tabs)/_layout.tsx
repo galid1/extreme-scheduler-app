@@ -29,9 +29,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="membermanagement"
         options={{
-          href: accountType === AccountType.TRAINER ? '/explore' : null,
+          href: accountType === AccountType.TRAINER ? '/membermanagement' : null,
           title: '회원관리',
           tabBarIcon: ({ color }) => <Ionicons name="people" size={28} color={color} />,
         }}
