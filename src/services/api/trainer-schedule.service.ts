@@ -6,7 +6,6 @@
 import apiClient from './client';
 import {
   RegisterScheduleRequest,
-  UpdateScheduleTimeRequest,
   AutoSchedulingRequest,
   GetFreeTimeScheduleResponse,
   TrainerWeeklyScheduleRegistrationStatusResponse,

@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { DayOfWeek, RegisterScheduleRequest } from '@/src/types/api';
 import { trainerScheduleService } from '@/src/services/api';
 import authService from '@/src/services/api/auth.service';
-import { getNextWeekYearAndWeek, getWeekDateRange, formatDateMMDD } from '@/src/utils/dateUtils';
+import { getNextWeekYearAndWeek, getNextWeekDateRange, formatDateMMDD } from '@/src/utils/dateUtils';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -56,7 +56,7 @@ export default function TrainerScheduleEditor({
   // Calculate next week info
   const nextWeekInfo = useMemo(() => {
     const { targetYear, targetWeekOfYear } = getNextWeekYearAndWeek();
-    const { startDate, endDate } = getWeekDateRange(targetYear, targetWeekOfYear);
+    const { startDate, endDate } = getNextWeekDateRange();
 
     // Calculate dates for each day of the week
     const dayDates: { [key: string]: string } = {};
@@ -127,8 +127,13 @@ export default function TrainerScheduleEditor({
     try {
       setIsSubmittingSchedule(true);
 
+      // Get next week's year and week number
+      const { targetYear, targetWeekOfYear } = getNextWeekYearAndWeek();
+
       // Prepare schedule data for API
       const request: RegisterScheduleRequest = {
+        targetYear,
+        targetWeekOfYear,
         periodicScheduleLines: [],
         onetimeScheduleLines: [],
       };

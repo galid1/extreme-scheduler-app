@@ -121,6 +121,8 @@ export interface OnetimeScheduleLine {
 }
 
 export interface RegisterScheduleRequest {
+  targetYear: number;
+  targetWeekOfYear: number;
   periodicScheduleLines?: PeriodicScheduleLine[];
   onetimeScheduleLines?: OnetimeScheduleLine[];
 }

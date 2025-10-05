@@ -24,7 +24,7 @@ import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 import MockModeToggle from '@/src/components/MockModeToggle';
 import { useConfigStore } from '@/src/store/useConfigStore';
-import { getYearAndWeek } from '@/src/utils/dateUtils';
+import { getYearAndWeek, getNextWeekYearAndWeek } from '@/src/utils/dateUtils';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -643,8 +643,13 @@ export default function MemberHome() {
                   try {
                     setIsSubmittingSchedule(true);
 
+                    // Get next week's year and week number
+                    const { targetYear, targetWeekOfYear } = getNextWeekYearAndWeek();
+
                     // Prepare schedule data for API
                     const request: RegisterScheduleRequest = {
+                      targetYear,
+                      targetWeekOfYear,
                       periodicScheduleLines: [],
                       onetimeScheduleLines: []
                     };

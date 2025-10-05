@@ -4,7 +4,21 @@
  */
 
 /**
- * 특정 날짜의 연도와 주차를 계산 (ISO 8601 방식)
+ * 특정 날짜가 속한 주의 월요일을 구함
+ * @param date 기준 날짜
+ * @returns 해당 주의 월요일
+ */
+const getMondayOfWeek = (date: Date): Date => {
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // 일요일(0)이면 -6, 그 외는 1-day
+  const monday = new Date(date);
+  monday.setDate(date.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+};
+
+/**
+ * 특정 날짜의 연도와 주차를 계산
  * @param date 계산할 날짜 (기본값: 현재 날짜)
  * @returns { targetYear: number, targetWeekOfYear: number }
  */
@@ -29,6 +43,22 @@ export const getNextWeekYearAndWeek = (date: Date = new Date()): { targetYear: n
   const nextWeekDate = new Date(date);
   nextWeekDate.setDate(date.getDate() + 7);
   return getYearAndWeek(nextWeekDate);
+};
+
+/**
+ * 다음 주의 시작일(월요일)과 종료일(일요일)을 계산
+ * @param date 기준 날짜 (기본값: 현재 날짜)
+ * @returns { startDate: Date, endDate: Date }
+ */
+export const getNextWeekDateRange = (date: Date = new Date()): { startDate: Date; endDate: Date } => {
+  const nextWeekDate = new Date(date);
+  nextWeekDate.setDate(date.getDate() + 7);
+
+  const startDate = getMondayOfWeek(nextWeekDate);
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 6);
+
+  return { startDate, endDate };
 };
 
 /**
