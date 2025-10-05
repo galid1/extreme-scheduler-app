@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -25,24 +25,19 @@ interface TimeSlotSelection {
 
 interface TrainerScheduleEditorProps {
   showScheduleEdit: boolean;
-  selectedTimes: { [key: string]: TimeSlotSelection[] };
-  setSelectedTimes: (times: { [key: string]: TimeSlotSelection[] }) => void;
   expandedDay: string | null;
   setExpandedDay: (day: string | null) => void;
   isSubmittingSchedule: boolean;
   setIsSubmittingSchedule: (value: boolean) => void;
   mockMode: boolean;
   onCancel: () => void;
-  onSuccess: (times: { [key: string]: TimeSlotSelection[] }) => void;
-  setAccountData: (data: any) => void;
+  onSuccess: () => void;
   fromDetail?: boolean;
   onBackToDetail?: () => void;
 }
 
 export default function TrainerScheduleEditor({
   showScheduleEdit,
-  selectedTimes,
-  setSelectedTimes,
   expandedDay,
   setExpandedDay,
   isSubmittingSchedule,
@@ -50,10 +45,86 @@ export default function TrainerScheduleEditor({
   mockMode,
   onCancel,
   onSuccess,
-  setAccountData,
   fromDetail = false,
   onBackToDetail,
 }: TrainerScheduleEditorProps) {
+  const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch schedule data from API
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        setIsLoading(true);
+        const response = await trainerScheduleService.getFreeSchedule();
+
+        // Transform API response to TimeSlotSelection format
+        const dayMapping: { [key: string]: string } = {
+          'MONDAY': '월',
+          'TUESDAY': '화',
+          'WEDNESDAY': '수',
+          'THURSDAY': '목',
+          'FRIDAY': '금',
+          'SATURDAY': '토',
+          'SUNDAY': '일',
+        };
+
+        const transformedSchedule: { [key: string]: TimeSlotSelection[] } = {};
+
+        // Process periodic schedules (recurring)
+        response.periodicScheduleList.forEach((schedule) => {
+          if (schedule.dayOfWeek) {
+            const day = dayMapping[schedule.dayOfWeek];
+            if (!transformedSchedule[day]) {
+              transformedSchedule[day] = [];
+            }
+
+            for (let hour = schedule.startHour; hour < schedule.endHour; hour++) {
+              transformedSchedule[day].push({
+                hour,
+                state: 'recurring',
+              });
+            }
+          }
+        });
+
+        // Process one-time schedules
+        response.onetimeScheduleList.forEach((schedule) => {
+          if (schedule.scheduleDate) {
+            const date = new Date(schedule.scheduleDate);
+            const dayIndex = date.getDay();
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            const day = days[dayIndex];
+
+            if (!transformedSchedule[day]) {
+              transformedSchedule[day] = [];
+            }
+
+            for (let hour = schedule.startHour; hour < schedule.endHour; hour++) {
+              transformedSchedule[day].push({
+                hour,
+                state: 'once',
+              });
+            }
+          }
+        });
+
+        // Sort time slots by hour for each day
+        Object.keys(transformedSchedule).forEach((day) => {
+          transformedSchedule[day].sort((a, b) => a.hour - b.hour);
+        });
+
+        setSelectedTimes(transformedSchedule);
+      } catch (error) {
+        console.error('Error fetching schedule:', error);
+        Alert.alert('오류', '일정을 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSchedule();
+  }, []);
   // Calculate next week info
   const nextWeekInfo = useMemo(() => {
     const { targetYear, targetWeekOfYear } = getNextWeekYearAndWeek();
@@ -177,20 +248,10 @@ export default function TrainerScheduleEditor({
       if (!mockMode) {
         // Register trainer schedule only in non-mock mode
         await trainerScheduleService.registerSchedule(request);
-
-        // Fetch updated user data after schedule registration
-        const userResponse = await authService.getCurrentUser();
-        if (userResponse.trainer) {
-          setAccountData({
-            account: userResponse.account,
-            member: userResponse.member,
-            trainer: userResponse.trainer,
-          });
-        }
       }
 
-      // Save to local store and notify parent
-      onSuccess(selectedTimes);
+      // Notify parent of success
+      onSuccess();
 
       if (showScheduleEdit) {
         Alert.alert('성공', '일정 수정이 완료되었습니다.');
@@ -299,6 +360,17 @@ export default function TrainerScheduleEditor({
   const sortedDays = expandedDay
     ? [expandedDay, ...days.filter((d) => d !== expandedDay)]
     : days;
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text style={styles.loadingText}>일정을 불러오는 중...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -450,6 +522,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6B7280',
   },
   scheduleHeader: {
     paddingTop: 40,

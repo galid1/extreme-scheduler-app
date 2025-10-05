@@ -26,9 +26,6 @@ interface AuthState {
   trainer: TrainerResponse | null;
   member: MemberResponse | null;
 
-  // Schedule data for both member and trainer
-  savedSchedule: { [key: string]: TimeSlotSelection[] };
-
   // Assigned trainer data for member
   assignedTrainer: any | null;
 
@@ -48,7 +45,6 @@ interface AuthState {
     trainer?: TrainerResponse;
     member?: MemberResponse;
   }) => void;
-  setSavedSchedule: (schedule: { [key: string]: TimeSlotSelection[] }) => void;
   setTrainerAccountId: (id: number | null) => void;
   setAssignedTrainer: (trainer: any | null) => void;
   setAutoSchedulingResults: (results: MemberFixedAutoSchedulingScheduleDetail[] | null) => void;
@@ -66,7 +62,6 @@ export const useAuthStore = create<AuthState>()(
       account: null,
       trainer: null,
       member: null,
-      savedSchedule: {},
       assignedTrainer: null,
       autoSchedulingResults: null,
       weeklyScheduleRegistration: null,
@@ -94,10 +89,6 @@ export const useAuthStore = create<AuthState>()(
           trainer: data.trainer || null,
           member: data.member || null,
         });
-      },
-
-      setSavedSchedule: (schedule) => {
-        set({ savedSchedule: schedule });
       },
 
       setTrainerAccountId: (id) => {
@@ -134,7 +125,6 @@ export const useAuthStore = create<AuthState>()(
           account: null,
           trainer: null,
           member: null,
-          savedSchedule: {},
           assignedTrainer: null,
           autoSchedulingResults: null,
           weeklyScheduleRegistration: null,

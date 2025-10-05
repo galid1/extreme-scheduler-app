@@ -5,8 +5,6 @@ import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
 import {authService, trainerService} from '@/src/services/api';
 import {TrainerStatus} from '@/src/types/enums';
-import {useAssignmentStore} from '@/src/store/useAssignmentStore';
-import MockModeToggle from '@/src/components/MockModeToggle';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
 import TrainerScheduleEditor from '@/src/components/trainer/TrainerScheduleEditor';
@@ -14,14 +12,6 @@ import TrainerScheduleDetailView from '@/src/components/trainer/TrainerScheduleD
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 import ErrorRetryView from '@/src/components/ErrorRetryView';
 import WeekInfo from '@/src/components/WeekInfo';
-
-type TimeSlotState = 'none' | 'once' | 'recurring';
-
-interface TimeSlotSelection {
-    hour: number;
-    state: TimeSlotState;
-}
-
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -38,12 +28,11 @@ function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
 
 export default function TrainerHome() {
     const router = useRouter();
-    const {account, trainer, savedSchedule, setSavedSchedule, setAccountData} = useAuthStore();
+    const {account, trainer, setAccountData} = useAuthStore();
     const name = account?.privacyInfo?.name;
     const status = trainer?.status
     const appStateRef = useRef(AppState.currentState);
     const [expandedDay, setExpandedDay] = useState<string | null>(null);
-    const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
     const [showScheduleEdit, setShowScheduleEdit] = useState(false);
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
@@ -90,12 +79,6 @@ export default function TrainerHome() {
         setIsRetrying(false);
     };
 
-    // Load saved schedule on mount for editing
-    useEffect(() => {
-        if (savedSchedule && Object.keys(savedSchedule).length > 0 && showScheduleEdit) {
-            setSelectedTimes(savedSchedule);
-        }
-    }, [showScheduleEdit]);
 
     // Update trainer status when app comes to foreground
     useEffect(() => {
@@ -171,8 +154,6 @@ export default function TrainerHome() {
         return (
             <TrainerScheduleEditor
                 showScheduleEdit={showScheduleEdit || showScheduleEditFromDetail}
-                selectedTimes={selectedTimes}
-                setSelectedTimes={setSelectedTimes}
                 expandedDay={expandedDay}
                 setExpandedDay={setExpandedDay}
                 isSubmittingSchedule={isSubmittingSchedule}
@@ -182,29 +163,23 @@ export default function TrainerHome() {
                 onBackToDetail={() => {
                     setShowScheduleEditFromDetail(false);
                     setShowScheduleDetail(true);
-                    setSelectedTimes(savedSchedule || {});
                     setExpandedDay(null);
                 }}
                 onCancel={() => {
                     setShowScheduleEdit(false);
                     setShowScheduleEditFromDetail(false);
-                    // Restore saved schedule from store when cancelling edit
-                    setSelectedTimes(savedSchedule || {});
                     setExpandedDay(null);
                 }}
-                onSuccess={async (times) => {
-                    setSavedSchedule(times);
+                onSuccess={async () => {
                     setShowScheduleEdit(false);
                     setShowScheduleEditFromDetail(false);
 
                     // Reload registration status after schedule registration
                     await loadInitialData();
-
                     if (showScheduleEditFromDetail) {
                         setShowScheduleDetail(true);
                     }
                 }}
-                setAccountData={setAccountData}
             />
         );
     }
@@ -213,7 +188,6 @@ export default function TrainerHome() {
     if (showScheduleDetail) {
         return (
             <TrainerScheduleDetailView
-                savedSchedule={savedSchedule}
                 onClose={() => setShowScheduleDetail(false)}
                 onEdit={() => {
                     setShowScheduleDetail(false);
