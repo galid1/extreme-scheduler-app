@@ -160,9 +160,23 @@ export interface Schedule {
 }
 
 // Schedule Response Types
+export interface PeriodicScheduleLineResponse {
+    id: number | null;
+    dayOfWeek: DayOfWeek;
+    startHour: number;
+    endHour: number;
+}
+
+export interface OnetimeScheduleLineResponse {
+    id: number | null;
+    scheduleDate: string;
+    startHour: number;
+    endHour: number;
+}
+
 export interface GetFreeTimeScheduleResponse {
-    periodicScheduleLines: Schedule[];
-    onetimeScheduleLines: Schedule[];
+    periodicScheduleLines: PeriodicScheduleLineResponse[];
+    onetimeScheduleLines: OnetimeScheduleLineResponse[];
 }
 
 // Training Session Types

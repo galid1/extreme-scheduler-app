@@ -13,10 +13,12 @@ import {useRouter} from 'expo-router';
 import {trainerService} from '@/src/services/api';
 import {getYearAndWeek} from '@/src/utils/dateUtils';
 import {useAssignedMembersStore} from '@/src/store/useAssignedMembersStore';
+import FreeTimeScheduleDetailView from '@/src/components/trainer/FreeTimeScheduleDetailView';
 
 export default function ApprovedMembersScreen() {
     const router = useRouter();
-    const [selectedMember, setSelectedMember] = useState<string | null>(null);
+    const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
+    const [showScheduleView, setShowScheduleView] = useState(false);
     const {members} = useAssignedMembersStore();
 
     const formatDate = (dateString: string) => {
@@ -25,6 +27,23 @@ export default function ApprovedMembersScreen() {
         const day = date.getDate();
         return `${month}/${day}`;
     };
+
+    if (showScheduleView) {
+        const selectedMember = members.find((member, idx) => {
+            return member.accountId === selectedMemberId
+        })
+
+        return (
+            <FreeTimeScheduleDetailView
+                periodicScheduleLines={selectedMember?.periodicSchedules}
+                onetimeScheduleLines={selectedMember?.onetimeSchedules}
+                onClose={() => setShowScheduleView(false)}
+                onEdit={() => {
+                    setShowScheduleView(false);
+                }}
+            />
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -48,10 +67,10 @@ export default function ApprovedMembersScreen() {
                                         key={member.accountId}
                                         style={[
                                             styles.memberCard,
-                                            selectedMember === member.accountId && styles.selectedCard
+                                            selectedMemberId === member.accountId && styles.selectedCard
                                         ]}
-                                        onPress={() => setSelectedMember(
-                                            selectedMember === member.accountId ? null : member.accountId
+                                        onPress={() => setSelectedMemberId(
+                                            selectedMemberId === member.accountId ? null : member.accountId
                                         )}
                                         activeOpacity={0.8}
                                     >
@@ -67,7 +86,7 @@ export default function ApprovedMembersScreen() {
                                             </View>
                                         </View>
 
-                                        {selectedMember === member.accountId && (
+                                        {selectedMemberId === member.accountId && (
                                             <View style={styles.memberStats}>
                                                 <View style={styles.statRow}>
                                                     <Text style={styles.statRowLabel}>최근 세션</Text>
@@ -83,7 +102,12 @@ export default function ApprovedMembersScreen() {
                                                 </View>
 
                                                 <View style={styles.memberActions}>
-                                                    <TouchableOpacity style={styles.actionButton}>
+                                                    <TouchableOpacity
+                                                        style={styles.actionButton}
+                                                        onPress={() => {
+                                                            setShowScheduleView(true);
+                                                        }}
+                                                    >
                                                         <Ionicons name="calendar-outline" size={18} color="white"/>
                                                         <Text style={styles.actionButtonText}>트레이닝 가능 일정</Text>
                                                     </TouchableOpacity>

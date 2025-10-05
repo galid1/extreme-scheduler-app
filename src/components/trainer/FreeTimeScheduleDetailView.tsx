@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import WeekInfo from '@/src/components/WeekInfo';
-import { Schedule } from '@/src/types/api';
+import { PeriodicScheduleLineResponse, OnetimeScheduleLineResponse } from '@/src/types/api';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -13,8 +13,8 @@ interface TimeSlotSelection {
 }
 
 interface TrainerScheduleDetailViewProps {
-  periodicScheduleLines: Schedule[];
-  onetimeScheduleLines: Schedule[];
+  periodicScheduleLines: PeriodicScheduleLineResponse[];
+  onetimeScheduleLines: OnetimeScheduleLineResponse[];
   onClose: () => void;
   onEdit: () => void;
 }

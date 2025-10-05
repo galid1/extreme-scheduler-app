@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
-import type {DayOfWeek, RegisterScheduleRequest, Schedule} from '@/src/types/api';
+import type {DayOfWeek, RegisterScheduleRequest, PeriodicScheduleLineResponse, OnetimeScheduleLineResponse} from '@/src/types/api';
 import {trainerScheduleService} from '@/src/services/api';
 import authService from '@/src/services/api/auth.service';
 import {getNextWeekYearAndWeek, getNextWeekDateRange, formatDateMMDD} from '@/src/utils/dateUtils';
@@ -25,8 +25,8 @@ interface TimeSlotSelection {
 
 interface TrainerScheduleEditorProps {
     showScheduleEdit: boolean;
-    periodicScheduleLines: Schedule[];
-    onetimeScheduleLines: Schedule[];
+    periodicScheduleLines: PeriodicScheduleLineResponse[];
+    onetimeScheduleLines: OnetimeScheduleLineResponse[];
     expandedDay: string | null;
     setExpandedDay: (day: string | null) => void;
     isSubmittingSchedule: boolean;

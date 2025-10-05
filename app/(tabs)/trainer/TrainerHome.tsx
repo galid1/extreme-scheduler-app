@@ -166,7 +166,6 @@ export default function TrainerHome() {
 
     // Show schedule registration as full page for NOT_READY status or when editing
     if (isRegisteredOperationSchedule === false || showScheduleEdit || showScheduleEditFromDetail) {
-        console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ${JSON.stringify(scheduleData.onetimeScheduleLines)}`);
         return (
             <TrainerScheduleEditor
                 showScheduleEdit={showScheduleEdit || showScheduleEditFromDetail}
