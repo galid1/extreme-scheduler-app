@@ -253,9 +253,15 @@ export default function TrainerHome() {
   // Default home screen for trainers or members with assigned trainer
   return (
     <SafeAreaView style={styles.container}>
-      <MockModeToggle />
+      {/*<MockModeToggle />*/}
       <View style={styles.topHeader}>
         <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
+        <TouchableOpacity
+          style={styles.notificationButton}
+          onPress={() => router.push('/notifications')}
+        >
+          <Ionicons name="notifications-outline" size={24} color="#1F2937" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -549,6 +555,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
+  },
+  notificationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   trainerBadge: {
     flexDirection: 'row',
