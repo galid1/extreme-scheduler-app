@@ -6,7 +6,6 @@ import {
   AccountType,
   Gender,
   Platform,
-  TrainerScheduleStatus,
   TrainerStatus,
   RequestStatus
 } from '@/src/types/api';
@@ -34,7 +33,6 @@ export const mockAccount: Account = {
 
 export const mockTrainer: TrainerResponse = {
   accountId: 1,
-  scheduleStatus: TrainerScheduleStatus.READY,
   status: TrainerStatus.ACTIVE,
   memberAccountIdList: [2, 3, 4]
 };

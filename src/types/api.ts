@@ -8,7 +8,6 @@ import {
   Platform,
   DayOfWeek,
   RequestStatus,
-  TrainerScheduleStatus,
   TrainerStatus,
   TrainingSessionStatus,
   AutoSchedulingResultStatus
@@ -21,7 +20,6 @@ export {
   Platform,
   DayOfWeek,
   RequestStatus,
-  TrainerScheduleStatus,
   TrainerStatus,
   TrainingSessionStatus,
   AutoSchedulingResultStatus
@@ -263,7 +261,6 @@ export interface Account {
 
 export interface TrainerResponse {
   accountId: number;
-  scheduleStatus: TrainerScheduleStatus;
   status: TrainerStatus;
   memberAccountIdList: number[];
 }
@@ -323,6 +320,5 @@ export interface GetAutoSchedulingResultApiResponse {
   trainerAccountId: number;
   year: number;
   weekOfYear: number;
-  autoSchedulingResultStatus: AutoSchedulingResultStatus | null;
   scheduleList: AutoSchedulingScheduleApiResponse[];
 }

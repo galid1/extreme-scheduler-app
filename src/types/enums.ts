@@ -3,12 +3,6 @@ export enum AccountType {
   TRAINER = 'TRAINER'
 }
 
-export enum TrainerScheduleStatus {
-  NOT_READY = 'NOT_READY',
-  READY ='READY',
-  SCHEEULDED = 'SCHEDULED',
-}
-
 // 자동 스케줄링 결과 상태
 export enum AutoSchedulingResultStatus {
     NOT_FIXED = 'NOT_FIXED',

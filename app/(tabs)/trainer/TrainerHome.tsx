@@ -4,7 +4,7 @@ import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
 import {authService, trainerService} from '@/src/services/api';
-import {TrainerScheduleStatus, TrainerStatus} from '@/src/types/enums';
+import {TrainerStatus} from '@/src/types/enums';
 import {useAssignmentStore} from '@/src/store/useAssignmentStore';
 import MockModeToggle from '@/src/components/MockModeToggle';
 import {useConfigStore} from '@/src/store/useConfigStore';
@@ -39,7 +39,6 @@ export default function TrainerHome() {
   const { account, trainer, savedSchedule, setSavedSchedule, setAccountData } = useAuthStore();
   const name = account?.privacyInfo?.name;
   const status = trainer?.status
-  const scheduleStatus = trainer?.scheduleStatus;
   const { assignmentRequests, setAssignmentRequests, setIsLoadingRequests } = useAssignmentStore();
   const appStateRef = useRef(AppState.currentState);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
@@ -50,6 +49,7 @@ export default function TrainerHome() {
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+  const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
   const { mockMode } = useConfigStore();
 
   // Check registration status on mount
@@ -68,6 +68,24 @@ export default function TrainerHome() {
     };
 
     checkRegistrationStatus();
+  }, [mockMode]);
+
+  // Check auto scheduling results
+  useEffect(() => {
+    const checkAutoSchedulingResults = async () => {
+      if (!mockMode) {
+        try {
+          const { year, weekOfYear } = getCurrentYearAndWeek();
+          const nextWeekOfYear = weekOfYear + 1;
+          const response = await trainerScheduleService.getAutoSchedulingResult(year, nextWeekOfYear);
+          setHasScheduledSessions(response.scheduleList.length > 0);
+        } catch (error) {
+          console.error('Error checking auto scheduling results:', error);
+        }
+      }
+    };
+
+    checkAutoSchedulingResults();
   }, [mockMode]);
 
   // Load saved schedule on mount for editing
@@ -288,8 +306,8 @@ export default function TrainerHome() {
         </View>
       )}
 
-      {/* View Schedule Button for Trainers with SCHEDULED status */}
-      {trainer?.scheduleStatus === TrainerScheduleStatus.SCHEEULDED && (
+      {/* View Schedule Button for Trainers with scheduled sessions */}
+      {hasScheduledSessions && (
         <View style={styles.autoScheduleButtonContainer}>
           <TouchableOpacity
             style={styles.viewScheduleButton}
