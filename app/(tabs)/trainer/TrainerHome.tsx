@@ -186,7 +186,6 @@ export default function TrainerHome() {
     return (
       <TrainerScheduleEditor
         showScheduleEdit={showScheduleEdit || showScheduleEditFromDetail}
-        savedSchedule={savedSchedule}
         selectedTimes={selectedTimes}
         setSelectedTimes={setSelectedTimes}
         expandedDay={expandedDay}

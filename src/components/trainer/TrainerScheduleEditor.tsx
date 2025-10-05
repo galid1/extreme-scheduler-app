@@ -40,7 +40,6 @@ interface TrainerScheduleEditorProps {
 
 export default function TrainerScheduleEditor({
   showScheduleEdit,
-  savedSchedule,
   selectedTimes,
   setSelectedTimes,
   expandedDay,

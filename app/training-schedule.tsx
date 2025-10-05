@@ -14,7 +14,6 @@ import {useRouter} from 'expo-router';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView from '@/src/components/training/WeekCalendarView';
-import {WeekScheduleStatus} from "@/src/types/enums";
 import {useConfigStore} from '@/src/store/useConfigStore';
 import {trainerScheduleService} from '@/src/services/api';
 
