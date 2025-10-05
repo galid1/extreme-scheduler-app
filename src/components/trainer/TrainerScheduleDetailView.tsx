@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import WeekInfo from '@/src/components/WeekInfo';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -33,7 +34,10 @@ export default function TrainerScheduleDetailView({
         >
           <Ionicons name="arrow-back" size={24} color="#3B82F6" />
         </TouchableOpacity>
-        <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
+        <View style={styles.scheduleDetailTitleContainer}>
+          <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
+          <WeekInfo style={styles.scheduleDetailWeekInfo} />
+        </View>
         <TouchableOpacity
           style={styles.scheduleDetailEditButton}
           onPress={onEdit}
@@ -148,10 +152,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scheduleDetailTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
   scheduleDetailTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
+  },
+  scheduleDetailWeekInfo: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
   },
   scheduleCalendarContainer: {
     flex: 1,

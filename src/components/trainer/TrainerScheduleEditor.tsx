@@ -14,6 +14,7 @@ import type { DayOfWeek, RegisterScheduleRequest } from '@/src/types/api';
 import { trainerScheduleService } from '@/src/services/api';
 import authService from '@/src/services/api/auth.service';
 import { getNextWeekYearAndWeek, getNextWeekDateRange, formatDateMMDD } from '@/src/utils/dateUtils';
+import WeekInfo from '@/src/components/WeekInfo';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -313,9 +314,7 @@ export default function TrainerScheduleEditor({
         <Text style={styles.schedulePageTitle}>
           {showScheduleEdit ? '일정 수정' : '운영 가능 일정 등록'}
         </Text>
-        <Text style={styles.scheduleSubtitle}>
-          {nextWeekInfo.weekNumber}주차 ({nextWeekInfo.dateRange})
-        </Text>
+        <WeekInfo style={styles.scheduleSubtitle} />
         <View style={styles.helpContainer}>
           <View style={styles.helpItem}>
             <View

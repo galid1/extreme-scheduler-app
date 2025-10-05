@@ -13,6 +13,7 @@ import TrainerScheduleEditor from '@/src/components/trainer/TrainerScheduleEdito
 import TrainerScheduleDetailView from '@/src/components/trainer/TrainerScheduleDetailView';
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 import ErrorRetryView from '@/src/components/ErrorRetryView';
+import WeekInfo from '@/src/components/WeekInfo';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -285,7 +286,10 @@ export default function TrainerHome() {
 
             {/* Schedule Management Card */}
             <View style={[styles.trainerDashboard, { marginTop: 20 }]}>
-              <Text style={styles.dashboardTitle}>운영 일정 관리</Text>
+              <View>
+                <Text style={styles.dashboardTitle}>운영 일정 관리</Text>
+                <WeekInfo style={styles.weekInfoText} />
+              </View>
               <View style={styles.scheduleButtonsContainer}>
                 <TouchableOpacity
                   style={[styles.modifyScheduleButton, { flex: 1 }]}
@@ -585,6 +589,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#1F2937',
+    marginBottom: 8,
+  },
+  weekInfoText: {
+    fontSize: 14,
+    color: '#6B7280',
     marginBottom: 16,
   },
   statsContainer: {
