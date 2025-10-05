@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import WeekInfo from '@/src/components/WeekInfo';
-import { trainerScheduleService } from '@/src/services/api';
+import { Schedule } from '@/src/types/api';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -13,117 +13,79 @@ interface TimeSlotSelection {
 }
 
 interface TrainerScheduleDetailViewProps {
+  periodicScheduleLines: Schedule[];
+  onetimeScheduleLines: Schedule[];
   onClose: () => void;
   onEdit: () => void;
 }
 
 export default function TrainerScheduleDetailView({
+  periodicScheduleLines,
+  onetimeScheduleLines,
   onClose,
   onEdit,
 }: TrainerScheduleDetailViewProps) {
-  const [freeTimeScheduleList, setFreeTimeScheduleList] = useState<{ [key: string]: TimeSlotSelection[] } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const days = ['월', '화', '수', '목', '금', '토', '일'];
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  // Fetch schedule data from API
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      try {
-        setIsLoading(true);
-        const response = await trainerScheduleService.getFreeSchedule();
+  // Transform API response to TimeSlotSelection format
+  const freeTimeScheduleList = useMemo(() => {
+    if (onetimeScheduleLines.length === 0 && periodicScheduleLines.length === 0) {
+      return {};
+    }
 
-        if(response.onetimeScheduleLines.length === 0 && response.periodicScheduleLines.length === 0) {
-            setFreeTimeScheduleList({});
-            return;
-        }
-
-        // Transform API response to TimeSlotSelection format
-        const dayMapping: { [key: string]: string } = {
-          'MONDAY': '월',
-          'TUESDAY': '화',
-          'WEDNESDAY': '수',
-          'THURSDAY': '목',
-          'FRIDAY': '금',
-          'SATURDAY': '토',
-          'SUNDAY': '일',
-        };
-
-        const transformedSchedule: { [key: string]: TimeSlotSelection[] } = {};
-
-        // Process periodic schedules (recurring)
-        response.periodicScheduleLines.forEach((schedule) => {
-          if (schedule.dayOfWeek) {
-            const day = dayMapping[schedule.dayOfWeek];
-            if (!transformedSchedule[day]) {
-              transformedSchedule[day] = [];
-            }
-            transformedSchedule[day].push({
-              hour: schedule.startHour,
-              state: 'recurring',
-            });
-          }
-        });
-
-        // Process one-time schedules
-        response.onetimeScheduleLines.forEach((schedule) => {
-          if (schedule.scheduleDate) {
-            const date = new Date(schedule.scheduleDate);
-            const dayIndex = date.getDay();
-            const days = ['일', '월', '화', '수', '목', '금', '토'];
-            const day = days[dayIndex];
-
-            if (!transformedSchedule[day]) {
-              transformedSchedule[day] = [];
-            }
-
-            transformedSchedule[day].push({
-              hour: schedule.startHour,
-              state: 'once',
-            });
-          }
-        });
-
-        // Sort time slots by hour for each day
-        Object.keys(transformedSchedule).forEach((day) => {
-          transformedSchedule[day].sort((a, b) => a.hour - b.hour);
-        });
-
-        setFreeTimeScheduleList(transformedSchedule);
-      } catch (error) {
-        console.error('Error fetching schedule:', error);
-        Alert.alert('오류', '일정을 불러오는데 실패했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
+    const dayMapping: { [key: string]: string } = {
+      'MONDAY': '월',
+      'TUESDAY': '화',
+      'WEDNESDAY': '수',
+      'THURSDAY': '목',
+      'FRIDAY': '금',
+      'SATURDAY': '토',
+      'SUNDAY': '일',
     };
 
-    fetchSchedule();
-  }, []);
+    const transformedSchedule: { [key: string]: TimeSlotSelection[] } = {};
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: 'white' }]}>
-        <View style={styles.scheduleDetailHeader}>
-          <TouchableOpacity
-            style={styles.scheduleDetailBackButton}
-            onPress={onClose}
-          >
-            <Ionicons name="arrow-back" size={24} color="#3B82F6" />
-          </TouchableOpacity>
-          <View style={styles.scheduleDetailTitleContainer}>
-            <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
-            <WeekInfo style={styles.scheduleDetailWeekInfo} />
-          </View>
-          <View style={{ width: 44 }} />
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text style={styles.loadingText}>일정을 불러오는 중...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+    // Process periodic schedules (recurring)
+    periodicScheduleLines.forEach((schedule) => {
+      if (schedule.dayOfWeek) {
+        const day = dayMapping[schedule.dayOfWeek];
+        if (!transformedSchedule[day]) {
+          transformedSchedule[day] = [];
+        }
+        transformedSchedule[day].push({
+          hour: schedule.startHour,
+          state: 'recurring',
+        });
+      }
+    });
+
+    // Process one-time schedules
+    onetimeScheduleLines.forEach((schedule) => {
+      if (schedule.scheduleDate) {
+        const date = new Date(schedule.scheduleDate);
+        const dayIndex = date.getDay();
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        const day = days[dayIndex];
+
+        if (!transformedSchedule[day]) {
+          transformedSchedule[day] = [];
+        }
+
+        transformedSchedule[day].push({
+          hour: schedule.startHour,
+          state: 'once',
+        });
+      }
+    });
+
+    // Sort time slots by hour for each day
+    Object.keys(transformedSchedule).forEach((day) => {
+      transformedSchedule[day].sort((a, b) => a.hour - b.hour);
+    });
+
+    return transformedSchedule;
+  }, [periodicScheduleLines, onetimeScheduleLines]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'white' }]}>
@@ -226,16 +188,6 @@ export default function TrainerScheduleDetailView({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6B7280',
   },
   scheduleDetailHeader: {
     flexDirection: 'row',

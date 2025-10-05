@@ -12,6 +12,7 @@ import TrainerScheduleDetailView from '@/src/components/trainer/TrainerScheduleD
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 import ErrorRetryView from '@/src/components/ErrorRetryView';
 import WeekInfo from '@/src/components/WeekInfo';
+import {Schedule} from '@/src/types/api';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -42,6 +43,7 @@ export default function TrainerHome() {
     const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
     const [hasError, setHasError] = useState(false);
     const [isRetrying, setIsRetrying] = useState(false);
+    const [scheduleData, setScheduleData] = useState<{periodicScheduleLines: Schedule[], onetimeScheduleLines: Schedule[]}>({periodicScheduleLines: [], onetimeScheduleLines: []});
     const {mockMode} = useConfigStore();
 
     // Function to load initial data
@@ -67,9 +69,23 @@ export default function TrainerHome() {
         }
     };
 
+    const loadScheduleData = async () => {
+        try {
+            const response = await trainerScheduleService.getFreeSchedule();
+            setScheduleData({
+                periodicScheduleLines: response.periodicScheduleLines,
+                onetimeScheduleLines: response.onetimeScheduleLines,
+            });
+            console.log(`Loaded schedule data: ${JSON.stringify(response)}`);
+        } catch (error) {
+            console.error('Error loading schedule data:', error);
+        }
+    };
+
     // Check registration status and scheduling results on mount
     useEffect(() => {
         loadInitialData();
+        loadScheduleData();
     }, [mockMode]);
 
     // Retry function
@@ -78,7 +94,6 @@ export default function TrainerHome() {
         await loadInitialData();
         setIsRetrying(false);
     };
-
 
     // Update trainer status when app comes to foreground
     useEffect(() => {
@@ -151,9 +166,12 @@ export default function TrainerHome() {
 
     // Show schedule registration as full page for NOT_READY status or when editing
     if (isRegisteredOperationSchedule === false || showScheduleEdit || showScheduleEditFromDetail) {
+        console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ${JSON.stringify(scheduleData.onetimeScheduleLines)}`);
         return (
             <TrainerScheduleEditor
                 showScheduleEdit={showScheduleEdit || showScheduleEditFromDetail}
+                periodicScheduleLines={scheduleData.periodicScheduleLines}
+                onetimeScheduleLines={scheduleData.onetimeScheduleLines}
                 expandedDay={expandedDay}
                 setExpandedDay={setExpandedDay}
                 isSubmittingSchedule={isSubmittingSchedule}
@@ -188,6 +206,8 @@ export default function TrainerHome() {
     if (showScheduleDetail) {
         return (
             <TrainerScheduleDetailView
+                periodicScheduleLines={scheduleData.periodicScheduleLines}
+                onetimeScheduleLines={scheduleData.onetimeScheduleLines}
                 onClose={() => setShowScheduleDetail(false)}
                 onEdit={() => {
                     setShowScheduleDetail(false);
