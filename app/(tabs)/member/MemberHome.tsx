@@ -19,9 +19,8 @@ import {
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { memberScheduleService, memberService, apiClient, trainerScheduleService, trainerService, authService } from '@/src/services/api';
+import { memberScheduleService, memberService, authService } from '@/src/services/api';
 import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
-import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 import MockModeToggle from '@/src/components/MockModeToggle';
 import { useConfigStore } from '@/src/store/useConfigStore';
 import { getYearAndWeek, getNextWeekYearAndWeek } from '@/src/utils/dateUtils';
