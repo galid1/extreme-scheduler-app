@@ -9,6 +9,7 @@ import {
   RejectAssignmentRequest,
   AddMemberToTrainerRequest,
   GetAssignedMembersResponse,
+  GetAssignedMembersWithSchedulesResponse,
   PageResponse,
   RequestStatus,
 } from '../../types/api';
@@ -57,22 +58,16 @@ class TrainerService {
   }
 
   /**
-   * 회원을 트레이너에게 직접 배정
-   * @param memberAccountId 회원 계정 ID
+   * 트레이너에게 배정된 회원 목록 조회 (스케줄 포함)
+   * @param year 조회할 연도
+   * @param weekOfYear 조회할 주차
    */
-  async addMemberDirectly(memberAccountId: number): Promise<void> {
-    const request: AddMemberToTrainerRequest = {
-      memberAccountId,
-    };
-    await apiClient.post('/api/v1/trainers/members', request);
-  }
-
-  /**
-   * 트레이너에게 배정된 회원 목록 조회
-   */
-  async getAssignedMembers(): Promise<GetAssignedMembersResponse> {
-    return apiClient.get<GetAssignedMembersResponse>(
-      '/api/v1/trainers/assigned-members'
+  async getAssignedMembersWithSchedules(
+    year: number,
+    weekOfYear: number
+  ): Promise<GetAssignedMembersWithSchedulesResponse> {
+    return apiClient.get<GetAssignedMembersWithSchedulesResponse>(
+      `/api/v1/trainers/assigned-members?year=${year}&weekOfYear=${weekOfYear}`
     );
   }
 }

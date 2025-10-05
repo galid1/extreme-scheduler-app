@@ -209,6 +209,37 @@ export interface GetAssignedMembersResponse {
   members: AssignedMemberDto[];
 }
 
+// Member with Schedules Types
+export interface PeriodicScheduleResponse {
+  id: number | null;
+  dayOfWeek: DayOfWeek;
+  startHour: number;
+  endHour: number;
+}
+
+export interface OnetimeScheduleResponse {
+  id: number | null;
+  scheduleDate: string;
+  startHour: number;
+  endHour: number;
+}
+
+export interface MemberWithSchedulesResponse {
+  accountId: number;
+  name: string;
+  birthDate: string;
+  gender: Gender;
+  phoneNumber: string;
+  periodicSchedules: PeriodicScheduleResponse[];
+  onetimeSchedules: OnetimeScheduleResponse[];
+}
+
+export interface GetAssignedMembersWithSchedulesResponse {
+  members: MemberWithSchedulesResponse[];
+  year: number;
+  weekOfYear: number;
+}
+
 // Current Account Types
 export interface PrivacyInfo {
   name: string;
