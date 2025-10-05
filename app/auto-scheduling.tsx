@@ -18,28 +18,8 @@ import {trainerScheduleService, trainerService} from '@/src/services/api';
 import {getYearAndWeek} from "@/src/utils/dateUtils";
 import {useAssignedMembersStore} from '@/src/store/useAssignedMembersStore';
 
-interface Member {
-    id: string;
-    name: string;
-    birthDate: string;
-    gender: string;
-    phoneNumber: string;
-    periodicSchedules: Array<{
-        id: number | null;
-        dayOfWeek: string;
-        startHour: number;
-        endHour: number;
-    }>;
-    onetimeSchedules: Array<{
-        id: number | null;
-        scheduleDate: string;
-        startHour: number;
-        endHour: number;
-    }>;
-}
-
 interface MemberSelection {
-    memberId: string;
+    memberId: number;
     sessionCount: number;
 }
 
@@ -48,8 +28,7 @@ export default function AutoSchedulingScreen() {
     const params = useLocalSearchParams();
     const {weekToReset, resetMode} = params;
     const {mockMode} = useConfigStore();
-    const {members: storedMembers, setMembers: setStoredMembers, shouldRefetch} = useAssignedMembersStore();
-    const [members, setMembers] = useState<Member[]>([]);
+    const {members, setMembers} = useAssignedMembersStore();
     const [selectedMembers, setSelectedMembers] = useState<MemberSelection[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -92,105 +71,16 @@ export default function AutoSchedulingScreen() {
     const fetchMembers = async () => {
         setIsLoading(true);
         try {
-            if (mockMode) {
-                // Mock data
-                await new Promise(resolve => setTimeout(resolve, 1000));
+            // Real API call
+            const { targetYear, targetWeekOfYear } = getYearAndWeek()
+            const nextWeekOfYear = targetWeekOfYear + 1
+            const response = await trainerService.getAssignedMembers(
+                targetYear,
+                nextWeekOfYear
+            );
 
-                const mockMembers: Member[] = [
-                    {
-                        id: 'member_001',
-                        name: '김민수',
-                        birthDate: '1990-05-15',
-                        gender: 'MALE',
-                        phoneNumber: '010-1234-5678',
-                        periodicSchedules: [
-                            { id: 1, dayOfWeek: 'MONDAY', startHour: 9, endHour: 10 },
-                            { id: 2, dayOfWeek: 'WEDNESDAY', startHour: 14, endHour: 15 },
-                        ],
-                        onetimeSchedules: [],
-                    },
-                    {
-                        id: 'member_002',
-                        name: '이영희',
-                        birthDate: '1985-08-20',
-                        gender: 'FEMALE',
-                        phoneNumber: '010-2345-6789',
-                        periodicSchedules: [
-                            { id: 3, dayOfWeek: 'TUESDAY', startHour: 10, endHour: 11 },
-                        ],
-                        onetimeSchedules: [
-                            { id: 4, scheduleDate: '2025-10-15', startHour: 16, endHour: 17 },
-                        ],
-                    },
-                    {
-                        id: 'member_003',
-                        name: '박철수',
-                        birthDate: '1992-03-10',
-                        gender: 'MALE',
-                        phoneNumber: '010-3456-7890',
-                        periodicSchedules: [],
-                        onetimeSchedules: [],
-                    },
-                    {
-                        id: 'member_004',
-                        name: '정미영',
-                        birthDate: '1988-11-25',
-                        gender: 'FEMALE',
-                        phoneNumber: '010-4567-8901',
-                        periodicSchedules: [
-                            { id: 5, dayOfWeek: 'THURSDAY', startHour: 15, endHour: 16 },
-                        ],
-                        onetimeSchedules: [],
-                    },
-                    {
-                        id: 'member_005',
-                        name: '최준호',
-                        birthDate: '1995-01-30',
-                        gender: 'MALE',
-                        phoneNumber: '010-5678-9012',
-                        periodicSchedules: [],
-                        onetimeSchedules: [],
-                    },
-                    {
-                        id: 'member_006',
-                        name: '강서연',
-                        birthDate: '1993-07-05',
-                        gender: 'FEMALE',
-                        phoneNumber: '010-6789-0123',
-                        periodicSchedules: [
-                            { id: 6, dayOfWeek: 'FRIDAY', startHour: 18, endHour: 19 },
-                            { id: 7, dayOfWeek: 'MONDAY', startHour: 11, endHour: 12 },
-                        ],
-                        onetimeSchedules: [],
-                    },
-                ];
-
-                const sortedMembers = mockMembers;
-
-                setMembers(sortedMembers);
-            } else {
-                // Real API call
-                const { targetYear, targetWeekOfYear } = getYearAndWeek()
-                const nextWeekOfYear = targetWeekOfYear + 1
-                const response = await trainerService.getAssignedMembers(
-                    targetYear,
-                    nextWeekOfYear
-                );
-
-                const fetchedMembers: Member[] = response.members.map(member => ({
-                    id: member.accountId.toString(),
-                    name: member.name,
-                    birthDate: member.birthDate,
-                    gender: member.gender,
-                    phoneNumber: member.phoneNumber,
-                    periodicSchedules: member.periodicSchedules,
-                    onetimeSchedules: member.onetimeSchedules,
-                }));
-
-                // Store에 저장
-                setStoredMembers(response.members);
-                setMembers(fetchedMembers);
-            }
+            // Store에 저장
+            setMembers(response.members);
         } catch (error) {
             console.error('Error fetching members:', error);
             Alert.alert('오류', '회원 목록을 불러오는데 실패했습니다.');
@@ -199,7 +89,7 @@ export default function AutoSchedulingScreen() {
         }
     };
 
-    const toggleMemberSelection = (memberId: string) => {
+    const toggleMemberSelection = (memberId: number) => {
         setSelectedMembers(prev => {
             const existing = prev.find(m => m.memberId === memberId);
             if (existing) {
@@ -210,7 +100,7 @@ export default function AutoSchedulingScreen() {
         });
     };
 
-    const updateSessionCount = (memberId: string, count: number) => {
+    const updateSessionCount = (memberId: number, count: number) => {
         setSelectedMembers(prev =>
             prev.map(m =>
                 m.memberId === memberId ? {...m, sessionCount: count} : m
@@ -253,7 +143,7 @@ export default function AutoSchedulingScreen() {
                 const timeSlots = [9, 10, 11, 14, 15, 16, 17, 18, 19, 20];
 
                 selectedMembers.forEach((selection) => {
-                    const member = members.find(m => m.id === selection.memberId);
+                    const member = members.find(m => m.accountId === selection.memberId);
                     if (!member) return;
 
                     for (let i = 0; i < selection.sessionCount; i++) {
@@ -261,7 +151,7 @@ export default function AutoSchedulingScreen() {
                         const hourIndex = Math.floor(Math.random() * timeSlots.length);
 
                         generatedSessions.push({
-                            memberId: member.id,
+                            memberId: member.accountId,
                             memberName: member.name,
                             memberPhone: member.phoneNumber,
                             hour: timeSlots[hourIndex],
@@ -279,7 +169,7 @@ export default function AutoSchedulingScreen() {
                 }
             } else {
                 // Real API call
-                const memberAccountIds = selectedMembers.map(sm => Number(sm.memberId));
+                const memberAccountIds = selectedMembers.map(sm => sm.memberId);
 
                 await trainerScheduleService.executeAutoScheduling({
                     memberAccountIds,
@@ -432,19 +322,19 @@ export default function AutoSchedulingScreen() {
                     members.map((member) => {
                     const hasSchedule = member.periodicSchedules.length > 0 || member.onetimeSchedules.length > 0;
                     const isReady = hasSchedule;
-                    const selectedMember = selectedMembers.find(m => m.memberId === member.id);
+                    const selectedMember = selectedMembers.find(m => m.memberId === member.accountId);
                     const isSelected = !!selectedMember;
                     const totalSchedules = member.periodicSchedules.length + member.onetimeSchedules.length;
 
                     return (
-                        <View key={member.id}>
+                        <View key={member.accountId}>
                             <TouchableOpacity
                                 style={[
                                     styles.memberCard,
                                     !isReady && styles.memberCardDisabled,
                                     isSelected && styles.memberCardSelected,
                                 ]}
-                                onPress={() => isReady && toggleMemberSelection(member.id)}
+                                onPress={() => isReady && toggleMemberSelection(member.accountId)}
                                 disabled={!isReady}
                                 activeOpacity={0.8}
                             >
