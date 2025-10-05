@@ -319,121 +319,171 @@ export default function AutoSchedulingScreen() {
                         </Text>
                     </View>
                 ) : (
-                    members.map((member) => {
-                    const hasSchedule = member.periodicSchedules.length > 0 || member.onetimeSchedules.length > 0;
-                    const isReady = hasSchedule;
-                    const selectedMember = selectedMembers.find(m => m.memberId === member.accountId);
-                    const isSelected = !!selectedMember;
-                    const totalSchedules = member.periodicSchedules.length + member.onetimeSchedules.length;
-
-                    return (
-                        <View key={member.accountId}>
-                            <TouchableOpacity
-                                style={[
-                                    styles.memberCard,
-                                    !isReady && styles.memberCardDisabled,
-                                    isSelected && styles.memberCardSelected,
-                                ]}
-                                onPress={() => isReady && toggleMemberSelection(member.accountId)}
-                                disabled={!isReady}
-                                activeOpacity={0.8}
-                            >
-                                <View style={styles.memberCardHeader}>
-                                    <View style={styles.memberInfo}>
-                                        <View style={styles.memberNameRow}>
-                                            <Text style={[
-                                                styles.memberName,
-                                                !isReady && styles.memberNameDisabled,
-                                            ]}>
-                                                {member.name}
-                                            </Text>
-                                            <View style={[
-                                                styles.statusBadge,
-                                                !isReady && styles.statusBadgeNotReady,
-                                            ]}>
-                                                <Text style={styles.statusText}>
-                                                    {isReady ? 'READY' : 'NOT READY'}
-                                                </Text>
-                                            </View>
-                                        </View>
-                                        <Text style={[
-                                            styles.memberPhone,
-                                            !isReady && styles.memberPhoneDisabled,
-                                        ]}>
-                                            {member.phoneNumber}
-                                        </Text>
-                                        {isReady && (
-                                            <View style={styles.memberMetaInfo}>
-                                                <View style={styles.metaItem}>
-                                                    <Ionicons name="time-outline" size={14} color="#666"/>
-                                                    <Text style={styles.metaText}>
-                                                        {totalSchedules}개 시간대
-                                                    </Text>
-                                                </View>
-                                                <View style={styles.metaItem}>
-                                                    <Ionicons name="calendar-outline" size={14} color="#666"/>
-                                                    <Text style={styles.metaText}>
-                                                        정기 {member.periodicSchedules.length}개 · 일회성 {member.onetimeSchedules.length}개
-                                                    </Text>
-                                                </View>
-                                            </View>
-                                        )}
-                                    </View>
-                                    <View style={[
-                                        styles.checkbox,
-                                        isSelected && styles.checkboxSelected,
-                                        !isReady && styles.checkboxDisabled,
-                                    ]}>
-                                        {isSelected && (
-                                            <Ionicons name="checkmark" size={18} color="white"/>
-                                        )}
-                                    </View>
+                    <>
+                        {/* READY 회원 섹션 */}
+                        {members.filter(m => m.periodicSchedules.length > 0 || m.onetimeSchedules.length > 0).length > 0 && (
+                            <View style={styles.sectionContainer}>
+                                <View style={styles.sectionHeader}>
+                                    <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                                    <Text style={styles.sectionTitle}>일정 등록 완료</Text>
+                                    <Text style={styles.sectionCount}>
+                                        {members.filter(m => m.periodicSchedules.length > 0 || m.onetimeSchedules.length > 0).length}명
+                                    </Text>
                                 </View>
-                            </TouchableOpacity>
+                                {members.filter(m => m.periodicSchedules.length > 0 || m.onetimeSchedules.length > 0).map((member) => {
+                                    const selectedMember = selectedMembers.find(m => m.memberId === member.accountId);
+                                    const isSelected = !!selectedMember;
+                                    const totalSchedules = member.periodicSchedules.length + member.onetimeSchedules.length;
 
-                            {isSelected && (
-                                <View style={styles.sessionCountContainer}>
-                                    <View style={styles.sessionCountSelector}>
-                                        <Text style={styles.sessionCountLabel}>주간 세션:</Text>
-                                        <TouchableOpacity
-                                            style={styles.sessionCountButton}
-                                            onPress={() => {
-                                                if (selectedMember.sessionCount > 1) {
-                                                    updateSessionCount(member.id, selectedMember.sessionCount - 1);
-                                                }
-                                            }}
-                                            disabled={selectedMember.sessionCount <= 1}
-                                        >
-                                            <Ionicons
-                                                name="remove-circle"
-                                                size={20}
-                                                color={selectedMember.sessionCount <= 1 ? "#D1D5DB" : "#3B82F6"}
-                                            />
-                                        </TouchableOpacity>
-                                        <View style={styles.sessionCountDisplay}>
-                                            <Text style={styles.sessionCountText}>{selectedMember.sessionCount}회</Text>
+                                    return (
+                                        <View key={member.accountId}>
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.memberCard,
+                                                    isSelected && styles.memberCardSelected,
+                                                ]}
+                                                onPress={() => toggleMemberSelection(member.accountId)}
+                                                activeOpacity={0.8}
+                                            >
+                                                <View style={styles.memberCardHeader}>
+                                                    <View style={styles.memberInfo}>
+                                                        <View style={styles.memberNameRow}>
+                                                            <Text style={styles.memberName}>
+                                                                {member.name}
+                                                            </Text>
+                                                            <View style={styles.statusBadge}>
+                                                                <Text style={styles.statusText}>READY</Text>
+                                                            </View>
+                                                        </View>
+                                                        <Text style={styles.memberPhone}>
+                                                            {member.phoneNumber}
+                                                        </Text>
+                                                        <View style={styles.memberMetaInfo}>
+                                                            <View style={styles.metaItem}>
+                                                                <Ionicons name="time-outline" size={14} color="#666"/>
+                                                                <Text style={styles.metaText}>
+                                                                    {totalSchedules}개 시간대
+                                                                </Text>
+                                                            </View>
+                                                            <View style={styles.metaItem}>
+                                                                <Ionicons name="calendar-outline" size={14} color="#666"/>
+                                                                <Text style={styles.metaText}>
+                                                                    정기 {member.periodicSchedules.length}개 · 일회성 {member.onetimeSchedules.length}개
+                                                                </Text>
+                                                            </View>
+                                                        </View>
+                                                    </View>
+                                                    <View style={[
+                                                        styles.checkbox,
+                                                        isSelected && styles.checkboxSelected,
+                                                    ]}>
+                                                        {isSelected && (
+                                                            <Ionicons name="checkmark" size={18} color="white"/>
+                                                        )}
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+
+                                            {isSelected && (
+                                                <View style={styles.sessionCountContainer}>
+                                                    <View style={styles.sessionCountSelector}>
+                                                        <Text style={styles.sessionCountLabel}>주간 세션:</Text>
+                                                        <TouchableOpacity
+                                                            style={styles.sessionCountButton}
+                                                            onPress={() => {
+                                                                if (selectedMember.sessionCount > 1) {
+                                                                    updateSessionCount(member.accountId, selectedMember.sessionCount - 1);
+                                                                }
+                                                            }}
+                                                            disabled={selectedMember.sessionCount <= 1}
+                                                        >
+                                                            <Ionicons
+                                                                name="remove-circle"
+                                                                size={20}
+                                                                color={selectedMember.sessionCount <= 1 ? "#D1D5DB" : "#3B82F6"}
+                                                            />
+                                                        </TouchableOpacity>
+                                                        <View style={styles.sessionCountDisplay}>
+                                                            <Text style={styles.sessionCountText}>{selectedMember.sessionCount}회</Text>
+                                                        </View>
+                                                        <TouchableOpacity
+                                                            style={styles.sessionCountButton}
+                                                            onPress={() => {
+                                                                if (selectedMember.sessionCount < 3) {
+                                                                    updateSessionCount(member.accountId, selectedMember.sessionCount + 1);
+                                                                }
+                                                            }}
+                                                            disabled={selectedMember.sessionCount >= 3}
+                                                        >
+                                                            <Ionicons
+                                                                name="add-circle"
+                                                                size={20}
+                                                                color={selectedMember.sessionCount >= 3 ? "#D1D5DB" : "#3B82F6"}
+                                                            />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            )}
                                         </View>
-                                        <TouchableOpacity
-                                            style={styles.sessionCountButton}
-                                            onPress={() => {
-                                                if (selectedMember.sessionCount < 3) {
-                                                    updateSessionCount(member.id, selectedMember.sessionCount + 1);
-                                                }
-                                            }}
-                                            disabled={selectedMember.sessionCount >= 3}
-                                        >
-                                            <Ionicons
-                                                name="add-circle"
-                                                size={20}
-                                                color={selectedMember.sessionCount >= 3 ? "#D1D5DB" : "#3B82F6"}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
+                                    );
+                                })}
+                            </View>
+                        )}
+
+                        {/* NOT READY 회원 섹션 */}
+                        {members.filter(m => m.periodicSchedules.length === 0 && m.onetimeSchedules.length === 0).length > 0 && (
+                            <View style={styles.sectionContainer}>
+                                <View style={styles.sectionHeader}>
+                                    <Ionicons name="alert-circle-outline" size={20} color="#9CA3AF" />
+                                    <Text style={[styles.sectionTitle, styles.sectionTitleNotReady]}>일정 미등록</Text>
+                                    <Text style={styles.sectionCount}>
+                                        {members.filter(m => m.periodicSchedules.length === 0 && m.onetimeSchedules.length === 0).length}명
+                                    </Text>
                                 </View>
-                            )}
-                        </View>
-                    );
-                })
+                                {members.filter(m => m.periodicSchedules.length === 0 && m.onetimeSchedules.length === 0).map((member) => {
+                                    return (
+                                        <View key={member.accountId}>
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.memberCard,
+                                                    styles.memberCardDisabled,
+                                                ]}
+                                                disabled={true}
+                                                activeOpacity={0.8}
+                                            >
+                                                <View style={styles.memberCardHeader}>
+                                                    <View style={styles.memberInfo}>
+                                                        <View style={styles.memberNameRow}>
+                                                            <Text style={[
+                                                                styles.memberName,
+                                                                styles.memberNameDisabled,
+                                                            ]}>
+                                                                {member.name}
+                                                            </Text>
+                                                            <View style={styles.statusBadgeNotReady}>
+                                                                <Text style={[styles.statusText, styles.statusTextNotReady]}>
+                                                                    NOT READY
+                                                                </Text>
+                                                            </View>
+                                                        </View>
+                                                        <Text style={[
+                                                            styles.memberPhone,
+                                                            styles.memberPhoneDisabled,
+                                                        ]}>
+                                                            {member.phoneNumber}
+                                                        </Text>
+                                                    </View>
+                                                    <View style={styles.checkboxDisabled}>
+                                                        <Ionicons name="close" size={18} color="#D1D5DB"/>
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        )}
+                    </>
                 )}
             </ScrollView>
 
@@ -566,11 +616,18 @@ const styles = StyleSheet.create({
     statusBadgeNotReady: {
         backgroundColor: '#F3F4F6',
         borderColor: '#E0E0E0',
+        borderRadius: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderWidth: 1,
     },
     statusText: {
         fontSize: 10,
         color: '#3B82F6',
         fontWeight: '700',
+    },
+    statusTextNotReady: {
+        color: '#9CA3AF',
     },
     memberPhone: {
         fontSize: 14,
@@ -763,5 +820,35 @@ const styles = StyleSheet.create({
         color: '#666',
         textAlign: 'center',
         lineHeight: 22,
+    },
+    sectionContainer: {
+        marginBottom: 24,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 12,
+        paddingBottom: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1F2937',
+        flex: 1,
+    },
+    sectionTitleNotReady: {
+        color: '#6B7280',
+    },
+    sectionCount: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#6B7280',
+        backgroundColor: '#F3F4F6',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
     },
 });
