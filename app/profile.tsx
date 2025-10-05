@@ -44,45 +44,13 @@ export default function ProfileScreen() {
 
         {/* Menu Items */}
         <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="person-outline" size={20} color="#333" />
-              <Text style={styles.menuItemText}>계정 정보</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="notifications-outline" size={20} color="#333" />
-              <Text style={styles.menuItemText}>알림 설정</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="lock-closed-outline" size={20} color="#333" />
-              <Text style={styles.menuItemText}>개인정보 보호</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="help-circle-outline" size={20} color="#333" />
-              <Text style={styles.menuItemText}>도움말</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="information-circle-outline" size={20} color="#333" />
-              <Text style={styles.menuItemText}>앱 정보</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
+          {/*<TouchableOpacity style={styles.menuItem}>*/}
+            {/*<View style={styles.menuItemLeft}>*/}
+            {/*  <Ionicons name="person-outline" size={20} color="#333" />*/}
+            {/*  <Text style={styles.menuItemText}>dummy</Text>*/}
+            {/*</View>*/}
+            {/*<Ionicons name="chevron-forward" size={20} color="#666" />*/}
+          {/*</TouchableOpacity>*/}
         </View>
 
         {/* Logout Button */}
