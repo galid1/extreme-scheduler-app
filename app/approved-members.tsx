@@ -76,12 +76,6 @@ export default function ApprovedMembersScreen() {
                                                     </Text>
                                                 </View>
                                                 <View style={styles.statRow}>
-                                                    <Text style={styles.statRowLabel}>예정 세션</Text>
-                                                    <Text style={styles.statRowValue}>
-                                                        {member.upcomingSessions}회
-                                                    </Text>
-                                                </View>
-                                                <View style={styles.statRow}>
                                                     <Text style={styles.statRowLabel}>총 세션</Text>
                                                     <Text style={styles.statRowValue}>
                                                         {member.totalSessions}회

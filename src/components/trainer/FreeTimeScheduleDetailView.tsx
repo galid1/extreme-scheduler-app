@@ -19,7 +19,7 @@ interface TrainerScheduleDetailViewProps {
   onEdit: () => void;
 }
 
-export default function TrainerScheduleDetailView({
+export default function FreeTimeScheduleDetailView({
   periodicScheduleLines,
   onetimeScheduleLines,
   onClose,

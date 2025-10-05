@@ -8,7 +8,7 @@ import {TrainerStatus} from '@/src/types/enums';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
 import TrainerScheduleEditor from '@/src/components/trainer/TrainerScheduleEditor';
-import TrainerScheduleDetailView from '@/src/components/trainer/TrainerScheduleDetailView';
+import FreeTimeScheduleDetailView from '@/src/components/trainer/FreeTimeScheduleDetailView';
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 import ErrorRetryView from '@/src/components/ErrorRetryView';
 import WeekInfo from '@/src/components/WeekInfo';
@@ -205,7 +205,7 @@ export default function TrainerHome() {
     // Show schedule detail view when requested
     if (showScheduleDetail) {
         return (
-            <TrainerScheduleDetailView
+            <FreeTimeScheduleDetailView
                 periodicScheduleLines={scheduleData.periodicScheduleLines}
                 onetimeScheduleLines={scheduleData.onetimeScheduleLines}
                 onClose={() => setShowScheduleDetail(false)}
