@@ -10,7 +10,6 @@ import {
   RequestStatus,
   TrainerScheduleStatus,
   TrainerStatus,
-  MemberScheduleStatus,
   TrainingSessionStatus,
   AutoSchedulingResultStatus
 } from './enums';
@@ -24,7 +23,6 @@ export {
   RequestStatus,
   TrainerScheduleStatus,
   TrainerStatus,
-  MemberScheduleStatus,
   TrainingSessionStatus,
   AutoSchedulingResultStatus
 };
@@ -202,7 +200,6 @@ export interface AssignedMemberDto {
   accountId: number;
   name: string;
   phoneNumber: string;
-  scheduleStatus: MemberScheduleStatus;
 }
 
 export interface GetAssignedMembersResponse {
@@ -274,7 +271,6 @@ export interface TrainerResponse {
 export interface MemberResponse {
   accountId: number;
   trainerAccountId?: number;
-  scheduleStatus: MemberScheduleStatus;
 }
 
 export interface CurrentAccountRequest {

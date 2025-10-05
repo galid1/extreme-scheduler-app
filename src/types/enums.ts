@@ -3,10 +3,6 @@ export enum AccountType {
   TRAINER = 'TRAINER'
 }
 
-export enum MemberScheduleStatus {
-  SCHEDULED = 'SCHEDULED',
-}
-
 export enum TrainerScheduleStatus {
   NOT_READY = 'NOT_READY',
   READY ='READY',

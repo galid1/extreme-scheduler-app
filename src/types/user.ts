@@ -1,4 +1,4 @@
-import { AccountType, Gender, MemberScheduleStatus } from './enums';
+import { AccountType, Gender } from './enums';
 
 export interface User {
   name: string;
@@ -8,5 +8,4 @@ export interface User {
   accountType: AccountType;
   // Member specific fields
   trainerAccountId?: string | null;
-  scheduleStatus?: MemberScheduleStatus;
 }

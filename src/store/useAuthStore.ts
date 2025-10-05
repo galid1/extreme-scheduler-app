@@ -1,17 +1,13 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import {create} from 'zustand';
+import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  Account,
-  TrainerResponse,
-  MemberResponse,
-  TrainerScheduleStatus,
-  MemberScheduleStatus,
-  MemberFixedAutoSchedulingScheduleDetail,
-  WeeklyScheduleRegistrationStatusResponse
+    Account,
+    MemberFixedAutoSchedulingScheduleDetail,
+    MemberResponse,
+    TrainerResponse,
+    WeeklyScheduleRegistrationStatusResponse
 } from '@/src/types/api';
-import { useConfigStore } from './useConfigStore';
-import { mockAccount, mockTrainer, mockMember, mockMemberAccount, mockSavedSchedule } from '@/src/mock/mockData';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 

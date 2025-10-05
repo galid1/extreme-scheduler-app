@@ -7,7 +7,6 @@ import {
   Gender,
   Platform,
   TrainerScheduleStatus,
-  MemberScheduleStatus,
   TrainerStatus,
   RequestStatus
 } from '@/src/types/api';
@@ -54,8 +53,7 @@ export const mockMemberAccount: Account = {
 
 export const mockMember: MemberResponse = {
   accountId: 2,
-  trainerAccountId: 1,
-  scheduleStatus: MemberScheduleStatus.SCHEDULED
+  trainerAccountId: 1
 };
 
 // Mock Assignment Requests

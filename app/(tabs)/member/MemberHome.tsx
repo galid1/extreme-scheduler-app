@@ -21,7 +21,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { memberScheduleService, memberService, apiClient, trainerScheduleService, trainerService, authService } from '@/src/services/api';
 import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
-import { MemberScheduleStatus } from '@/src/types/enums';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
 import MockModeToggle from '@/src/components/MockModeToggle';
 import { useConfigStore } from '@/src/store/useConfigStore';
@@ -40,7 +39,6 @@ export default function MemberHome() {
   const { account, member, setTrainerAccountId, savedSchedule, setSavedSchedule, setAccountData, setAssignedTrainer, autoSchedulingResults, setAutoSchedulingResults, weeklyScheduleRegistration, setWeeklyScheduleRegistration } = useAuthStore();
   const name = account?.privacyInfo?.name;
   const trainerAccountId = member?.trainerAccountId;
-  const scheduleStatus = member?.scheduleStatus;
   const [trainerPhone, setTrainerPhone] = useState('');
 
   // Helper function to check if auto scheduling is completed with results
