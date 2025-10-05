@@ -307,3 +307,22 @@ export interface TrainerWeeklyScheduleRegistrationStatusResponse {
   year: number;
   weekOfYear: number;
 }
+
+// Auto Scheduling Result Types
+export interface AutoSchedulingScheduleApiResponse {
+  memberName: string;
+  memberAccountId: number;
+  year: number;
+  weekOfYear: number;
+  dayOfWeek: DayOfWeek;
+  startHour: number;
+  endHour: number;
+}
+
+export interface GetAutoSchedulingResultApiResponse {
+  trainerAccountId: number;
+  year: number;
+  weekOfYear: number;
+  autoSchedulingResultStatus: AutoSchedulingResultStatus | null;
+  scheduleList: AutoSchedulingScheduleApiResponse[];
+}

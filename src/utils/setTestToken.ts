@@ -17,7 +17,6 @@ export const setTestToken = async () => {
       trainer: null,
       member: null,
       trainerAccountId: null,
-      scheduleStatus: 'NOT_READY',
       savedSchedule: {},
       notificationSent: false,
     },

@@ -10,6 +10,7 @@ import {
   AutoSchedulingRequest,
   GetFreeTimeScheduleResponse,
   TrainerWeeklyScheduleRegistrationStatusResponse,
+  GetAutoSchedulingResultApiResponse,
 } from '../../types/api';
 
 class TrainerScheduleService {
@@ -43,6 +44,20 @@ class TrainerScheduleService {
   ): Promise<TrainerWeeklyScheduleRegistrationStatusResponse> {
     return apiClient.get<TrainerWeeklyScheduleRegistrationStatusResponse>(
       `/api/v1/trainers/schedules/registration-status?targetYear=${targetYear}&targetWeekOfYear=${targetWeekOfYear}`
+    );
+  }
+
+  /**
+   * 자동 스케줄링 결과 조회
+   * @param year 조회할 연도
+   * @param weekOfYear 조회할 주차
+   */
+  async getAutoSchedulingResult(
+    year: number,
+    weekOfYear: number
+  ): Promise<GetAutoSchedulingResultApiResponse> {
+    return apiClient.get<GetAutoSchedulingResultApiResponse>(
+      `/api/v1/trainers/schedules/auto-scheduling?year=${year}&weekOfYear=${weekOfYear}`
     );
   }
 }
