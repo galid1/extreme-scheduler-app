@@ -1,30 +1,40 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
-    View,
-    Text,
+    ActivityIndicator,
+    Alert,
+    Animated,
     SafeAreaView,
     ScrollView,
-    TouchableOpacity,
     StyleSheet,
-    ActivityIndicator,
-    Animated,
-    Alert,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
-import {useRouter, useLocalSearchParams} from 'expo-router';
-import {useAuthStore} from '@/src/store/useAuthStore';
+import {useLocalSearchParams, useRouter} from 'expo-router';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
-import {MemberScheduleStatus} from '@/src/types/enums';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import {trainerScheduleService, trainerService} from '@/src/services/api';
+import {getYearAndWeek} from "@/src/utils/dateUtils";
 
 interface Member {
     id: string;
     name: string;
+    birthDate: string;
+    gender: string;
     phoneNumber: string;
-    scheduleStatus: MemberScheduleStatus;
-    registeredTimes?: number;
-    lastTrainingDate?: string;
+    periodicSchedules: Array<{
+        id: number | null;
+        dayOfWeek: string;
+        startHour: number;
+        endHour: number;
+    }>;
+    onetimeSchedules: Array<{
+        id: number | null;
+        scheduleDate: string;
+        startHour: number;
+        endHour: number;
+    }>;
 }
 
 interface MemberSelection {
@@ -88,46 +98,68 @@ export default function AutoSchedulingScreen() {
                     {
                         id: 'member_001',
                         name: '김민수',
+                        birthDate: '1990-05-15',
+                        gender: 'MALE',
                         phoneNumber: '010-1234-5678',
-                        scheduleStatus: 'SCHEDULED' as any,
-                        registeredTimes: 8,
-                        lastTrainingDate: '2024-01-15',
+                        periodicSchedules: [
+                            { id: 1, dayOfWeek: 'MONDAY', startHour: 9, endHour: 10 },
+                            { id: 2, dayOfWeek: 'WEDNESDAY', startHour: 14, endHour: 15 },
+                        ],
+                        onetimeSchedules: [],
                     },
                     {
                         id: 'member_002',
                         name: '이영희',
+                        birthDate: '1985-08-20',
+                        gender: 'FEMALE',
                         phoneNumber: '010-2345-6789',
-                        scheduleStatus: 'SCHEDULED' as any,
-                        registeredTimes: 12,
-                        lastTrainingDate: '2024-01-14',
+                        periodicSchedules: [
+                            { id: 3, dayOfWeek: 'TUESDAY', startHour: 10, endHour: 11 },
+                        ],
+                        onetimeSchedules: [
+                            { id: 4, scheduleDate: '2025-10-15', startHour: 16, endHour: 17 },
+                        ],
                     },
                     {
                         id: 'member_003',
                         name: '박철수',
+                        birthDate: '1992-03-10',
+                        gender: 'MALE',
                         phoneNumber: '010-3456-7890',
-                        scheduleStatus: 'SCHEDULED' as any,
+                        periodicSchedules: [],
+                        onetimeSchedules: [],
                     },
                     {
                         id: 'member_004',
                         name: '정미영',
+                        birthDate: '1988-11-25',
+                        gender: 'FEMALE',
                         phoneNumber: '010-4567-8901',
-                        scheduleStatus: 'SCHEDULED' as any,
-                        registeredTimes: 6,
-                        lastTrainingDate: '2024-01-13',
+                        periodicSchedules: [
+                            { id: 5, dayOfWeek: 'THURSDAY', startHour: 15, endHour: 16 },
+                        ],
+                        onetimeSchedules: [],
                     },
                     {
                         id: 'member_005',
                         name: '최준호',
+                        birthDate: '1995-01-30',
+                        gender: 'MALE',
                         phoneNumber: '010-5678-9012',
-                        scheduleStatus: 'SCHEDULED' as any,
+                        periodicSchedules: [],
+                        onetimeSchedules: [],
                     },
                     {
                         id: 'member_006',
                         name: '강서연',
+                        birthDate: '1993-07-05',
+                        gender: 'FEMALE',
                         phoneNumber: '010-6789-0123',
-                        scheduleStatus: 'SCHEDULED' as any,
-                        registeredTimes: 10,
-                        lastTrainingDate: '2024-01-16',
+                        periodicSchedules: [
+                            { id: 6, dayOfWeek: 'FRIDAY', startHour: 18, endHour: 19 },
+                            { id: 7, dayOfWeek: 'MONDAY', startHour: 11, endHour: 12 },
+                        ],
+                        onetimeSchedules: [],
                     },
                 ];
 
@@ -136,13 +168,21 @@ export default function AutoSchedulingScreen() {
                 setMembers(sortedMembers);
             } else {
                 // Real API call
-                const response = await trainerService.getAssignedMembers();
+                const { targetYear, targetWeekOfYear } = getYearAndWeek()
+                const nextWeekOfYear = targetWeekOfYear + 1
+                const response = await trainerService.getAssignedMembers(
+                    targetYear,
+                    nextWeekOfYear
+                );
 
                 const fetchedMembers: Member[] = response.members.map(member => ({
                     id: member.accountId.toString(),
                     name: member.name,
+                    birthDate: member.birthDate,
+                    gender: member.gender,
                     phoneNumber: member.phoneNumber,
-                    scheduleStatus: member.scheduleStatus,
+                    periodicSchedules: member.periodicSchedules,
+                    onetimeSchedules: member.onetimeSchedules,
                 }));
 
                 setMembers(fetchedMembers);
@@ -386,9 +426,11 @@ export default function AutoSchedulingScreen() {
                     </View>
                 ) : (
                     members.map((member) => {
-                    const isReady = member.scheduleStatus === 'SCHEDULED';
+                    const hasSchedule = member.periodicSchedules.length > 0 || member.onetimeSchedules.length > 0;
+                    const isReady = hasSchedule;
                     const selectedMember = selectedMembers.find(m => m.memberId === member.id);
                     const isSelected = !!selectedMember;
+                    const totalSchedules = member.periodicSchedules.length + member.onetimeSchedules.length;
 
                     return (
                         <View key={member.id}>
@@ -426,22 +468,20 @@ export default function AutoSchedulingScreen() {
                                         ]}>
                                             {member.phoneNumber}
                                         </Text>
-                                        {isReady && member.registeredTimes && (
+                                        {isReady && (
                                             <View style={styles.memberMetaInfo}>
                                                 <View style={styles.metaItem}>
                                                     <Ionicons name="time-outline" size={14} color="#666"/>
                                                     <Text style={styles.metaText}>
-                                                        {member.registeredTimes}개 시간대
+                                                        {totalSchedules}개 시간대
                                                     </Text>
                                                 </View>
-                                                {member.lastTrainingDate && (
-                                                    <View style={styles.metaItem}>
-                                                        <Ionicons name="fitness-outline" size={14} color="#666"/>
-                                                        <Text style={styles.metaText}>
-                                                            마지막 수강: {member.lastTrainingDate}
-                                                        </Text>
-                                                    </View>
-                                                )}
+                                                <View style={styles.metaItem}>
+                                                    <Ionicons name="calendar-outline" size={14} color="#666"/>
+                                                    <Text style={styles.metaText}>
+                                                        정기 {member.periodicSchedules.length}개 · 일회성 {member.onetimeSchedules.length}개
+                                                    </Text>
+                                                </View>
                                             </View>
                                         )}
                                     </View>

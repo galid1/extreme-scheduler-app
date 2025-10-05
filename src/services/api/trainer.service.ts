@@ -62,7 +62,7 @@ class TrainerService {
    * @param year 조회할 연도
    * @param weekOfYear 조회할 주차
    */
-  async getAssignedMembersWithSchedules(
+  async getAssignedMembers(
     year: number,
     weekOfYear: number
   ): Promise<GetAssignedMembersWithSchedulesResponse> {
