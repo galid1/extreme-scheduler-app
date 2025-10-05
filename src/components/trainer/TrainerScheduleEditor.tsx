@@ -23,7 +23,6 @@ interface TimeSlotSelection {
 
 interface TrainerScheduleEditorProps {
   showScheduleEdit: boolean;
-  savedSchedule: { [key: string]: TimeSlotSelection[] } | null;
   selectedTimes: { [key: string]: TimeSlotSelection[] };
   setSelectedTimes: (times: { [key: string]: TimeSlotSelection[] }) => void;
   expandedDay: string | null;

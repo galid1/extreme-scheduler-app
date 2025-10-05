@@ -12,6 +12,7 @@ import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendin
 import TrainerScheduleEditor from '@/src/components/trainer/TrainerScheduleEditor';
 import TrainerScheduleDetailView from '@/src/components/trainer/TrainerScheduleDetailView';
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
+import ErrorRetryView from '@/src/components/ErrorRetryView';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -48,45 +49,46 @@ export default function TrainerHome() {
   const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+  const [isRegisteredOperationSchedule, setIsRegisteredOperationSchedule] = useState<boolean | null>(null);
   const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
+  const [hasError, setHasError] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const { mockMode } = useConfigStore();
 
-  // Check registration status on mount
-  useEffect(() => {
-    const checkRegistrationStatus = async () => {
-      if (!mockMode) {
-        try {
-          const { year, weekOfYear } = getCurrentYearAndWeek();
-          const nextWeekOfYear = weekOfYear + 1;
-          const response = await trainerScheduleService.checkWeeklyScheduleRegistration(year, nextWeekOfYear);
-          setIsRegistered(response.registered);
-        } catch (error) {
-          console.error('Error checking registration status:', error);
-        }
-      }
-    };
+  // Function to load initial data
+  const loadInitialData = async () => {
+    if (mockMode) return;
 
-    checkRegistrationStatus();
+    try {
+      setHasError(false);
+      const { year, weekOfYear } = getCurrentYearAndWeek();
+      const nextWeekOfYear = weekOfYear + 1;
+
+      // Load both APIs in parallel
+      const [registrationResponse, schedulingResponse] = await Promise.all([
+        trainerScheduleService.checkWeeklyScheduleRegistration(year, nextWeekOfYear),
+        trainerScheduleService.getAutoSchedulingResult(year, nextWeekOfYear)
+      ]);
+
+      setIsRegisteredOperationSchedule(registrationResponse.registered);
+      setHasScheduledSessions(schedulingResponse.scheduleList.length > 0);
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      setHasError(true);
+    }
+  };
+
+  // Check registration status and scheduling results on mount
+  useEffect(() => {
+    loadInitialData();
   }, [mockMode]);
 
-  // Check auto scheduling results
-  useEffect(() => {
-    const checkAutoSchedulingResults = async () => {
-      if (!mockMode) {
-        try {
-          const { year, weekOfYear } = getCurrentYearAndWeek();
-          const nextWeekOfYear = weekOfYear + 1;
-          const response = await trainerScheduleService.getAutoSchedulingResult(year, nextWeekOfYear);
-          setHasScheduledSessions(response.scheduleList.length > 0);
-        } catch (error) {
-          console.error('Error checking auto scheduling results:', error);
-        }
-      }
-    };
-
-    checkAutoSchedulingResults();
-  }, [mockMode]);
+  // Retry function
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    await loadInitialData();
+    setIsRetrying(false);
+  };
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -133,10 +135,10 @@ export default function TrainerHome() {
 
   // Fetch trainer assignment requests
   useEffect(() => {
-    if (isRegistered === true) {
+    if (isRegisteredOperationSchedule === true) {
       fetchAssignmentRequests();
     }
-  }, [isRegistered]);
+  }, [isRegisteredOperationSchedule]);
 
 
 
@@ -176,13 +178,22 @@ export default function TrainerHome() {
     }
   };
 
+  // Show error retry view if API calls failed
+  if (hasError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorRetryView onRetry={handleRetry} isRetrying={isRetrying} />
+      </SafeAreaView>
+    );
+  }
+
   // Show pending approval screen for PENDING status
   if (status === TrainerStatus.PENDING) {
     return <TrainerPendingApprovalScreen onRefresh={handleRefresh} isRefreshing={isRefreshing} />;
   }
 
   // Show schedule registration as full page for NOT_READY status or when editing
-  if (isRegistered === false || showScheduleEdit || showScheduleEditFromDetail) {
+  if (isRegisteredOperationSchedule === false || showScheduleEdit || showScheduleEditFromDetail) {
     return (
       <TrainerScheduleEditor
         showScheduleEdit={showScheduleEdit || showScheduleEditFromDetail}
@@ -207,10 +218,14 @@ export default function TrainerHome() {
           setSelectedTimes(savedSchedule || {});
           setExpandedDay(null);
         }}
-        onSuccess={(times) => {
+        onSuccess={async (times) => {
           setSavedSchedule(times);
           setShowScheduleEdit(false);
           setShowScheduleEditFromDetail(false);
+
+          // Reload registration status after schedule registration
+          await loadInitialData();
+
           if (showScheduleEditFromDetail) {
             setShowScheduleDetail(true);
           }
@@ -244,7 +259,7 @@ export default function TrainerHome() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Show trainer dashboard or schedule management */}
-        {(isRegistered === true) && (
+        {(isRegisteredOperationSchedule === true) && (
           <>
             <View style={styles.trainerDashboard}>
               <Text style={styles.dashboardTitle}>담당 회원 대시보드</Text>
@@ -293,7 +308,7 @@ export default function TrainerHome() {
       </ScrollView>
 
       {/* Auto Scheduling Button for Trainers with READY status */}
-      {isRegistered === true && (
+      {isRegisteredOperationSchedule === true && (
         <View style={styles.autoScheduleButtonContainer}>
           <TouchableOpacity
             style={styles.autoScheduleButton}
