@@ -7,13 +7,12 @@ import {authService, trainerService} from '@/src/services/api';
 import {TrainerStatus} from '@/src/types/enums';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
-import TrainerScheduleEditor from '@/src/components/trainer/TrainerScheduleEditor';
+import FreeTimeScheduleEditor from '@/src/components/freetimeschedule/FreeTimeScheduleEditor';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 import ErrorRetryView from '@/src/components/ErrorRetryView';
 import WeekInfo from '@/src/components/WeekInfo';
-import {PeriodicScheduleLineResponse, OnetimeScheduleLineResponse} from '@/src/types/api';
-import {next} from "sucrase/dist/types/parser/tokenizer";
+import {PeriodicScheduleLine, OnetimeScheduleLine} from '@/src/types/api';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -44,7 +43,7 @@ export default function TrainerHome() {
     const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
     const [hasError, setHasError] = useState(false);
     const [isRetrying, setIsRetrying] = useState(false);
-    const [scheduleData, setScheduleData] = useState<{periodicScheduleLines: PeriodicScheduleLineResponse[], onetimeScheduleLines: OnetimeScheduleLineResponse[]}>({periodicScheduleLines: [], onetimeScheduleLines: []});
+    const [scheduleData, setScheduleData] = useState<{periodicScheduleLines: PeriodicScheduleLine[], onetimeScheduleLines: OnetimeScheduleLine[]}>({periodicScheduleLines: [], onetimeScheduleLines: []});
     const {mockMode} = useConfigStore();
 
     // Function to load initial data
@@ -160,14 +159,14 @@ export default function TrainerHome() {
     // Show schedule registration as full page for NOT_READY status or when editing
     if (isRegisteredOperationSchedule === false || showScheduleEdit || showScheduleEditFromDetail) {
         return (
-            <TrainerScheduleEditor
-                showScheduleEdit={showScheduleEdit || showScheduleEditFromDetail}
+            <FreeTimeScheduleEditor
+                showEdit={showScheduleEdit || showScheduleEditFromDetail}
                 periodicScheduleLines={scheduleData.periodicScheduleLines}
                 onetimeScheduleLines={scheduleData.onetimeScheduleLines}
                 expandedDay={expandedDay}
                 setExpandedDay={setExpandedDay}
-                isSubmittingSchedule={isSubmittingSchedule}
-                setIsSubmittingSchedule={setIsSubmittingSchedule}
+                isSubmitting={isSubmittingSchedule}
+                setIsSubmitting={setIsSubmittingSchedule}
                 fromDetail={showScheduleEditFromDetail}
                 onBackToDetail={() => {
                     setShowScheduleEditFromDetail(false);

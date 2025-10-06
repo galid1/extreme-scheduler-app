@@ -13,12 +13,14 @@ import {Ionicons} from '@expo/vector-icons';
 import type {
     DayOfWeek,
     RegisterScheduleRequest,
-    PeriodicScheduleLineResponse,
-    OnetimeScheduleLineResponse
+    PeriodicScheduleLine,
+    OnetimeScheduleLine
 } from '@/src/types/api';
-import {trainerScheduleService} from '@/src/services/api';
+import {trainerScheduleService, memberScheduleService} from '@/src/services/api';
 import {getNextWeekYearAndWeek, getNextWeekDateRange, formatDateMMDD} from '@/src/utils/dateUtils';
 import WeekInfo from '@/src/components/WeekInfo';
+import {useAuthStore} from '@/src/store/useAuthStore';
+import {AccountType} from '@/src/types/enums';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -27,33 +29,35 @@ interface TimeSlotSelection {
     state: TimeSlotState;
 }
 
-interface TrainerScheduleEditorProps {
-    showScheduleEdit: boolean;
-    periodicScheduleLines: PeriodicScheduleLineResponse[];
-    onetimeScheduleLines: OnetimeScheduleLineResponse[];
+interface FreeTimeScheduleEditorProps {
+    showEdit: boolean;
+    periodicScheduleLines: PeriodicScheduleLine[];
+    onetimeScheduleLines: OnetimeScheduleLine[];
     expandedDay: string | null;
     setExpandedDay: (day: string | null) => void;
-    isSubmittingSchedule: boolean;
-    setIsSubmittingSchedule: (value: boolean) => void;
+    isSubmitting: boolean;
+    setIsSubmitting: (value: boolean) => void;
     onCancel: () => void;
     onSuccess: () => void;
     fromDetail?: boolean;
     onBackToDetail?: () => void;
 }
 
-export default function TrainerScheduleEditor({
-                                                  showScheduleEdit,
+export default function FreeTimeScheduleEditor({
+                                                  showEdit,
                                                   periodicScheduleLines,
                                                   onetimeScheduleLines,
                                                   expandedDay,
                                                   setExpandedDay,
-                                                  isSubmittingSchedule,
-                                                  setIsSubmittingSchedule,
+                                                  isSubmitting,
+                                                  setIsSubmitting,
                                                   onCancel,
                                                   onSuccess,
                                                   fromDetail = false,
                                                   onBackToDetail,
-                                              }: TrainerScheduleEditorProps) {
+                                              }: FreeTimeScheduleEditorProps) {
+    const {account} = useAuthStore();
+    const accountType = account?.accountType;
     const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
     const [initialTimes, setInitialTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
 
@@ -118,6 +122,7 @@ export default function TrainerScheduleEditor({
         setSelectedTimes(transformedSchedule);
         setInitialTimes(transformedSchedule); // Save initial state for comparison
     }, [periodicScheduleLines, onetimeScheduleLines]);
+
     // Calculate next week info
     const nextWeekInfo = useMemo(() => {
         const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
@@ -197,7 +202,7 @@ export default function TrainerScheduleEditor({
         };
 
         try {
-            setIsSubmittingSchedule(true);
+            setIsSubmitting(true);
 
             // Get next week's year and week number
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
@@ -253,12 +258,19 @@ export default function TrainerScheduleEditor({
                 }
             });
 
-            await trainerScheduleService.registerSchedule(request);
+            // Call appropriate service based on account type
+            if (accountType === AccountType.TRAINER) {
+                await trainerScheduleService.registerSchedule(request);
+            } else if (accountType === AccountType.MEMBER) {
+                await memberScheduleService.registerSchedule(request);
+            } else {
+                throw new Error('Invalid account type');
+            }
 
             // Notify parent of success
             onSuccess();
 
-            if (showScheduleEdit) {
+            if (showEdit) {
                 Alert.alert('성공', '일정 수정이 완료되었습니다.');
             } else {
                 Alert.alert('성공', '일정 등록이 완료되었습니다.');
@@ -270,7 +282,7 @@ export default function TrainerScheduleEditor({
                 error.message || '일정 등록에 실패했습니다. 다시 시도해주세요.'
             );
         } finally {
-            setIsSubmittingSchedule(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -366,10 +378,17 @@ export default function TrainerScheduleEditor({
         ? [expandedDay, ...days.filter((d) => d !== expandedDay)]
         : days;
 
+    // Determine title based on account type
+    const getTitle = () => {
+        if (showEdit) return '일정 수정';
+        if (accountType === AccountType.TRAINER) return '운영 가능 일정 등록';
+        return '차주의 원하는 일정을 등록하세요';
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.scheduleHeader}>
-                {(showScheduleEdit || fromDetail) && (
+                {(showEdit || fromDetail) && (
                     <TouchableOpacity
                         style={styles.scheduleBackButton}
                         onPress={fromDetail && onBackToDetail ? onBackToDetail : onCancel}
@@ -378,7 +397,7 @@ export default function TrainerScheduleEditor({
                     </TouchableOpacity>
                 )}
                 <Text style={styles.schedulePageTitle}>
-                    {showScheduleEdit ? '일정 수정' : '운영 가능 일정 등록'}
+                    {getTitle()}
                 </Text>
                 <WeekInfo style={styles.scheduleSubtitle}/>
                 <View style={styles.helpContainer}>
@@ -492,16 +511,16 @@ export default function TrainerScheduleEditor({
                     onPress={handleSubmit}
                     disabled={
                         !Object.keys(selectedTimes).some((day) => selectedTimes[day]?.length > 0) ||
-                        isSubmittingSchedule
+                        isSubmitting
                     }
                 >
-                    {isSubmittingSchedule ? (
+                    {isSubmitting ? (
                         <ActivityIndicator color="white"/>
                     ) : (
                         <Text style={styles.scheduleSubmitButtonText}>
                             {expandedDay
                                 ? '완료'
-                                : showScheduleEdit
+                                : showEdit
                                     ? '수정 요청 완료'
                                     : '일정 등록 완료'}
                         </Text>
