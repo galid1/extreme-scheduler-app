@@ -259,6 +259,34 @@ export default function TrainerHome() {
                                 </TouchableOpacity>
                             </View>
                         </View>
+
+                        {/* Training Schedule Management Card */}
+                        <View style={[styles.trainerDashboard, {marginTop: 16}]}>
+                            <View>
+                                <Text style={styles.dashboardTitle}>트레이닝 일정 관리</Text>
+                                <WeekInfo style={styles.weekInfoText}/>
+                            </View>
+                            <View style={styles.scheduleButtonsContainer}>
+                                <TouchableOpacity
+                                    style={[styles.modifyScheduleButton, {flex: 1}]}
+                                    onPress={() => {
+                                        // 이번 주차로 설정하고 화면 이동
+                                        const today = new Date();
+                                        const startOfYear = new Date(today.getFullYear(), 0, 1);
+                                        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+                                        const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+
+                                        const { setCurrentWeek } = useTrainingStore.getState();
+                                        setCurrentWeek(realCurrentWeek);
+
+                                        router.push('/training-schedule');
+                                    }}
+                                >
+                                    <Ionicons name="calendar-sharp" size={20} color="white"/>
+                                    <Text style={styles.modifyScheduleButtonText}>트레이닝 일정 확인</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     </>
                 )}
             </ScrollView>
