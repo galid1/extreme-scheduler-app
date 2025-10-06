@@ -146,30 +146,37 @@ export default function FreeTimeScheduleEditor({
     }, []);
 
     const handleTimeSlotPress = (day: string, hour: number) => {
-        const dayTimes = selectedTimes[day] || [];
-        const existingIndex = dayTimes.findIndex((t) => t.hour === hour);
+        setSelectedTimes((prevSelectedTimes) => {
+            const dayTimes = prevSelectedTimes[day] || [];
+            const existingIndex = dayTimes.findIndex((t) => t.hour === hour);
 
-        if (existingIndex >= 0) {
-            const currentState = dayTimes[existingIndex].state;
-            if (currentState === 'recurring') {
-                // Change to once
-                const updated = [...dayTimes];
-                updated[existingIndex] = {hour, state: 'once'};
-                setSelectedTimes({...selectedTimes, [day]: updated});
+            if (existingIndex >= 0) {
+                const currentState = dayTimes[existingIndex].state;
+                if (currentState === 'recurring') {
+                    // Change to once
+                    const updated = [...dayTimes];
+                    updated[existingIndex] = {hour, state: 'once'};
+                    return {...prevSelectedTimes, [day]: updated};
+                } else {
+                    // Remove (once -> none)
+                    return {
+                        ...prevSelectedTimes,
+                        [day]: dayTimes.filter((t) => t.hour !== hour),
+                    };
+                }
             } else {
-                // Remove (once -> none)
-                setSelectedTimes({
-                    ...selectedTimes,
-                    [day]: dayTimes.filter((t) => t.hour !== hour),
-                });
+                // Add as recurring (with duplicate check)
+                const newDayTimes = [...dayTimes, {hour, state: 'recurring'}]
+                    .filter((item, index, self) =>
+                        index === self.findIndex((t) => t.hour === item.hour)
+                    )
+                    .sort((a, b) => a.hour - b.hour);
+                return {
+                    ...prevSelectedTimes,
+                    [day]: newDayTimes,
+                };
             }
-        } else {
-            // Add as recurring
-            setSelectedTimes({
-                ...selectedTimes,
-                [day]: [...dayTimes, {hour, state: 'recurring'}].sort((a, b) => a.hour - b.hour),
-            });
-        }
+        });
     };
 
     const handleSubmit = async () => {
