@@ -100,12 +100,7 @@ export default function FreeTimeScheduleDetailView({
           <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
           <WeekInfo style={styles.scheduleDetailWeekInfo} />
         </View>
-        <TouchableOpacity
-          style={styles.scheduleDetailEditButton}
-          onPress={onEdit}
-        >
-          <Ionicons name="create-outline" size={24} color="#3B82F6" />
-        </TouchableOpacity>
+        <View style={{width: 44}} />
       </View>
 
       <View style={styles.scheduleCalendarContainer}>

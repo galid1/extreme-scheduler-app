@@ -12,7 +12,8 @@ import FreeTimeScheduleDetailView from '@/src/components/trainer/FreeTimeSchedul
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 import ErrorRetryView from '@/src/components/ErrorRetryView';
 import WeekInfo from '@/src/components/WeekInfo';
-import {Schedule} from '@/src/types/api';
+import {PeriodicScheduleLineResponse, OnetimeScheduleLineResponse} from '@/src/types/api';
+import {next} from "sucrase/dist/types/parser/tokenizer";
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -43,7 +44,7 @@ export default function TrainerHome() {
     const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
     const [hasError, setHasError] = useState(false);
     const [isRetrying, setIsRetrying] = useState(false);
-    const [scheduleData, setScheduleData] = useState<{periodicScheduleLines: Schedule[], onetimeScheduleLines: Schedule[]}>({periodicScheduleLines: [], onetimeScheduleLines: []});
+    const [scheduleData, setScheduleData] = useState<{periodicScheduleLines: PeriodicScheduleLineResponse[], onetimeScheduleLines: OnetimeScheduleLineResponse[]}>({periodicScheduleLines: [], onetimeScheduleLines: []});
     const {mockMode} = useConfigStore();
 
     // Function to load initial data
@@ -56,37 +57,29 @@ export default function TrainerHome() {
             const nextWeekOfYear = weekOfYear + 1;
 
             // Load both APIs in parallel
-            const [registrationResponse, schedulingResponse] = await Promise.all([
+            const [registrationResponse, schedulingResponse, freeTimeScheduleResponse] = await Promise.all([
                 trainerScheduleService.checkWeeklyScheduleRegistration(year, nextWeekOfYear),
-                trainerScheduleService.getAutoSchedulingResult(year, nextWeekOfYear)
+                trainerScheduleService.getAutoSchedulingResult(year, nextWeekOfYear),
+                trainerScheduleService.getFreeSchedule()
             ]);
 
             setIsRegisteredOperationSchedule(registrationResponse.registered);
             setHasScheduledSessions(schedulingResponse.scheduleList.length > 0);
+            setScheduleData({
+                periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
+                onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
+            });
+
         } catch (error) {
             console.error('Error loading initial data:', error);
             setHasError(true);
         }
     };
 
-    const loadScheduleData = async () => {
-        try {
-            const response = await trainerScheduleService.getFreeSchedule();
-            setScheduleData({
-                periodicScheduleLines: response.periodicScheduleLines,
-                onetimeScheduleLines: response.onetimeScheduleLines,
-            });
-            console.log(`Loaded schedule data: ${JSON.stringify(response)}`);
-        } catch (error) {
-            console.error('Error loading schedule data:', error);
-        }
-    };
-
     // Check registration status and scheduling results on mount
     useEffect(() => {
         loadInitialData();
-        loadScheduleData();
-    }, [mockMode]);
+    }, []);
 
     // Retry function
     const handleRetry = async () => {

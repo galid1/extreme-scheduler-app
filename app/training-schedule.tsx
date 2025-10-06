@@ -15,7 +15,7 @@ import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView from '@/src/components/training/WeekCalendarView';
 import {useConfigStore} from '@/src/store/useConfigStore';
-import {trainerScheduleService} from '@/src/services/api';
+import {AutoSchedulingResultStatus, trainerScheduleService} from '@/src/services/api';
 
 
 export default function TrainingScheduleScreen() {
@@ -412,14 +412,7 @@ export default function TrainingScheduleScreen() {
 
               const sessionDate = new Date(currentDate);
               sessionDate.setDate(currentDate.getDate() + daysToAdd);
-              const month = sessionDate.getMonth() + 1;
-              const day = sessionDate.getDate();
-
-              // Check if today and calculate hours until session
-              const isToday = daysToAdd === 0 && weekDiff === 0;
               const hoursUntil = session.hour - currentHour + (daysToAdd * 24);
-              const isWithin12Hours = hoursUntil <= 12 && hoursUntil > 0;
-              const isWithin24Hours = hoursUntil <= 24 && hoursUntil > 0;
 
               return (
                 <TouchableOpacity
@@ -494,7 +487,7 @@ export default function TrainingScheduleScreen() {
         <TouchableOpacity
           style={[
             styles.notificationButton,
-            (!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == WeekScheduleStatus.FIXED) && styles.notificationButtonDisabled
+            (!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == AutoSchedulingResultStatus.FIXED) && styles.notificationButtonDisabled
           ]}
           onPress={() => {
             if (canSendNotification(currentWeek)) {
@@ -526,19 +519,19 @@ export default function TrainingScheduleScreen() {
               }
             }
           }}
-          disabled={!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == WeekScheduleStatus.FIXED || isFixingWeekSchedule}
+          disabled={!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == AutoSchedulingResultStatus.FIXED || isFixingWeekSchedule}
         >
           {isFixingWeekSchedule ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
             <>
               <Ionicons
-                name={weekScheduleStatus[currentWeek] === WeekScheduleStatus.FIXED ? "checkmark-circle" : isCurrentWeek(currentWeek) ? "lock-closed" : "notifications-outline"}
+                name={weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? "checkmark-circle" : isCurrentWeek(currentWeek) ? "lock-closed" : "notifications-outline"}
                 size={18}
                 color="white"
               />
               <Text style={styles.notificationButtonText}>
-                {weekScheduleStatus[currentWeek] === WeekScheduleStatus.FIXED ? '일정 확정' : isCurrentWeek(currentWeek) ? '일정 확정 불가' : '일정 확정'}
+                {weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? '일정 확정' : isCurrentWeek(currentWeek) ? '일정 확정 불가' : '일정 확정'}
               </Text>
             </>
           )}

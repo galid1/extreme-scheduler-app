@@ -10,7 +10,12 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
-import type {DayOfWeek, RegisterScheduleRequest, PeriodicScheduleLineResponse, OnetimeScheduleLineResponse} from '@/src/types/api';
+import type {
+    DayOfWeek,
+    RegisterScheduleRequest,
+    PeriodicScheduleLineResponse,
+    OnetimeScheduleLineResponse
+} from '@/src/types/api';
 import {trainerScheduleService} from '@/src/services/api';
 import authService from '@/src/services/api/auth.service';
 import {getNextWeekYearAndWeek, getNextWeekDateRange, formatDateMMDD} from '@/src/utils/dateUtils';
@@ -56,7 +61,7 @@ export default function TrainerScheduleEditor({
 
     // Transform API response to TimeSlotSelection format
     useEffect(() => {
-        if(onetimeScheduleLines.length === 0 && periodicScheduleLines.length === 0) {
+        if (onetimeScheduleLines.length === 0 && periodicScheduleLines.length === 0) {
             setSelectedTimes({});
             return;
         }
@@ -233,11 +238,7 @@ export default function TrainerScheduleEditor({
                 }
             });
 
-            // Check mock mode
-            if (!mockMode) {
-                // Register trainer schedule only in non-mock mode
-                await trainerScheduleService.registerSchedule(request);
-            }
+            await trainerScheduleService.registerSchedule(request);
 
             // Notify parent of success
             onSuccess();

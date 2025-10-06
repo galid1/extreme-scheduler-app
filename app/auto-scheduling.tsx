@@ -13,7 +13,6 @@ import {
 import {Ionicons} from '@expo/vector-icons';
 import {useLocalSearchParams, useRouter} from 'expo-router';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
-import {useConfigStore} from '@/src/store/useConfigStore';
 import {trainerScheduleService, trainerService} from '@/src/services/api';
 import {getYearAndWeek} from "@/src/utils/dateUtils";
 import {useAssignedMembersStore} from '@/src/store/useAssignedMembersStore';
@@ -26,8 +25,7 @@ interface MemberSelection {
 export default function AutoSchedulingScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const {weekToReset, resetMode} = params;
-    const {mockMode} = useConfigStore();
+    const {resetMode} = params;
     const {members, setMembers} = useAssignedMembersStore();
     const [selectedMembers, setSelectedMembers] = useState<MemberSelection[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -72,7 +70,7 @@ export default function AutoSchedulingScreen() {
         setIsLoading(true);
         try {
             // Real API call
-            const { targetYear, targetWeekOfYear } = getYearAndWeek()
+            const {targetYear, targetWeekOfYear} = getYearAndWeek()
             const nextWeekOfYear = targetWeekOfYear + 1
             const response = await trainerService.getAssignedMembers(
                 targetYear,
@@ -116,66 +114,18 @@ export default function AutoSchedulingScreen() {
         setIsProcessing(true);
 
         try {
-            // Calculate target date
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
-            const nextMonday = new Date(today);
-            nextMonday.setDate(today.getDate() + daysUntilNextMonday);
-            const targetDate = nextMonday.toISOString().split('T')[0];
+            const {targetYear, targetWeekOfYear} = getYearAndWeek()
+            const nextWeekOfYear = targetWeekOfYear + 1
 
-            console.log()
+            // Real API call
+            const memberAccountIds = selectedMembers.map(sm => sm.memberId);
 
-            if (mockMode) {
-                // Mock mode: 로컬에서 가짜 스케줄 생성
-                await new Promise(resolve => setTimeout(resolve, 1700));
+            const response = await trainerScheduleService.executeAutoScheduling({
+                memberAccountIds: memberAccountIds,
+                targetYear: targetYear,
+                targetWeekOfYear: nextWeekOfYear,
+            });
 
-                const {setTrainingSessions, trainingSessions} = useTrainingStore.getState();
-                const generatedSessions: any[] = [];
-
-                // Calculate target week for mock mode
-                const startOfYear = new Date(today.getFullYear(), 0, 1);
-                const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-                const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-                const targetWeek = resetMode && weekToReset ? Number(weekToReset) : currentWeekOfYear + 1;
-
-                const weekDays = ['월', '화', '수', '목', '금'];
-                const timeSlots = [9, 10, 11, 14, 15, 16, 17, 18, 19, 20];
-
-                selectedMembers.forEach((selection) => {
-                    const member = members.find(m => m.accountId === selection.memberId);
-                    if (!member) return;
-
-                    for (let i = 0; i < selection.sessionCount; i++) {
-                        const dayIndex = Math.floor(Math.random() * weekDays.length);
-                        const hourIndex = Math.floor(Math.random() * timeSlots.length);
-
-                        generatedSessions.push({
-                            memberId: member.accountId,
-                            memberName: member.name,
-                            memberPhone: member.phoneNumber,
-                            hour: timeSlots[hourIndex],
-                            day: weekDays[dayIndex],
-                            weekOfYear: targetWeek,
-                        });
-                    }
-                });
-
-                if (resetMode && weekToReset) {
-                    const existingSessions = trainingSessions.filter(s => s.weekOfYear !== targetWeek);
-                    setTrainingSessions([...existingSessions, ...generatedSessions]);
-                } else {
-                    setTrainingSessions([...trainingSessions, ...generatedSessions]);
-                }
-            } else {
-                // Real API call
-                const memberAccountIds = selectedMembers.map(sm => sm.memberId);
-
-                await trainerScheduleService.executeAutoScheduling({
-                    memberAccountIds,
-                    targetDate,
-                });
-            }
 
             setShowConfirmButton(true);
         } catch (error: any) {
@@ -258,9 +208,6 @@ export default function AutoSchedulingScreen() {
                             <>
                                 <Ionicons name="checkmark-circle" size={80} color="#4ADE80"/>
                                 <Text style={styles.successTitle}>스케줄링 완료!</Text>
-                                <Text style={styles.successSubtitle}>
-                                    총 {selectedMembers.length}명의 회원, {getTotalSessionCount()}개 세션이 생성되었습니다
-                                </Text>
                                 <TouchableOpacity
                                     style={styles.confirmButton}
                                     onPress={handleConfirmSchedule}
@@ -324,7 +271,7 @@ export default function AutoSchedulingScreen() {
                         {members.filter(m => m.periodicSchedules.length > 0 || m.onetimeSchedules.length > 0).length > 0 && (
                             <View style={styles.sectionContainer}>
                                 <View style={styles.sectionHeader}>
-                                    <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                                    <Ionicons name="checkmark-circle" size={20} color="#10B981"/>
                                     <Text style={styles.sectionTitle}>일정 등록 완료</Text>
                                     <Text style={styles.sectionCount}>
                                         {members.filter(m => m.periodicSchedules.length > 0 || m.onetimeSchedules.length > 0).length}명
@@ -366,9 +313,11 @@ export default function AutoSchedulingScreen() {
                                                                 </Text>
                                                             </View>
                                                             <View style={styles.metaItem}>
-                                                                <Ionicons name="calendar-outline" size={14} color="#666"/>
+                                                                <Ionicons name="calendar-outline" size={14}
+                                                                          color="#666"/>
                                                                 <Text style={styles.metaText}>
-                                                                    정기 {member.periodicSchedules.length}개 · 일회성 {member.onetimeSchedules.length}개
+                                                                    정기 {member.periodicSchedules.length}개 ·
+                                                                    일회성 {member.onetimeSchedules.length}개
                                                                 </Text>
                                                             </View>
                                                         </View>
@@ -404,7 +353,8 @@ export default function AutoSchedulingScreen() {
                                                             />
                                                         </TouchableOpacity>
                                                         <View style={styles.sessionCountDisplay}>
-                                                            <Text style={styles.sessionCountText}>{selectedMember.sessionCount}회</Text>
+                                                            <Text
+                                                                style={styles.sessionCountText}>{selectedMember.sessionCount}회</Text>
                                                         </View>
                                                         <TouchableOpacity
                                                             style={styles.sessionCountButton}
@@ -434,7 +384,7 @@ export default function AutoSchedulingScreen() {
                         {members.filter(m => m.periodicSchedules.length === 0 && m.onetimeSchedules.length === 0).length > 0 && (
                             <View style={styles.sectionContainer}>
                                 <View style={styles.sectionHeader}>
-                                    <Ionicons name="alert-circle-outline" size={20} color="#9CA3AF" />
+                                    <Ionicons name="alert-circle-outline" size={20} color="#9CA3AF"/>
                                     <Text style={[styles.sectionTitle, styles.sectionTitleNotReady]}>일정 미등록</Text>
                                     <Text style={styles.sectionCount}>
                                         {members.filter(m => m.periodicSchedules.length === 0 && m.onetimeSchedules.length === 0).length}명
@@ -461,7 +411,8 @@ export default function AutoSchedulingScreen() {
                                                                 {member.name}
                                                             </Text>
                                                             <View style={styles.statusBadgeNotReady}>
-                                                                <Text style={[styles.statusText, styles.statusTextNotReady]}>
+                                                                <Text
+                                                                    style={[styles.statusText, styles.statusTextNotReady]}>
                                                                     NOT READY
                                                                 </Text>
                                                             </View>
@@ -733,7 +684,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#333',
         marginTop: 20,
-        marginBottom: 12,
+        marginBottom: 40,
     },
     successSubtitle: {
         fontSize: 16,

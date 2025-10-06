@@ -5,11 +5,11 @@
 
 import apiClient from './client';
 import {
-  RegisterScheduleRequest,
-  AutoSchedulingRequest,
-  GetFreeTimeScheduleResponse,
-  TrainerWeeklyScheduleRegistrationStatusResponse,
-  GetAutoSchedulingResultApiResponse,
+    RegisterScheduleRequest,
+    AutoSchedulingRequest,
+    GetFreeTimeScheduleResponse,
+    TrainerWeeklyScheduleRegistrationStatusResponse,
+    GetAutoSchedulingResultApiResponse, AutoSchedulingResponse,
 } from '../../types/api';
 
 class TrainerScheduleService {
@@ -30,8 +30,8 @@ class TrainerScheduleService {
   /**
    * 자동 스케줄링 실행
    */
-  async executeAutoScheduling(request: AutoSchedulingRequest): Promise<void> {
-    await apiClient.post('/api/v1/trainers/schedules/auto-scheduling', request);
+  async executeAutoScheduling(request: AutoSchedulingRequest): Promise<AutoSchedulingResponse> {
+    return apiClient.post<AutoSchedulingResponse>('/api/v1/trainers/schedules/auto-scheduling', request);
   }
 
   /**

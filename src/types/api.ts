@@ -132,19 +132,16 @@ export interface UnRegisterMemberFreeTimeScheduleRequest {
     targetWeekOfYear: number;
 }
 
-export interface ScheduleTimeUpdate {
-    scheduleId: number;
-    startHour: number;
-    endHour: number;
-}
-
-export interface UpdateScheduleTimeRequest {
-    scheduleLines: ScheduleTimeUpdate[];
-}
-
 export interface AutoSchedulingRequest {
     memberAccountIds: number[];
-    targetDate: string;
+    targetYear: number;
+    targetWeekOfYear: number;
+}
+
+export interface AutoSchedulingResponse {
+    totalMatchings: number;
+    successfulMemberIds: number[];
+    failedMemberIds: number[];
 }
 
 export interface Schedule {
@@ -333,7 +330,6 @@ export interface AutoSchedulingScheduleApiResponse {
 }
 
 export interface GetAutoSchedulingResultApiResponse {
-    trainerAccountId: number;
     year: number;
     weekOfYear: number;
     scheduleList: AutoSchedulingScheduleApiResponse[];
