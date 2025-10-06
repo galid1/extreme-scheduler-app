@@ -17,7 +17,6 @@ import type {
     OnetimeScheduleLineResponse
 } from '@/src/types/api';
 import {trainerScheduleService} from '@/src/services/api';
-import authService from '@/src/services/api/auth.service';
 import {getNextWeekYearAndWeek, getNextWeekDateRange, formatDateMMDD} from '@/src/utils/dateUtils';
 import WeekInfo from '@/src/components/WeekInfo';
 
@@ -36,7 +35,6 @@ interface TrainerScheduleEditorProps {
     setExpandedDay: (day: string | null) => void;
     isSubmittingSchedule: boolean;
     setIsSubmittingSchedule: (value: boolean) => void;
-    mockMode: boolean;
     onCancel: () => void;
     onSuccess: () => void;
     fromDetail?: boolean;
@@ -51,7 +49,6 @@ export default function TrainerScheduleEditor({
                                                   setExpandedDay,
                                                   isSubmittingSchedule,
                                                   setIsSubmittingSchedule,
-                                                  mockMode,
                                                   onCancel,
                                                   onSuccess,
                                                   fromDetail = false,

@@ -168,7 +168,6 @@ export default function TrainerHome() {
                 setExpandedDay={setExpandedDay}
                 isSubmittingSchedule={isSubmittingSchedule}
                 setIsSubmittingSchedule={setIsSubmittingSchedule}
-                mockMode={mockMode}
                 fromDetail={showScheduleEditFromDetail}
                 onBackToDetail={() => {
                     setShowScheduleEditFromDetail(false);

@@ -2,28 +2,23 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   SafeAreaView,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
   Alert,
-  Image,
   AppState,
 } from 'react-native';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { memberScheduleService, memberService, authService } from '@/src/services/api';
-import type { RegisterScheduleRequest, DayOfWeek, TrainerSearchResponse } from '@/src/types/api';
+import { memberScheduleService, authService } from '@/src/services/api';
+import type { RegisterScheduleRequest, DayOfWeek } from '@/src/types/api';
 import MockModeToggle from '@/src/components/MockModeToggle';
 import { useConfigStore } from '@/src/store/useConfigStore';
 import { getYearAndWeek, getNextWeekYearAndWeek } from '@/src/utils/dateUtils';
+import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -38,17 +33,12 @@ export default function MemberHome() {
   const { account, member, setTrainerAccountId, savedSchedule, setSavedSchedule, setAccountData, setAssignedTrainer, autoSchedulingResults, setAutoSchedulingResults, weeklyScheduleRegistration, setWeeklyScheduleRegistration } = useAuthStore();
   const name = account?.privacyInfo?.name;
   const trainerAccountId = member?.trainerAccountId;
-  const [trainerPhone, setTrainerPhone] = useState('');
 
   // Helper function to check if auto scheduling is completed with results
   const hasAutoSchedulingResults = useCallback(() => {
     return autoSchedulingResults !== null && autoSchedulingResults.length > 0;
   }, [autoSchedulingResults]);
-  const [trainerProfile, setTrainerProfile] = useState<TrainerSearchResponse | null>(null);
   const appStateRef = useRef(AppState.currentState);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isAssigning, setIsAssigning] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
@@ -172,183 +162,13 @@ export default function MemberHome() {
   }, [fetchWeeklyScheduleRegistration, fetchAutoSchedulingResults]);
 
 
-  const formatPhoneNumber = (text: string) => {
-    const cleaned = text.replace(/\D/g, '');
-    if (cleaned.length <= 3) return cleaned;
-    if (cleaned.length <= 7) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
-    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7, 11)}`;
-  };
-
-  const handlePhoneChange = (text: string) => {
-    const cleaned = text.replace(/\D/g, '');
-    if (cleaned.length <= 11) {
-      setTrainerPhone(cleaned);
-      setSearchError(null);
-      if (cleaned.length < 11) {
-        setTrainerProfile(null);
-      }
-    }
-  };
-
-  // Auto search when 11 digits are entered
-  useEffect(() => {
-    if (trainerPhone.length === 11) {
-      searchTrainer();
-    }
-  }, [trainerPhone]);
-
-  const searchTrainer = async () => {
-    setIsSearching(true);
-    setSearchError(null);
-    try {
-      // Mock mode handling
-      if (mockMode) {
-        setTrainerProfile({
-          trainerAccountId: 1,
-          name: '김트레이너',
-          phoneNumber: trainerPhone,
-          profileImageUrl: 'https://via.placeholder.com/150'
-        });
-      } else {
-        // Phone number for API (숫자만 전송)
-        const response = await memberService.searchTrainer(trainerPhone);
-        setTrainerProfile(response);
-      }
-    } catch (error: any) {
-      console.error('Error searching trainer:', error);
-      setTrainerProfile(null);
-      if (error.response?.status === 404) {
-        setSearchError('해당 전화번호의 트레이너를 찾을 수 없습니다.');
-      } else {
-        setSearchError('트레이너 검색 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleAssignTrainer = async () => {
-    if (!trainerProfile) return;
-
-    setIsAssigning(true);
-    try {
-      if (!mockMode) {
-        // Send trainer assignment request only in non-mock mode
-        await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
-      }
-
-      // Update store with trainer ID
-      setTrainerAccountId(trainerProfile.trainerAccountId);
-
-      Alert.alert(
-        '요청 완료',
-        '담당 트레이너 지정 요청이 전송되었습니다. 트레이너가 승인하면 일정 등록이 가능합니다.',
-        [{ text: '확인' }]
-      );
-
-      // Clear the form
-      setTrainerPhone('');
-      setTrainerProfile(null);
-      setSearchError(null);
-    } catch (error: any) {
-      console.error('Error assigning trainer:', error);
-      Alert.alert(
-        '요청 실패',
-        error.message || '담당 트레이너 지정 요청에 실패했습니다.',
-        [{ text: '확인' }]
-      );
-    } finally {
-      setIsAssigning(false);
-    }
-  };
-
   // Show trainer assignment UI if no trainer assigned
   if (!trainerAccountId) {
     return (
-      <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: '#F8FAFC' }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-              <View style={styles.header}>
-                <Text style={styles.title}>담당 트레이너를 지정해주세요</Text>
-              </View>
-
-              <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>트레이너 전화번호로 검색하세요</Text>
-
-                <View style={styles.phoneInputContainer}>
-                  <TextInput
-                    style={styles.phoneInput}
-                    placeholder="010-0000-0000"
-                    placeholderTextColor="#9CA3AF"
-                    value={formatPhoneNumber(trainerPhone)}
-                    onChangeText={handlePhoneChange}
-                    keyboardType="phone-pad"
-                    maxLength={13}
-                  />
-                  {isSearching && (
-                    <ActivityIndicator size="small" color="#3B82F6" style={styles.searchingIndicator} />
-                  )}
-                </View>
-
-                  {trainerProfile &&
-                  (<View>
-                      <Text>
-                          {trainerProfile?.trainerAccountId}
-                      </Text>
-                  </View>)
-                  }
-
-                {searchError && (
-                  <View style={styles.errorCard}>
-                    <Ionicons name="alert-circle" size={20} color="#EF4444" />
-                    <Text style={styles.errorText}>{searchError}</Text>
-                  </View>
-                )}
-
-                {trainerProfile?.profileImageUrl && (
-                  <View style={styles.profileCard}>
-                    <View style={styles.profileHeader}>
-                      <View style={styles.profileIcon}>
-                        {trainerProfile?.profileImageUrl ? (
-                          <Image
-                            source={{ uri: trainerProfile?.profileImageUrl }}
-                            style={styles.profileImage}
-                          />
-                        ) : (
-                          <Ionicons name="person-circle" size={50} color="#3B82F6" />
-                        )}
-                      </View>
-                      <View style={styles.profileInfo}>
-                        <Text style={styles.profileName}>{trainerProfile?.name}</Text>
-                        <Text style={styles.profilePhone}>{formatPhoneNumber(trainerProfile?.phoneNumber)}</Text>
-                      </View>
-                    </View>
-
-                    <TouchableOpacity
-                      style={[styles.assignButton, isAssigning && styles.assignButtonDisabled]}
-                      onPress={handleAssignTrainer}
-                      disabled={isAssigning || !trainerProfile}
-                    >
-                      {isAssigning ? (
-                        <ActivityIndicator color="white" />
-                      ) : (
-                        <>
-                          <Ionicons name="person-add" size={20} color="white" />
-                          <Text style={styles.assignButtonText}>담당 트레이너 지정 요청</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-          </SafeAreaView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+      <TrainerSearchComponent
+        mockMode={mockMode}
+        onAssignmentSuccess={setTrainerAccountId}
+      />
     );
   }
 
