@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useConfigStore } from './useConfigStore';
 import { mockTrainingSessions } from '@/src/mock/mockData';
-import {WeekScheduleStatus} from "@/src/types/enums";
+import {AutoSchedulingResultStatus, WeekScheduleStatus} from "@/src/types/enums";
 
 export interface TrainingSession {
   memberId: string;
@@ -143,7 +143,7 @@ export const useTrainingStore = create<TrainingState>()(
         set((state) => ({
           weekScheduleStatus: {
             ...state.weekScheduleStatus,
-            [week]: WeekScheduleStatus.NOT_FIXED,
+            [week]: AutoSchedulingResultStatus.NOT_FIXED,
           }
         }));
       },
