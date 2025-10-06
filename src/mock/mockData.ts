@@ -9,7 +9,6 @@ import {
   TrainerStatus,
   RequestStatus
 } from '@/src/types/api';
-import { Schedule } from '@/src/store/useScheduleStore';
 import { TrainingSession } from '@/src/store/useTrainingStore';
 
 // Mock Auth Data
@@ -88,120 +87,6 @@ export const mockAssignmentRequests: AssignmentRequestDto[] = [
     status: RequestStatus.REJECTED,
     requestedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     rejectReason: '현재 신규 회원을 받지 않습니다'
-  }
-];
-
-// Mock Schedules
-export const mockSchedules: Schedule[] = [
-  {
-    id: 'schedule-1',
-    title: '상체 운동',
-    description: '가슴, 어깨, 삼두 운동',
-    startTime: new Date(2024, 0, 15, 10, 0),
-    endTime: new Date(2024, 0, 15, 11, 30),
-    category: '운동',
-    color: '#3B82F6',
-    isRecurring: true,
-    recurringPattern: {
-      type: 'weekly',
-      interval: 1,
-      endDate: new Date(2024, 2, 31)
-    },
-    reminder: {
-      type: 'minutes',
-      value: 30
-    },
-    createdAt: new Date(2024, 0, 1),
-    updatedAt: new Date(2024, 0, 1)
-  },
-  {
-    id: 'schedule-2',
-    title: '하체 운동',
-    description: '스쿼트, 런지, 레그프레스',
-    startTime: new Date(2024, 0, 17, 14, 0),
-    endTime: new Date(2024, 0, 17, 15, 30),
-    category: '운동',
-    color: '#10B981',
-    isRecurring: true,
-    recurringPattern: {
-      type: 'weekly',
-      interval: 1,
-      endDate: new Date(2024, 2, 31)
-    },
-    reminder: {
-      type: 'hours',
-      value: 1
-    },
-    createdAt: new Date(2024, 0, 1),
-    updatedAt: new Date(2024, 0, 1)
-  },
-  {
-    id: 'schedule-3',
-    title: '유산소 운동',
-    description: '러닝머신 30분, 자전거 20분',
-    startTime: new Date(2024, 0, 19, 7, 0),
-    endTime: new Date(2024, 0, 19, 8, 0),
-    category: '운동',
-    color: '#F59E0B',
-    isRecurring: false,
-    reminder: {
-      type: 'days',
-      value: 1
-    },
-    createdAt: new Date(2024, 0, 1),
-    updatedAt: new Date(2024, 0, 1)
-  }
-];
-
-// Mock Training Sessions
-export const mockTrainingSessions: TrainingSession[] = [
-  {
-    memberId: 'member-2',
-    memberName: '김민수',
-    memberPhone: '010-1111-2222',
-    hour: 9,
-    day: 'MONDAY',
-    weekOfYear: 3
-  },
-  {
-    memberId: 'member-3',
-    memberName: '이수진',
-    memberPhone: '010-3333-4444',
-    hour: 10,
-    day: 'MONDAY',
-    weekOfYear: 3
-  },
-  {
-    memberId: 'member-4',
-    memberName: '박정호',
-    memberPhone: '010-5555-6666',
-    hour: 14,
-    day: 'TUESDAY',
-    weekOfYear: 3
-  },
-  {
-    memberId: 'member-2',
-    memberName: '김민수',
-    memberPhone: '010-1111-2222',
-    hour: 9,
-    day: 'WEDNESDAY',
-    weekOfYear: 3
-  },
-  {
-    memberId: 'member-3',
-    memberName: '이수진',
-    memberPhone: '010-3333-4444',
-    hour: 15,
-    day: 'THURSDAY',
-    weekOfYear: 3
-  },
-  {
-    memberId: 'member-4',
-    memberName: '박정호',
-    memberPhone: '010-5555-6666',
-    hour: 16,
-    day: 'FRIDAY',
-    weekOfYear: 3
   }
 ];
 

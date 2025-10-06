@@ -142,7 +142,6 @@ if (scheduleStatus === MemberScheduleStatus.READY) {
 - **TailwindCSS**: 유틸리티 기반 CSS 프레임워크
 
 ## Store 구조
-- `src/store/useScheduleStore.ts`: 일정 관리 상태
 - `src/store/useSettingsStore.ts`: 앱 설정 상태
 
 ## NativeWind 설정 완료

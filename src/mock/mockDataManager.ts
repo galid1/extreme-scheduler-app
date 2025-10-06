@@ -1,6 +1,5 @@
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useAssignmentStore } from '@/src/store/useAssignmentStore';
-import { useScheduleStore } from '@/src/store/useScheduleStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { useTrainingStore } from '@/src/store/useTrainingStore';
 import {
@@ -10,11 +9,10 @@ import {
   mockMemberAccount,
   mockSavedSchedule,
   mockAssignmentRequests,
-  mockSchedules,
   mockTrainingSessions,
   mockSettings
 } from './mockData';
-import {AccountType, WeekScheduleStatus} from '@/src/types/enums';
+import {AccountType} from '@/src/types/enums';
 
 export class MockDataManager {
   /**
@@ -45,10 +43,6 @@ export class MockDataManager {
     // Assignment Store - Load mock assignment requests
     const assignmentStore = useAssignmentStore.getState();
     assignmentStore.setAssignmentRequests(mockAssignmentRequests);
-
-    // Schedule Store - Load mock schedules
-    const scheduleStore = useScheduleStore.getState();
-    scheduleStore.setSchedules(mockSchedules);
 
     // Training Store - Load mock training sessions
     const trainingStore = useTrainingStore.getState();
@@ -83,10 +77,6 @@ export class MockDataManager {
     // Assignment Store
     const assignmentStore = useAssignmentStore.getState();
     assignmentStore.clearAssignmentRequests();
-
-    // Schedule Store
-    const scheduleStore = useScheduleStore.getState();
-    scheduleStore.setSchedules([]);
 
     // Training Store
     const trainingStore = useTrainingStore.getState();
