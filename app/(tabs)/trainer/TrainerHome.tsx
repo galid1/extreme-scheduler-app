@@ -254,29 +254,26 @@ export default function TrainerHome() {
                 )}
             </ScrollView>
 
-            {/* Auto Scheduling Button for Trainers with READY status */}
+            {/* Bottom Action Button */}
             {isRegisteredOperationSchedule === true && (
-                <View style={styles.autoScheduleButtonContainer}>
-                    <TouchableOpacity
-                        style={styles.autoScheduleButton}
-                        onPress={() => router.push('/auto-scheduling')}
-                    >
-                        <Ionicons name="calendar-outline" size={20} color="white"/>
-                        <Text style={styles.autoScheduleButtonText}>자동 스케줄링</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-
-            {/* View Schedule Button for Trainers with scheduled sessions */}
-            {hasScheduledSessions && (
-                <View style={styles.autoScheduleButtonContainer}>
-                    <TouchableOpacity
-                        style={styles.viewScheduleButton}
-                        onPress={() => router.push('/training-schedule')}
-                    >
-                        <Ionicons name="calendar-sharp" size={20} color="white"/>
-                        <Text style={styles.autoScheduleButtonText}>트레이닝 일정 확인</Text>
-                    </TouchableOpacity>
+                <View style={styles.bottomActionsContainer}>
+                    {hasScheduledSessions ? (
+                        <TouchableOpacity
+                            style={styles.viewScheduleButton}
+                            onPress={() => router.push('/training-schedule')}
+                        >
+                            <Ionicons name="calendar-sharp" size={20} color="white"/>
+                            <Text style={styles.autoScheduleButtonText}>트레이닝 일정 확인</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.autoScheduleButton}
+                            onPress={() => router.push('/auto-scheduling')}
+                        >
+                            <Ionicons name="calendar-outline" size={20} color="white"/>
+                            <Text style={styles.autoScheduleButtonText}>자동 스케줄링</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             )}
 
@@ -1207,11 +1204,13 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
     },
-    autoScheduleButtonContainer: {
+    bottomActionsContainer: {
         position: 'absolute',
         bottom: 30,
         left: 20,
         right: 20,
+        flexDirection: 'column',
+        gap: 12,
     },
     autoScheduleButton: {
         flexDirection: 'row',
