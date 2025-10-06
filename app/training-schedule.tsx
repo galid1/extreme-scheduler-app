@@ -404,22 +404,16 @@ export default function TrainingScheduleScreen() {
                 />
             </View>
 
-            {/* Bottom Action Buttons */}
-            <View style={styles.bottomButtonsContainer}>
-                <TouchableOpacity
-                    style={[
-                        styles.notificationButton,
-                        (!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == AutoSchedulingResultStatus.FIXED) && styles.notificationButtonDisabled
-                    ]}
-                    onPress={() => {
-                        if (canSendNotification(currentWeek)) {
-                            if (isCurrentWeek(currentWeek)) {
-                                Alert.alert(
-                                    '일정 확정 불가',
-                                    '이번 주차는 이미 일정이 확정 되었어요.\n다음 주차부터 일정 확정이 가능합니다.',
-                                    [{text: '확인', style: 'default'}]
-                                );
-                            } else {
+            {/* Bottom Action Buttons - Only show for future weeks */}
+            {!isCurrentWeek(currentWeek) && !isPastWeek(currentWeek) && (
+                <View style={styles.bottomButtonsContainer}>
+                    <TouchableOpacity
+                        style={[
+                            styles.notificationButton,
+                            (!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == AutoSchedulingResultStatus.FIXED) && styles.notificationButtonDisabled
+                        ]}
+                        onPress={() => {
+                            if (canSendNotification(currentWeek)) {
                                 Alert.alert(
                                     '일정 확정 확인',
                                     `${currentWeek}주차 트레이닝 일정을 확정하고, 모든 회원에게 알림을 발송하시겠습니까?`,
@@ -439,32 +433,32 @@ export default function TrainingScheduleScreen() {
                                     ]
                                 );
                             }
-                        }
-                    }}
-                    disabled={!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == AutoSchedulingResultStatus.FIXED || isFixingWeekSchedule}
-                >
-                    {isFixingWeekSchedule ? (
-                        <ActivityIndicator size="small" color="white"/>
-                    ) : (
-                        <>
-                            <Ionicons
-                                name={weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? "checkmark-circle" : isCurrentWeek(currentWeek) ? "lock-closed" : "notifications-outline"}
-                                size={18}
-                                color="white"
-                            />
-                            <Text style={styles.notificationButtonText}>
-                                {weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? '일정 확정' : isCurrentWeek(currentWeek) ? '일정 확정 불가' : '일정 확정'}
-                            </Text>
-                        </>
-                    )}
-                </TouchableOpacity>
+                        }}
+                        disabled={!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == AutoSchedulingResultStatus.FIXED || isFixingWeekSchedule}
+                    >
+                        {isFixingWeekSchedule ? (
+                            <ActivityIndicator size="small" color="white"/>
+                        ) : (
+                            <>
+                                <Ionicons
+                                    name={weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? "checkmark-circle" : "notifications-outline"}
+                                    size={18}
+                                    color="white"
+                                />
+                                <Text style={styles.notificationButtonText}>
+                                    {weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? '일정 확정' : '일정 확정'}
+                                </Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
 
-                <ScheduleResetButton
-                    currentWeek={currentWeek}
-                    disabled={isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
-                    style={styles.weekResetButton}
-                />
-            </View>
+                    <ScheduleResetButton
+                        currentWeek={currentWeek}
+                        disabled={isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
+                        style={styles.weekResetButton}
+                    />
+                </View>
+            )}
 
 
         </SafeAreaView>

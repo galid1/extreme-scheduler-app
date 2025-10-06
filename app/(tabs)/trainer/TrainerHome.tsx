@@ -286,8 +286,28 @@ export default function TrainerHome() {
                                     }}
                                 >
                                     <Ionicons name="calendar-sharp" size={20} color="white"/>
-                                    <Text style={styles.modifyScheduleButtonText}>금주 트레이닝 일정</Text>
+                                    <Text style={styles.modifyScheduleButtonText}>금주 일정</Text>
                                 </TouchableOpacity>
+                                {hasScheduledSessions && (
+                                    <TouchableOpacity
+                                        style={[styles.modifyScheduleButton, {flex: 1}]}
+                                        onPress={() => {
+                                            // 다음 주차로 설정하고 화면 이동
+                                            const today = new Date();
+                                            const startOfYear = new Date(today.getFullYear(), 0, 1);
+                                            const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+                                            const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+
+                                            const { setCurrentWeek } = useTrainingStore.getState();
+                                            setCurrentWeek(realCurrentWeek + 1); // 다음 주
+
+                                            router.push('/training-schedule');
+                                        }}
+                                    >
+                                        <Ionicons name="calendar-sharp" size={20} color="white"/>
+                                        <Text style={styles.modifyScheduleButtonText}>차주 일정</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         </View>
                     </>
