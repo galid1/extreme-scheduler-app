@@ -22,18 +22,10 @@ export default function MemberHome() {
         setSavedSchedule,
         setAccountData,
         setAssignedTrainer,
-        autoSchedulingResults,
-        setAutoSchedulingResults,
-        weeklyScheduleRegistration,
-        setWeeklyScheduleRegistration
     } = useAuthStore();
     const name = account?.privacyInfo?.name;
     const trainerAccountId = member?.trainerAccountId;
 
-    // Helper function to check if auto scheduling is completed with results
-    const hasAutoSchedulingResults = useCallback(() => {
-        return autoSchedulingResults !== null && autoSchedulingResults?.length > 0;
-    }, [autoSchedulingResults]);
     const appStateRef = useRef(AppState.currentState);
     const [expandedDay, setExpandedDay] = useState<string | null>(null);
     const [showScheduleEdit, setShowScheduleEdit] = useState(false);
@@ -43,7 +35,52 @@ export default function MemberHome() {
         periodicScheduleLines: PeriodicScheduleLine[],
         onetimeScheduleLines: OnetimeScheduleLine[]
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
+
+    // Local state for auto scheduling results and registration status
+    const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<any[] | null>(null);
+    const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
+    const [trainerAutoScheduled, setTrainerAutoScheduled] = useState<boolean>(false);
+
     const {mockMode} = useConfigStore();
+
+    // Helper function to check if auto scheduling is completed with results
+    const hasAutoSchedulingResults = useCallback(() => {
+        console.log("JSON.stringify(autoSchedulingResults) = ", JSON.stringify(fixedAutoSchedulingResults));
+        return fixedAutoSchedulingResults !== null && fixedAutoSchedulingResults?.length > 0;
+    }, [fixedAutoSchedulingResults]);
+
+    // Load initial data on mount
+    const loadInitialData = useCallback(async () => {
+        if (!member || mockMode) return;
+
+        try {
+            const {targetYear, targetWeekOfYear} = getYearAndWeek();
+            const nextWeekOfYear = targetWeekOfYear + 1;
+
+            // Load all APIs in parallel
+            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, trainerStatusResponse] = await Promise.all([
+                memberScheduleService.checkWeeklyScheduleRegistration(targetYear, nextWeekOfYear),
+                memberScheduleService.getFixedAutoSchedulingResult(targetYear, targetWeekOfYear),
+                memberScheduleService.getFreeSchedule(),
+                memberScheduleService.getTrainerAutoSchedulingStatus(targetYear, targetWeekOfYear)
+            ]);
+
+            setWeeklyScheduleRegistration(registrationResponse);
+            setFixedAutoSchedulingResults(autoSchedulingResponse.data);
+            setTrainerAutoScheduled(trainerStatusResponse);
+            setScheduleData({
+                periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
+                onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
+            });
+        } catch (error) {
+            console.error('Error loading initial data:', error);
+        }
+    }, [member, mockMode]);
+
+    // Load initial data on mount
+    useEffect(() => {
+        loadInitialData();
+    }, [loadInitialData]);
 
     // Fetch member's free time schedule
     const fetchMemberSchedule = useCallback(async () => {
@@ -64,13 +101,6 @@ export default function MemberHome() {
         }
     }, [member, mockMode]);
 
-    // Fetch schedule data when needed
-    useEffect(() => {
-        if (showScheduleEdit || (weeklyScheduleRegistration?.registered === false)) {
-            fetchMemberSchedule();
-        }
-    }, [showScheduleEdit, weeklyScheduleRegistration, fetchMemberSchedule]);
-
     // Fetch weekly schedule registration status
     const fetchWeeklyScheduleRegistration = useCallback(async () => {
         if (!member) {
@@ -85,7 +115,7 @@ export default function MemberHome() {
 
         try {
             const {targetYear, targetWeekOfYear} = getYearAndWeek();
-            const nextWeekOfYear = targetWeekOfYear + 1; // 다음주
+            const nextWeekOfYear = targetWeekOfYear + 1;
 
             const status = await memberScheduleService.checkWeeklyScheduleRegistration(
                 targetYear,
@@ -96,32 +126,7 @@ export default function MemberHome() {
             console.error('Error fetching weekly schedule registration:', error);
             setWeeklyScheduleRegistration(null);
         }
-    }, [mockMode, member, setWeeklyScheduleRegistration]);
-
-    // Fetch auto scheduling results
-    const fetchAutoSchedulingResults = useCallback(async () => {
-        if (!member) {
-            setAutoSchedulingResults(null);
-            return;
-        }
-
-        if (mockMode) {
-            setAutoSchedulingResults([]);
-            return;
-        }
-
-        try {
-            const {targetYear, targetWeekOfYear} = getYearAndWeek();
-            const response = await memberScheduleService.getFixedAutoSchedulingResult(
-                targetYear,
-                targetWeekOfYear
-            );
-            setAutoSchedulingResults(response.data);
-        } catch (error) {
-            console.error('Error fetching auto scheduling results:', error);
-            setAutoSchedulingResults(null);
-        }
-    }, [mockMode, member, setAutoSchedulingResults]);
+    }, [mockMode, member]);
 
     // Update member status when app comes to foreground
     useEffect(() => {
@@ -146,9 +151,8 @@ export default function MemberHome() {
                             }
                         }
 
-                        // Fetch weekly schedule registration and auto scheduling results after updating member data
-                        await fetchWeeklyScheduleRegistration();
-                        await fetchAutoSchedulingResults();
+                        // Reload all data after updating member data
+                        await loadInitialData();
                     }
                 } catch (error) {
                     console.error('Error fetching latest user data:', error);
@@ -171,13 +175,7 @@ export default function MemberHome() {
         return () => {
             subscription.remove();
         };
-    }, [account, fetchWeeklyScheduleRegistration, fetchAutoSchedulingResults]);
-
-    // Fetch weekly schedule registration and auto scheduling results when status changes
-    useEffect(() => {
-        fetchWeeklyScheduleRegistration();
-        fetchAutoSchedulingResults();
-    }, [fetchWeeklyScheduleRegistration, fetchAutoSchedulingResults]);
+    }, [account, loadInitialData]);
 
     // Show trainer assignment UI if no trainer assigned
     if (!trainerAccountId) {
@@ -207,9 +205,8 @@ export default function MemberHome() {
                 }}
                 onSuccess={async () => {
                     setShowScheduleEdit(false);
-                    // Reload registration status after schedule registration
-                    await fetchWeeklyScheduleRegistration();
-                    await fetchMemberSchedule();
+                    // Reload all data after schedule registration
+                    await loadInitialData();
                 }}
             />
         );
@@ -482,7 +479,7 @@ export default function MemberHome() {
                 )}
 
                 {/* Show member's scheduled state */}
-                {trainerAccountId && autoSchedulingResults !== null && (
+                {trainerAccountId && trainerAutoScheduled && (
                     <View style={styles.scheduledStateContainer}>
                         <View style={styles.scheduledStateCard}>
                             <View style={styles.scheduledStateHeader}>
