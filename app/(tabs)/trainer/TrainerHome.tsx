@@ -15,6 +15,7 @@ import WeekInfo from '@/src/components/WeekInfo';
 import {PeriodicScheduleLine, OnetimeScheduleLine} from '@/src/types/api';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
+import ScheduleResetButton from '@/src/components/training/ScheduleResetButton';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -35,7 +36,7 @@ export default function TrainerHome() {
     const name = account?.privacyInfo?.name;
     const status = trainer?.status
     const appStateRef = useRef(AppState.currentState);
-    const { shouldRefresh } = useSchedulingEventStore();
+    const { shouldRefresh, setHasNextWeekScheduling } = useSchedulingEventStore();
     const [expandedDay, setExpandedDay] = useState<string | null>(null);
     const [showScheduleEdit, setShowScheduleEdit] = useState(false);
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
@@ -66,7 +67,9 @@ export default function TrainerHome() {
             ]);
 
             setIsRegisteredOperationSchedule(registrationResponse.registered);
-            setHasScheduledSessions(schedulingResponse.scheduleList.length > 0);
+            const hasScheduling = schedulingResponse.scheduleList.length > 0;
+            setHasScheduledSessions(hasScheduling);
+            setHasNextWeekScheduling(hasScheduling); // Store에 저장
             setScheduleData({
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
@@ -295,25 +298,15 @@ export default function TrainerHome() {
             {isRegisteredOperationSchedule === true && (
                 <View style={styles.bottomActionsContainer}>
                     {hasScheduledSessions ? (
-                        <TouchableOpacity
-                            style={styles.viewScheduleButton}
-                            onPress={() => {
-                                // 이번 주차로 설정하고 화면 이동
+                        <ScheduleResetButton
+                            currentWeek={(() => {
                                 const today = new Date();
                                 const startOfYear = new Date(today.getFullYear(), 0, 1);
-                                const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-                                const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-
-                                const { setCurrentWeek } = useTrainingStore.getState();
-                                setCurrentWeek(realCurrentWeek);
-
-                                // push를 사용하여 화면 이동
-                                router.push('/training-schedule');
-                            }}
-                        >
-                            <Ionicons name="calendar-sharp" size={20} color="white"/>
-                            <Text style={styles.autoScheduleButtonText}>트레이닝 일정 확인</Text>
-                        </TouchableOpacity>
+                                const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+                                const currentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+                                return currentWeek + 1; // 다음 주
+                            })()}
+                        />
                     ) : (
                         <TouchableOpacity
                             style={styles.autoScheduleButton}
@@ -1349,7 +1342,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#3B82F6',
+        backgroundColor: '#F59E0B',
         borderRadius: 14,
         paddingVertical: 18,
         gap: 8,
