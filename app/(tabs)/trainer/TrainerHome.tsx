@@ -16,6 +16,7 @@ import {PeriodicScheduleLine, OnetimeScheduleLine} from '@/src/types/api';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import ScheduleResetButton from '@/src/components/training/ScheduleResetButton';
+import {getCurrentWeek} from '@/src/utils/dateUtils';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -274,10 +275,7 @@ export default function TrainerHome() {
                                     style={[styles.modifyScheduleButton, {flex: 1}]}
                                     onPress={() => {
                                         // 이번 주차로 설정하고 화면 이동
-                                        const today = new Date();
-                                        const startOfYear = new Date(today.getFullYear(), 0, 1);
-                                        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-                                        const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+                                        const realCurrentWeek = getCurrentWeek();
 
                                         const { setCurrentWeek } = useTrainingStore.getState();
                                         setCurrentWeek(realCurrentWeek);
@@ -293,10 +291,7 @@ export default function TrainerHome() {
                                         style={[styles.modifyScheduleButton, {flex: 1}]}
                                         onPress={() => {
                                             // 다음 주차로 설정하고 화면 이동
-                                            const today = new Date();
-                                            const startOfYear = new Date(today.getFullYear(), 0, 1);
-                                            const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-                                            const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+                                            const realCurrentWeek = getCurrentWeek();
 
                                             const { setCurrentWeek } = useTrainingStore.getState();
                                             setCurrentWeek(realCurrentWeek + 1); // 다음 주
@@ -319,13 +314,7 @@ export default function TrainerHome() {
                 <View style={styles.bottomActionsContainer}>
                     {hasScheduledSessions ? (
                         <ScheduleResetButton
-                            currentWeek={(() => {
-                                const today = new Date();
-                                const startOfYear = new Date(today.getFullYear(), 0, 1);
-                                const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-                                const currentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-                                return currentWeek + 1; // 다음 주
-                            })()}
+                            currentWeek={getCurrentWeek() + 1} // 다음 주
                         />
                     ) : (
                         <TouchableOpacity

@@ -79,3 +79,14 @@ export const formatDateMMDD = (date: Date): string => {
   const day = date.getDate().toString().padStart(2, '0');
   return `${month}/${day}`;
 };
+
+/**
+ * 현재 주차 번호를 반환
+ * @returns 현재 주차 번호
+ */
+export const getCurrentWeek = (): number => {
+  const today = new Date();
+  const startOfYear = new Date(today.getFullYear(), 0, 1);
+  const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  return Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+};

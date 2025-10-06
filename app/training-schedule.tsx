@@ -18,6 +18,7 @@ import {useConfigStore} from '@/src/store/useConfigStore';
 import {AutoSchedulingResultStatus, trainerScheduleService} from '@/src/services/api';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import ScheduleResetButton from '@/src/components/training/ScheduleResetButton';
+import {getCurrentWeek} from '@/src/utils/dateUtils';
 
 
 export default function TrainingScheduleScreen() {
@@ -51,10 +52,7 @@ export default function TrainingScheduleScreen() {
         // 설정되어 있지 않거나 0이면 현재 실제 주차로 초기화
         console.log('🔍 TrainingSchedule mounted, currentWeek:', currentWeek);
         if (!currentWeek || currentWeek === 0) {
-            const today = new Date();
-            const startOfYear = new Date(today.getFullYear(), 0, 1);
-            const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-            const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+            const realCurrentWeek = getCurrentWeek();
             console.log('📍 Setting currentWeek to realCurrentWeek:', realCurrentWeek);
             setCurrentWeek(realCurrentWeek);
         } else {
@@ -389,7 +387,6 @@ export default function TrainingScheduleScreen() {
                     sessions={trainingSessions}
                     selectedMember={selectedMember}
                     onSelectMember={setSelectedMember}
-                    isCurrentWeek={isCurrentWeek(currentWeek)}
                     currentWeek={currentWeek}
                     onWeekChange={setCurrentWeek}
                 />

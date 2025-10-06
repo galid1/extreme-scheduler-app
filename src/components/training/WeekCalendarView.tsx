@@ -10,6 +10,7 @@ import {
   NativeSyntheticEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { getCurrentWeek } from '@/src/utils/dateUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 // 시간 열의 너비를 작게 설정
@@ -30,7 +31,6 @@ interface WeekCalendarViewProps {
   sessions: TrainingSession[];
   selectedMember: string | null;
   onSelectMember: (memberId: string) => void;
-  isCurrentWeek?: boolean;
   currentWeek: number;
   onWeekChange: (week: number) => void;
 }
@@ -43,7 +43,6 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
   sessions,
   selectedMember,
   onSelectMember,
-  isCurrentWeek = false,
   currentWeek,
   onWeekChange
 }, ref) => {
@@ -55,10 +54,7 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
   const weekScrollRefs = useRef<{ [key: number]: ScrollView | null }>({});
 
   // 현재 실제 주차 계산
-  const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+  const realCurrentWeek = getCurrentWeek();
 
   // 표시할 주차들 (이번주, 다음주까지만)
   // 항상 [이번주, 다음주] 2개 페이지를 유지하되, 다음주보다 더 넘어가지 못하도록 제한
@@ -127,27 +123,30 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
   // 해당 주차의 날짜 계산
   const getWeekDates = (weekNumber: number) => {
     const year = currentTime.getFullYear();
-    const jan1 = new Date(year, 0, 1);
-    const daysOffset = (weekNumber - 1) * 7;
-    const weekStart = new Date(jan1.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+    const startOfYear = new Date(year, 0, 1);
 
-    // 월요일로 조정
-    const day = weekStart.getDay();
-    const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
-    weekStart.setDate(diff);
+    // 1월 1일부터 해당 주차의 시작까지의 일수 계산
+    const daysToAdd = (weekNumber - 1) * 7 - startOfYear.getDay() + 1; // 월요일로 시작
+    const weekStartDate = new Date(startOfYear);
+    weekStartDate.setDate(startOfYear.getDate() + daysToAdd);
 
     const dates = [];
     const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+
     for (let i = 0; i < 7; i++) {
-      const date = new Date(weekStart);
-      date.setDate(weekStart.getDate() + i);
+      const date = new Date(weekStartDate);
+      date.setDate(weekStartDate.getDate() + i);
 
       const isWeekCurrent = weekNumber === realCurrentWeek;
+      const isTodayDate = isWeekCurrent &&
+        date.getDate() === currentTime.getDate() &&
+        date.getMonth() === currentTime.getMonth();
+
       dates.push({
         day: dayNames[i],
         date: date.getDate(),
         month: date.getMonth() + 1,
-        isToday: isWeekCurrent && dayNames[i] === currentDay
+        isToday: isTodayDate
       });
     }
     return dates;
