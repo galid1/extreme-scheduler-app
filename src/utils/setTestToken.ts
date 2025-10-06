@@ -25,7 +25,6 @@ export const setTestToken = async () => {
 
   try {
     await AsyncStorage.setItem('auth-storage', JSON.stringify(testAuthState));
-    console.log('Test token set successfully');
     return true;
   } catch (error) {
     console.error('Failed to set test token:', error);
@@ -36,7 +35,6 @@ export const setTestToken = async () => {
 export const clearAuthStorage = async () => {
   try {
     await AsyncStorage.removeItem('auth-storage');
-    console.log('Auth storage cleared');
     return true;
   } catch (error) {
     console.error('Failed to clear auth storage:', error);

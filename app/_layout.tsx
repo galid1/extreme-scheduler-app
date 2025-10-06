@@ -46,14 +46,6 @@ export default function RootLayout() {
       const inAuthGroup = segments[0] === '(auth)';
       const authStore = useAuthStore.getState();
 
-      console.log('=== Auth Debug (After Hydration) ===');
-      console.log('isHydrated:', isHydrated);
-      console.log('token:', authStore.token);
-      console.log('inAuthGroup:', inAuthGroup);
-      console.log('segments:', segments);
-      console.log('account:', authStore.account);
-      console.log('====================================');
-
       // 토큰과 계정 정보가 없고, 인증 화면에 있지 않은 경우
       if (!authStore.token && !authStore.account && !inAuthGroup) {
         // Redirect to auth if not authenticated
@@ -72,7 +64,6 @@ export default function RootLayout() {
 
               // Get current user data
               const userResponse = await authService.getCurrentUser();
-              console.log(`@@@@@################# : ${JSON.stringify(userResponse)}`)
               setAccountData({
                 account: userResponse.account,
                 trainer: userResponse.trainer,

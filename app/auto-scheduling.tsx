@@ -16,6 +16,7 @@ import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {trainerScheduleService, trainerService} from '@/src/services/api';
 import {getYearAndWeek} from "@/src/utils/dateUtils";
 import {useAssignedMembersStore} from '@/src/store/useAssignedMembersStore';
+import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 
 interface MemberSelection {
     memberId: number;
@@ -126,6 +127,9 @@ export default function AutoSchedulingScreen() {
                 targetWeekOfYear: nextWeekOfYear,
             });
 
+            // 스케줄링 완료 이벤트 트리거 (TrainerHome에서 데이터 새로고침)
+            const { triggerRefresh } = useSchedulingEventStore.getState();
+            triggerRefresh();
 
             setShowConfirmButton(true);
         } catch (error: any) {
@@ -229,9 +233,9 @@ export default function AutoSchedulingScreen() {
                 <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => {
-                        // 재설정 모드면 replace로 돌아가고, 일반 모드면 back
+                        // 재설정 모드면 홈으로 이동, 일반 모드면 back
                         if (resetMode) {
-                            router.replace('/training-schedule');
+                            router.replace('/(tabs)');
                         } else {
                             router.back();
                         }

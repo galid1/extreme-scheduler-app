@@ -16,6 +16,7 @@ import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView from '@/src/components/training/WeekCalendarView';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import {AutoSchedulingResultStatus, trainerScheduleService} from '@/src/services/api';
+import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 
 
 export default function TrainingScheduleScreen() {
@@ -491,6 +492,11 @@ export default function TrainingScheduleScreen() {
                                                 if (result.success) {
                                                     // Store에 재설정할 주차 정보 저장
                                                     resetWeek(currentWeek);
+
+                                                    // 상태 갱신 트리거
+                                                    const { triggerRefresh } = useSchedulingEventStore.getState();
+                                                    triggerRefresh();
+
                                                     // 자동 스케줄링 화면으로 이동 (replace로 스택을 교체)
                                                     router.replace({
                                                         pathname: '/auto-scheduling',

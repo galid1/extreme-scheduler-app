@@ -14,6 +14,7 @@ import ErrorRetryView from '@/src/components/ErrorRetryView';
 import WeekInfo from '@/src/components/WeekInfo';
 import {PeriodicScheduleLine, OnetimeScheduleLine} from '@/src/types/api';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
+import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -34,6 +35,7 @@ export default function TrainerHome() {
     const name = account?.privacyInfo?.name;
     const status = trainer?.status
     const appStateRef = useRef(AppState.currentState);
+    const { shouldRefresh } = useSchedulingEventStore();
     const [expandedDay, setExpandedDay] = useState<string | null>(null);
     const [showScheduleEdit, setShowScheduleEdit] = useState(false);
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
@@ -80,6 +82,14 @@ export default function TrainerHome() {
     useEffect(() => {
         loadInitialData();
     }, []);
+
+    // 자동 스케줄링 완료 시 데이터 새로고침
+    useEffect(() => {
+        if (shouldRefresh > 0) {
+            console.log('🎉 Scheduling completed, refreshing data...');
+            loadInitialData();
+        }
+    }, [shouldRefresh]);
 
     // Retry function
     const handleRetry = async () => {
@@ -268,8 +278,6 @@ export default function TrainerHome() {
 
                                 const { setCurrentWeek } = useTrainingStore.getState();
                                 setCurrentWeek(realCurrentWeek);
-
-                                console.log('🚀 TrainerHome - Setting currentWeek to:', realCurrentWeek);
 
                                 // push를 사용하여 화면 이동
                                 router.push('/training-schedule');

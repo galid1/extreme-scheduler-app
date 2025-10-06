@@ -62,11 +62,8 @@ export default function WeekCalendarView({
   const maxAllowedWeek = Math.min(realCurrentWeek + 1, 52);
   const weeks = [realCurrentWeek, maxAllowedWeek].filter(week => week <= 52);
 
-  console.log('📅 WeekCalendarView - realCurrentWeek:', realCurrentWeek, 'currentWeek:', currentWeek, 'weeks:', weeks);
-
   // currentWeek에 해당하는 페이지 인덱스 계산
   const initialPageIndex = weeks.indexOf(currentWeek);
-  console.log('📍 initialPageIndex:', initialPageIndex, 'for currentWeek:', currentWeek);
   const [currentPageIndex, setCurrentPageIndex] = useState(initialPageIndex >= 0 ? initialPageIndex : 0);
 
   // currentWeek가 변경되면 페이지 인덱스를 동기화
@@ -85,8 +82,6 @@ export default function WeekCalendarView({
   const handleHorizontalScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const pageIndex = Math.round(offsetX / SCREEN_WIDTH);
-
-    console.log('🔄 Scroll - offsetX:', offsetX, 'pageIndex:', pageIndex, 'currentPageIndex:', currentPageIndex, 'currentWeek:', currentWeek, 'maxAllowedWeek:', maxAllowedWeek);
 
     // 이번주와 다음주 범위 내에서만 페이지 변경 허용
     if (pageIndex < 0 || pageIndex >= weeks.length) {
