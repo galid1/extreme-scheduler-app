@@ -13,7 +13,7 @@ import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
-import WeekCalendarView from '@/src/components/training/WeekCalendarView';
+import WeekCalendarView, {WeekCalendarViewRef} from '@/src/components/training/WeekCalendarView';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import {AutoSchedulingResultStatus, trainerScheduleService} from '@/src/services/api';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
@@ -44,7 +44,7 @@ export default function TrainingScheduleScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isFixingWeekSchedule, setIsFixingWeekSchedule] = useState(false);
     const [currentTime] = useState(new Date());
-    const calendarScrollRef = useRef<ScrollView>(null);
+    const calendarViewRef = useRef<WeekCalendarViewRef>(null);
 
     useEffect(() => {
         // Store에 이미 주차가 설정되어 있으면 그대로 사용 (auto-scheduling에서 설정한 경우)
@@ -130,18 +130,12 @@ export default function TrainingScheduleScreen() {
 
                 // 캘린더 뷰 스크롤
                 setTimeout(() => {
-                    if (calendarScrollRef.current) {
-                        const scrollY = Math.max(0, (targetSession.hour - 1) * 50); // 50 is hourRow height
-                        calendarScrollRef.current.scrollTo({y: scrollY, animated: true});
-                    }
+                    calendarViewRef.current?.scrollToHour(targetSession.hour);
                 }, 800);
             } else if (currentWeek === realCurrentWeek) {
                 // 현재 주차이면서 남은 세션이 없으면 현재 시간으로 스크롤
                 setTimeout(() => {
-                    if (calendarScrollRef.current) {
-                        const scrollY = Math.max(0, (currentHour - 1) * 50);
-                        calendarScrollRef.current.scrollTo({y: scrollY, animated: true});
-                    }
+                    calendarViewRef.current?.scrollToHour(currentHour);
                 }, 800);
             }
         }
@@ -342,10 +336,7 @@ export default function TrainingScheduleScreen() {
                                         onPress={() => {
                                             setSelectedMember(session.memberId);
                                             // Scroll to the member's session hour in calendar
-                                            if (calendarScrollRef.current) {
-                                                const scrollY = session.hour * 50; // 50 is hourRow height
-                                                calendarScrollRef.current.scrollTo({y: scrollY, animated: true});
-                                            }
+                                            calendarViewRef.current?.scrollToHour(session.hour);
                                         }}
                                         activeOpacity={0.8}
                                     >
@@ -394,10 +385,10 @@ export default function TrainingScheduleScreen() {
             {/* Calendar View */}
             <View style={styles.calendarContainer}>
                 <WeekCalendarView
+                    ref={calendarViewRef}
                     sessions={trainingSessions}
                     selectedMember={selectedMember}
                     onSelectMember={setSelectedMember}
-                    scrollRef={calendarScrollRef}
                     isCurrentWeek={isCurrentWeek(currentWeek)}
                     currentWeek={currentWeek}
                     onWeekChange={setCurrentWeek}

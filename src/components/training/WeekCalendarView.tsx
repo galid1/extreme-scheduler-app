@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import {
   View,
   Text,
@@ -30,26 +30,29 @@ interface WeekCalendarViewProps {
   sessions: TrainingSession[];
   selectedMember: string | null;
   onSelectMember: (memberId: string) => void;
-  scrollRef?: React.RefObject<ScrollView>;
   isCurrentWeek?: boolean;
   currentWeek: number;
   onWeekChange: (week: number) => void;
 }
 
-export default function WeekCalendarView({
+export interface WeekCalendarViewRef {
+  scrollToHour: (hour: number) => void;
+}
+
+const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(({
   sessions,
   selectedMember,
   onSelectMember,
-  scrollRef,
   isCurrentWeek = false,
   currentWeek,
   onWeekChange
-}: WeekCalendarViewProps) {
+}, ref) => {
   const currentTime = new Date();
   const currentDay = ['일', '월', '화', '수', '목', '금', '토'][currentTime.getDay()];
   const currentHour = currentTime.getHours();
 
   const horizontalScrollRef = useRef<ScrollView>(null);
+  const weekScrollRefs = useRef<{ [key: number]: ScrollView | null }>({});
 
   // 현재 실제 주차 계산
   const today = new Date();
@@ -77,6 +80,17 @@ export default function WeekCalendarView({
       }
     }
   }, [currentWeek]);
+
+  // Expose scrollToHour method to parent
+  useImperativeHandle(ref, () => ({
+    scrollToHour: (hour: number) => {
+      const scrollRef = weekScrollRefs.current[currentWeek];
+      if (scrollRef) {
+        const scrollY = Math.max(0, (hour - 1) * 50); // 50 is hourRow height
+        scrollRef.scrollTo({ y: scrollY, animated: true });
+      }
+    }
+  }));
 
   // 수평 스크롤 처리
   const handleHorizontalScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -220,7 +234,7 @@ export default function WeekCalendarView({
 
         {/* Calendar Body */}
         <ScrollView
-          ref={scrollRef}
+          ref={(ref) => { weekScrollRefs.current[weekNumber] = ref; }}
           style={styles.calendarBody}
           showsVerticalScrollIndicator={false}
         >
@@ -326,7 +340,9 @@ export default function WeekCalendarView({
       </ScrollView>
     </View>
   );
-}
+});
+
+export default WeekCalendarView;
 
 const styles = StyleSheet.create({
   container: {
