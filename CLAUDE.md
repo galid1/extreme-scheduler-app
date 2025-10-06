@@ -121,7 +121,7 @@ Enum 타입들은 `src/types/enums.ts` 파일에서 중앙 관리됩니다:
 - **DayOfWeek**: 요일 (MONDAY ~ SUNDAY)
 - **RequestStatus**: 요청 상태 (PENDING, ACCEPTED, REJECTED)
 - **TrainerStatus**: 트레이너 상태 (PENDING, ACTIVE)
-- **TrainingSessionStatus**: 트레이닝 세션 상태 (SCHEDULED, COMPLETED, CANCELLED)
+- **TrainingSessionStatus**: 트레이닝 세션 상태 (SCHEDULED, COMPLETED)
 
 ### 사용 예시
 ```typescript

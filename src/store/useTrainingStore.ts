@@ -54,7 +54,7 @@ export const useTrainingStore = create<TrainingState>()(
   persist(
     (set, get) => ({
       trainingSessions: [],
-      currentWeek: 1,
+      currentWeek: 0, // persist에서 제외되므로 초기값은 의미 없음
       totalWeeks: 12, // 기본 12주 프로그램
       selectedMember: null,
       weekScheduleStatus: {},
@@ -151,7 +151,7 @@ export const useTrainingStore = create<TrainingState>()(
       resetTraining: () => {
         set({
           trainingSessions: [],
-          currentWeek: 1,
+          currentWeek: 0,
           selectedMember: null,
           weekScheduleStatus: {},
         });
@@ -169,6 +169,13 @@ export const useTrainingStore = create<TrainingState>()(
     {
       name: 'training-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      // currentWeek는 persist에서 제외 (항상 현재 실제 주차로 시작)
+      partialize: (state) => ({
+        trainingSessions: state.trainingSessions,
+        totalWeeks: state.totalWeeks,
+        selectedMember: state.selectedMember,
+        weekScheduleStatus: state.weekScheduleStatus,
+      }),
     }
   )
 );

@@ -9,7 +9,6 @@ import {
     DayOfWeek,
     RequestStatus,
     TrainerStatus,
-    TrainingSessionStatus,
     AutoSchedulingResultStatus
 } from './enums';
 
@@ -21,7 +20,6 @@ export {
     DayOfWeek,
     RequestStatus,
     TrainerStatus,
-    TrainingSessionStatus,
     AutoSchedulingResultStatus
 };
 
@@ -174,20 +172,6 @@ export interface OnetimeScheduleLineResponse {
 export interface GetFreeTimeScheduleResponse {
     periodicScheduleLines: PeriodicScheduleLineResponse[];
     onetimeScheduleLines: OnetimeScheduleLineResponse[];
-}
-
-// Training Session Types
-export interface TrainingSession {
-    sessionId: number;
-    trainerId: number;
-    memberId: number;
-    scheduleDate: string;
-    startHour: number;
-    endHour: number;
-    status: TrainingSessionStatus;
-    notes?: string;
-    createdAt: string;
-    updatedAt: string;
 }
 
 // Page Response

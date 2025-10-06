@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,6 @@ const DAY_COLUMN_WIDTH = AVAILABLE_WIDTH / 7;
 interface TrainingSession {
   memberId: string;
   memberName: string;
-  memberPhone: string;
   hour: number;
   day: string;
   weekOfYear: number;
@@ -51,7 +50,6 @@ export default function WeekCalendarView({
   const currentHour = currentTime.getHours();
 
   const horizontalScrollRef = useRef<ScrollView>(null);
-  const [currentPageIndex, setCurrentPageIndex] = useState(0); // Start at current week (first page)
 
   // 현재 실제 주차 계산
   const today = new Date();
@@ -62,6 +60,22 @@ export default function WeekCalendarView({
   // 표시할 주차들 (이번주, 다음주까지만)
   const maxWeek = Math.min(realCurrentWeek + 1, 52);
   const weeks = [realCurrentWeek, realCurrentWeek + 1].filter(week => week <= 52);
+
+  // currentWeek에 해당하는 페이지 인덱스 계산
+  const initialPageIndex = weeks.indexOf(currentWeek);
+  const [currentPageIndex, setCurrentPageIndex] = useState(initialPageIndex >= 0 ? initialPageIndex : 0);
+
+  // currentWeek가 변경되면 페이지 인덱스를 동기화
+  useEffect(() => {
+    const newPageIndex = weeks.indexOf(currentWeek);
+    if (newPageIndex >= 0 && newPageIndex !== currentPageIndex) {
+      setCurrentPageIndex(newPageIndex);
+      // 스크롤 위치도 동기화
+      if (horizontalScrollRef.current) {
+        horizontalScrollRef.current.scrollTo({ x: newPageIndex * SCREEN_WIDTH, animated: false });
+      }
+    }
+  }, [currentWeek]);
 
   // 수평 스크롤 처리
   const handleHorizontalScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {

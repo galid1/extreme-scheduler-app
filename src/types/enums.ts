@@ -7,7 +7,6 @@ export enum AccountType {
 export enum AutoSchedulingResultStatus {
     NOT_FIXED = 'NOT_FIXED',
     FIXED = 'FIXED',
-    CANCELLED = 'CANCELLED',
 }
 
 export enum Gender {
@@ -39,10 +38,4 @@ export enum RequestStatus {
 export enum TrainerStatus {
   PENDING = 'PENDING',
   ACTIVE = 'ACTIVE'
-}
-
-export enum TrainingSessionStatus {
-  SCHEDULED = 'SCHEDULED',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED'
 }
