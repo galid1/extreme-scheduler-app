@@ -13,12 +13,13 @@ import {
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { memberScheduleService, authService } from '@/src/services/api';
-import type { RegisterScheduleRequest, DayOfWeek } from '@/src/types/api';
+import {memberScheduleService, authService, memberService} from '@/src/services/api';
+import type { PeriodicScheduleLine, OnetimeScheduleLine } from '@/src/types/api';
 import MockModeToggle from '@/src/components/MockModeToggle';
 import { useConfigStore } from '@/src/store/useConfigStore';
-import { getYearAndWeek, getNextWeekYearAndWeek } from '@/src/utils/dateUtils';
+import { getYearAndWeek } from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
+import FreeTimeScheduleEditor from '@/src/components/freetimeschedule/FreeTimeScheduleEditor';
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -44,7 +45,27 @@ export default function MemberHome() {
   const [showScheduleEdit, setShowScheduleEdit] = useState(false);
   const [showScheduleDetail, setShowScheduleDetail] = useState(false);
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
+  const [scheduleData, setScheduleData] = useState<{periodicScheduleLines: PeriodicScheduleLine[], onetimeScheduleLines: OnetimeScheduleLine[]}>({periodicScheduleLines: [], onetimeScheduleLines: []});
   const { mockMode } = useConfigStore();
+
+  // Fetch member's free time schedule
+  const fetchMemberSchedule = useCallback(async () => {
+    if (!member || mockMode) {
+      setScheduleData({periodicScheduleLines: [], onetimeScheduleLines: []});
+      return;
+    }
+
+    try {
+      const response = await memberScheduleService.getFreeSchedule();
+      setScheduleData({
+        periodicScheduleLines: response.periodicScheduleLines,
+        onetimeScheduleLines: response.onetimeScheduleLines,
+      });
+    } catch (error) {
+      console.error('Error fetching member schedule:', error);
+      setScheduleData({periodicScheduleLines: [], onetimeScheduleLines: []});
+    }
+  }, [member, mockMode]);
 
   // Load saved schedule on mount for editing
   useEffect(() => {
@@ -52,6 +73,13 @@ export default function MemberHome() {
       setSelectedTimes(savedSchedule);
     }
   }, [showScheduleEdit]);
+
+  // Fetch schedule data when needed
+  useEffect(() => {
+    if (showScheduleEdit || (weeklyScheduleRegistration?.registered === false)) {
+      fetchMemberSchedule();
+    }
+  }, [showScheduleEdit, weeklyScheduleRegistration, fetchMemberSchedule]);
 
   // Fetch weekly schedule registration status
   const fetchWeeklyScheduleRegistration = useCallback(async () => {
@@ -161,7 +189,6 @@ export default function MemberHome() {
     fetchAutoSchedulingResults();
   }, [fetchWeeklyScheduleRegistration, fetchAutoSchedulingResults]);
 
-
   // Show trainer assignment UI if no trainer assigned
   if (!trainerAccountId) {
     return (
@@ -176,380 +203,25 @@ export default function MemberHome() {
   // Schedule editing view for members with trainer assigned
   if (trainerAccountId && (weeklyScheduleRegistration?.registered === false || showScheduleEdit)) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.scheduleHeader}>
-          {showScheduleEdit && (
-            <TouchableOpacity
-              style={styles.scheduleBackButton}
-              onPress={() => {
-                setShowScheduleEdit(false);
-                // Restore saved schedule from store when cancelling edit
-                setSelectedTimes(savedSchedule || {});
-                setExpandedDay(null);
-              }}
-            >
-              <Ionicons name="arrow-back" size={24} color="white" />
-            </TouchableOpacity>
-          )}
-          <Text style={styles.schedulePageTitle}>
-            {showScheduleEdit ? '일정 수정' : '차주의 원하는 일정을 등록하세요'}
-          </Text>
-          <Text style={styles.scheduleSubtitle}>
-            트레이너가 확인 후 일정을 확정해드립니다
-          </Text>
-          <View style={styles.helpContainer}>
-            <View style={styles.helpItem}>
-              <View style={[styles.helpIndicator, { backgroundColor: 'rgba(91, 153, 247, 0.3)' }]}>
-                <Text style={styles.helpIndicatorText}>일회</Text>
-              </View>
-              <Text style={styles.helpText}>한 번만</Text>
-            </View>
-            <View style={styles.helpItem}>
-              <View style={[styles.helpIndicator, { backgroundColor: 'rgba(139, 92, 246, 0.3)' }]}>
-                <Ionicons name="repeat" size={12} color="white" />
-                <Text style={styles.helpIndicatorText}>반복</Text>
-              </View>
-              <Text style={styles.helpText}>매주 반복</Text>
-            </View>
-          </View>
-        </View>
-
-        <ScrollView style={styles.scheduleScrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.daysContainer}>
-            {(() => {
-              const days = ['월', '화', '수', '목', '금', '토', '일'];
-              // Sort days to put expanded day first
-              const sortedDays = expandedDay
-                ? [expandedDay, ...days.filter(d => d !== expandedDay)]
-                : days;
-
-              return sortedDays.map((day) => (
-                <View key={day} style={styles.daySection}>
-                  <TouchableOpacity
-                    style={[
-                      styles.dayButton,
-                      expandedDay === day && styles.dayButtonActive,
-                    ]}
-                    onPress={() => setExpandedDay(expandedDay === day ? null : day)}
-                  >
-                    <Text style={[
-                      styles.dayButtonText,
-                      expandedDay === day && styles.dayButtonTextActive,
-                    ]}>
-                      {day}요일
-                    </Text>
-                    <View style={styles.dayButtonRight}>
-                      {selectedTimes[day]?.length > 0 && (
-                        <View style={styles.dayCountBadge}>
-                          <Text style={styles.dayCountText}>
-                            {selectedTimes[day].length}
-                          </Text>
-                        </View>
-                      )}
-                      <Ionicons
-                        name={expandedDay === day ? "chevron-up" : "chevron-down"}
-                        size={20}
-                        color="white"
-                        style={{ marginLeft: 8 }}
-                      />
-                    </View>
-                  </TouchableOpacity>
-
-                  {expandedDay === day && (
-                    <View style={styles.timeFullSlots}>
-                    <ScrollView style={styles.timeFullSlotsScroll} showsVerticalScrollIndicator={false}>
-                      {/* Morning Section */}
-                      <View style={styles.timePeriodSection}>
-                        <Text style={styles.timePeriodLabel}>오전</Text>
-                        {Array.from({ length: 12 }, (_, i) => i).map((hour) => {
-                          const timeSlot = selectedTimes[day]?.find(t => t.hour === hour);
-                          const state = timeSlot?.state || 'none';
-                          const displayHour = hour === 0 ? 12 : hour;
-
-                          return (
-                            <TouchableOpacity
-                              key={hour}
-                              style={[
-                                styles.timeFullSlot,
-                                state === 'once' && styles.timeSlotOnce,
-                                state === 'recurring' && styles.timeSlotRecurring,
-                              ]}
-                              onPress={() => {
-                                const dayTimes = selectedTimes[day] || [];
-                                const existingIndex = dayTimes.findIndex(t => t.hour === hour);
-
-                                if (existingIndex >= 0) {
-                                  const currentState = dayTimes[existingIndex].state;
-                                  if (currentState === 'once') {
-                                    // Change to recurring
-                                    const updated = [...dayTimes];
-                                    updated[existingIndex] = { hour, state: 'recurring' };
-                                    setSelectedTimes({ ...selectedTimes, [day]: updated });
-                                  } else {
-                                    // Remove (recurring -> none)
-                                    setSelectedTimes({
-                                      ...selectedTimes,
-                                      [day]: dayTimes.filter(t => t.hour !== hour),
-                                    });
-                                  }
-                                } else {
-                                  // Add as once
-                                  setSelectedTimes({
-                                    ...selectedTimes,
-                                    [day]: [...dayTimes, { hour, state: 'once' }].sort((a, b) => a.hour - b.hour),
-                                  });
-                                }
-                              }}
-                            >
-                              <View style={styles.timeSlotContent}>
-                                <Text style={[
-                                  styles.timeFullSlotText,
-                                  state !== 'none' && styles.timeSlotTextSelected,
-                                ]}>
-                                  {hour === 0
-                                    ? `오전 12:00 - 01:00`
-                                    : `오전 ${displayHour.toString().padStart(2, '0')}:00 - ${(displayHour + 1).toString().padStart(2, '0')}:00`}
-                                </Text>
-                                <View style={styles.timeSlotStateOptions}>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'once' && styles.stateOptionActive
-                                  ]}>
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'once' && styles.stateOptionTextActive
-                                    ]}>일회</Text>
-                                  </View>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'recurring' && styles.stateOptionActiveRecurring
-                                  ]}>
-                                    <Ionicons
-                                      name="repeat"
-                                      size={14}
-                                      color={state === 'recurring' ? 'white' : 'rgba(255,255,255,0.3)'}
-                                    />
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'recurring' && styles.stateOptionTextActive
-                                    ]}>반복</Text>
-                                  </View>
-                                </View>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-
-                      {/* Afternoon/Evening Section */}
-                      <View style={styles.timePeriodSection}>
-                        <Text style={styles.timePeriodLabel}>오후</Text>
-                        {Array.from({ length: 12 }, (_, i) => i + 12).map((hour) => {
-                          const timeSlot = selectedTimes[day]?.find(t => t.hour === hour);
-                          const state = timeSlot?.state || 'none';
-                          const displayHour = hour === 12 ? 12 : hour - 12;
-
-                          return (
-                            <TouchableOpacity
-                              key={hour}
-                              style={[
-                                styles.timeFullSlot,
-                                state === 'once' && styles.timeSlotOnce,
-                                state === 'recurring' && styles.timeSlotRecurring,
-                              ]}
-                              onPress={() => {
-                                const dayTimes = selectedTimes[day] || [];
-                                const existingIndex = dayTimes.findIndex(t => t.hour === hour);
-
-                                if (existingIndex >= 0) {
-                                  const currentState = dayTimes[existingIndex].state;
-                                  if (currentState === 'once') {
-                                    // Change to recurring
-                                    const updated = [...dayTimes];
-                                    updated[existingIndex] = { hour, state: 'recurring' };
-                                    setSelectedTimes({ ...selectedTimes, [day]: updated });
-                                  } else {
-                                    // Remove (recurring -> none)
-                                    setSelectedTimes({
-                                      ...selectedTimes,
-                                      [day]: dayTimes.filter(t => t.hour !== hour),
-                                    });
-                                  }
-                                } else {
-                                  // Add as once
-                                  setSelectedTimes({
-                                    ...selectedTimes,
-                                    [day]: [...dayTimes, { hour, state: 'once' }].sort((a, b) => a.hour - b.hour),
-                                  });
-                                }
-                              }}
-                            >
-                              <View style={styles.timeSlotContent}>
-                                <Text style={[
-                                  styles.timeFullSlotText,
-                                  state !== 'none' && styles.timeSlotTextSelected,
-                                ]}>
-                                  {hour === 12
-                                    ? `오후 12:00 - 01:00`
-                                    : hour === 23
-                                    ? `오후 ${displayHour.toString().padStart(2, '0')}:00 - 12:00`
-                                    : `오후 ${displayHour.toString().padStart(2, '0')}:00 - ${(displayHour + 1).toString().padStart(2, '0')}:00`}
-                                </Text>
-                                <View style={styles.timeSlotStateOptions}>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'once' && styles.stateOptionActive
-                                  ]}>
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'once' && styles.stateOptionTextActive
-                                    ]}>일회</Text>
-                                  </View>
-                                  <View style={[
-                                    styles.stateOptionBadge,
-                                    state === 'recurring' && styles.stateOptionActiveRecurring
-                                  ]}>
-                                    <Ionicons
-                                      name="repeat"
-                                      size={14}
-                                      color={state === 'recurring' ? 'white' : 'rgba(255,255,255,0.3)'}
-                                    />
-                                    <Text style={[
-                                      styles.stateOptionText,
-                                      state === 'recurring' && styles.stateOptionTextActive
-                                    ]}>반복</Text>
-                                  </View>
-                                </View>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </ScrollView>
-                  </View>
-                  )}
-                </View>
-              ));
-            })()}
-          </View>
-        </ScrollView>
-
-        <View style={styles.scheduleBottomBar}>
-          <TouchableOpacity
-            style={[
-              styles.scheduleSubmitButton,
-              Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)
-                ? styles.scheduleSubmitButtonActive
-                : styles.scheduleSubmitButtonDisabled,
-            ]}
-            onPress={async () => {
-              if (Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0)) {
-                // If a day is expanded, collapse it first
-                if (expandedDay) {
-                  setExpandedDay(null);
-                } else {
-                  // Convert day names to DayOfWeek enum
-                  const dayMapping: { [key: string]: DayOfWeek } = {
-                    '월': 'MONDAY',
-                    '화': 'TUESDAY',
-                    '수': 'WEDNESDAY',
-                    '목': 'THURSDAY',
-                    '금': 'FRIDAY',
-                    '토': 'SATURDAY',
-                    '일': 'SUNDAY',
-                  };
-
-                  try {
-                    setIsSubmittingSchedule(true);
-
-                    // Get next week's year and week number
-                    const { targetYear, targetWeekOfYear } = getNextWeekYearAndWeek();
-
-                    // Prepare schedule data for API
-                    const request: RegisterScheduleRequest = {
-                      targetYear,
-                      targetWeekOfYear,
-                      periodicScheduleLines: [],
-                      onetimeScheduleLines: []
-                    };
-
-                    // Get current date for one-time schedules
-                    const today = new Date();
-                    const getNextDate = (dayOfWeek: string) => {
-                      const targetDay = ['일', '월', '화', '수', '목', '금', '토'].indexOf(dayOfWeek);
-                      const currentDay = today.getDay();
-                      const daysUntilTarget = (targetDay - currentDay + 7) % 7 || 7; // If same day, schedule for next week
-                      const nextDate = new Date(today);
-                      nextDate.setDate(today.getDate() + daysUntilTarget);
-                      return nextDate.toISOString().split('T')[0];
-                    };
-
-                    // Process selected times
-                    Object.entries(selectedTimes).forEach(([day, slots]) => {
-                      if (slots && slots.length > 0) {
-                        slots.forEach(slot => {
-                          if (slot.state === 'recurring') {
-                            // Periodic schedule
-                            request.periodicScheduleLines?.push({
-                              dayOfWeek: dayMapping[day],
-                              startHour: slot.hour,
-                              endHour: slot.hour + 1, // Assuming 1-hour slots
-                            });
-                          } else if (slot.state === 'once') {
-                            // One-time schedule
-                            request.onetimeScheduleLines?.push({
-                              scheduleDate: getNextDate(day),
-                              startHour: slot.hour,
-                              endHour: slot.hour + 1, // Assuming 1-hour slots
-                            });
-                          }
-                        });
-                      }
-                    });
-
-                    // Check mock mode
-                    if (!mockMode) {
-                      // Call member API only in non-mock mode
-                      await memberScheduleService.registerSchedule(request);
-                    }
-
-                    // Save to local store and update status
-                    setSavedSchedule(selectedTimes);
-
-                    if (showScheduleEdit) {
-                      setShowScheduleEdit(false);
-                      Alert.alert('성공', '일정 수정이 완료되었습니다.');
-                    } else {
-                      Alert.alert('성공', '일정 등록이 완료되었습니다. 트레이너의 확인을 기다려주세요.');
-                    }
-                  } catch (error: any) {
-                    console.error('Schedule registration error:', error);
-                    Alert.alert(
-                      '등록 실패',
-                      error.message || '일정 등록에 실패했습니다. 다시 시도해주세요.'
-                    );
-                  } finally {
-                    setIsSubmittingSchedule(false);
-                  }
-                }
-              }
-            }}
-            disabled={!Object.keys(selectedTimes).some(day => selectedTimes[day]?.length > 0) || isSubmittingSchedule}
-          >
-            {isSubmittingSchedule ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.scheduleSubmitButtonText}>
-                {expandedDay
-                  ? '완료'
-                  : showScheduleEdit
-                    ? '수정 요청 완료'
-                    : '일정 등록 완료'}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      <FreeTimeScheduleEditor
+        showEdit={showScheduleEdit}
+        periodicScheduleLines={scheduleData.periodicScheduleLines}
+        onetimeScheduleLines={scheduleData.onetimeScheduleLines}
+        expandedDay={expandedDay}
+        setExpandedDay={setExpandedDay}
+        isSubmitting={isSubmittingSchedule}
+        setIsSubmitting={setIsSubmittingSchedule}
+        onCancel={() => {
+          setShowScheduleEdit(false);
+          setExpandedDay(null);
+        }}
+        onSuccess={async () => {
+          setShowScheduleEdit(false);
+          // Reload registration status after schedule registration
+          await fetchWeeklyScheduleRegistration();
+          await fetchMemberSchedule();
+        }}
+      />
     );
   }
 
