@@ -12,6 +12,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+// 시간 열의 너비를 작게 설정
+const TIME_COLUMN_WIDTH = Math.max(28, Math.min(35, SCREEN_WIDTH * 0.1));
+// 요일 열의 너비 계산 - padding/margin을 고려하여 조금 작게
+const AVAILABLE_WIDTH = SCREEN_WIDTH - TIME_COLUMN_WIDTH - 2; // 2px for borders
+const DAY_COLUMN_WIDTH = AVAILABLE_WIDTH / 7;
 
 interface TrainingSession {
   memberId: string;
@@ -46,7 +51,7 @@ export default function WeekCalendarView({
   const currentHour = currentTime.getHours();
 
   const horizontalScrollRef = useRef<ScrollView>(null);
-  const [currentPageIndex, setCurrentPageIndex] = useState(1); // Start at middle page
+  const [currentPageIndex, setCurrentPageIndex] = useState(0); // Start at current week (first page)
 
   // 현재 실제 주차 계산
   const today = new Date();
@@ -54,13 +59,19 @@ export default function WeekCalendarView({
   const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
   const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
-  // 표시할 주차들 (이전주, 현재주, 다음주)
-  const weeks = [currentWeek - 1, currentWeek, currentWeek + 1].filter(week => week >= realCurrentWeek && week <= 52);
+  // 표시할 주차들 (이번주, 다음주까지만)
+  const maxWeek = Math.min(realCurrentWeek + 1, 52);
+  const weeks = [realCurrentWeek, realCurrentWeek + 1].filter(week => week <= 52);
 
   // 수평 스크롤 처리
   const handleHorizontalScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const pageIndex = Math.round(offsetX / SCREEN_WIDTH);
+
+    // 이번주와 다음주 범위 내에서만 페이지 변경 허용
+    if (pageIndex < 0 || pageIndex >= weeks.length) {
+      return;
+    }
 
     if (pageIndex !== currentPageIndex) {
       setCurrentPageIndex(pageIndex);
@@ -130,6 +141,23 @@ export default function WeekCalendarView({
 
     return (
       <View key={weekNumber} style={{ width: SCREEN_WIDTH }}>
+        {/* Page Indicator Dots */}
+        {weeks.length > 1 && (
+          <View style={styles.pageIndicatorRow}>
+            <View style={styles.pageIndicatorDots}>
+              {weeks.map((week, index) => (
+                <View
+                  key={`dot-${week}`}
+                  style={[
+                    styles.pageIndicatorDot,
+                    currentPageIndex === index && styles.pageIndicatorDotActive
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Calendar Header with Days */}
         <View style={styles.calendarHeader}>
           <View style={styles.timeColumn} />
@@ -171,7 +199,7 @@ export default function WeekCalendarView({
           {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23].map((hour) => {
             const isPM = hour >= 12;
             const displayHour = hour === 12 ? 12 : hour > 12 ? hour - 12 : hour;
-            const period = isPM ? '오후🌙' : '오전☀️';
+            const period = isPM ? '오후' : '오전';
             const isCurrent = isCurrentHourForWeek(hour, weekNumber);
 
             return (
@@ -256,15 +284,6 @@ export default function WeekCalendarView({
 
   return (
     <View style={styles.container}>
-      {/* Scroll Indicator */}
-      <View style={styles.scrollIndicator}>
-        <View style={styles.scrollIndicatorBar}>
-          <Ionicons name="chevron-back" size={16} color="#9CA3AF" />
-          <Text style={styles.scrollIndicatorText}>좌우로 스와이프하여 주차 변경</Text>
-          <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-        </View>
-      </View>
-
       {/* Horizontal ScrollView for weeks */}
       <ScrollView
         ref={horizontalScrollRef}
@@ -273,7 +292,7 @@ export default function WeekCalendarView({
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleHorizontalScroll}
         scrollEventThrottle={16}
-        contentOffset={{ x: SCREEN_WIDTH * currentPageIndex, y: 0 }}
+        contentOffset={{ x: 0, y: 0 }}
       >
         {weeks.map((week) => renderWeekCalendar(week))}
       </ScrollView>
@@ -285,39 +304,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollIndicator: {
+  pageIndicatorRow: {
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#F9FAFB',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    alignItems: 'center',
+    backgroundColor: 'white',
   },
-  scrollIndicatorBar: {
+  pageIndicatorDots: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
-  scrollIndicatorText: {
-    fontSize: 11,
-    color: '#6B7280',
-    fontWeight: '500',
+  pageIndicatorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#D1D5DB',
+  },
+  pageIndicatorDotActive: {
+    width: 20,
+    backgroundColor: '#3B82F6',
   },
   calendarHeader: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
-    paddingBottom: 8,
-    marginBottom: 8,
+    paddingBottom: 4,
+    marginBottom: 4,
     backgroundColor: 'white',
+    width: SCREEN_WIDTH,
   },
   timeColumn: {
-    width: 60,
+    width: TIME_COLUMN_WIDTH,
   },
   dayHeader: {
-    flex: 1,
+    width: DAY_COLUMN_WIDTH,
     alignItems: 'center',
-    paddingTop: 10,
+    justifyContent: 'center',
+    paddingTop: 4,
+    paddingBottom: 2,
+    paddingHorizontal: 1,
   },
   todayHeader: {
     backgroundColor: '#EBF5FF',
@@ -326,7 +353,7 @@ const styles = StyleSheet.create({
   },
   dayHeaderText: {
     color: '#333',
-    fontSize: 14,
+    fontSize: Math.max(9, SCREEN_WIDTH * 0.038),
     fontWeight: '600',
   },
   todayHeaderText: {
@@ -334,9 +361,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dateText: {
-    fontSize: 10,
+    fontSize: Math.max(7, SCREEN_WIDTH * 0.02),
+    fontWeight: '600',
     color: '#6B7280',
-    marginTop: 2,
+    marginTop: 1,
   },
   todayDateText: {
     color: '#3B82F6',
@@ -344,14 +372,14 @@ const styles = StyleSheet.create({
   },
   todayIndicator: {
     backgroundColor: '#3B82F6',
-    borderRadius: 10,
-    paddingHorizontal: 8,
+    borderRadius: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    marginTop: 4,
+    marginTop: 2,
   },
   todayIndicatorText: {
     color: 'white',
-    fontSize: 10,
+    fontSize: Math.max(8, SCREEN_WIDTH * 0.022),
     fontWeight: '600',
   },
   calendarBody: {
@@ -363,6 +391,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
     backgroundColor: '#FAFAFA',
+    width: SCREEN_WIDTH,
   },
   hourRowPM: {
     backgroundColor: '#F0F7FF',
@@ -375,9 +404,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#FB923C',
   },
   timeCell: {
-    width: 60,
+    width: TIME_COLUMN_WIDTH,
     justifyContent: 'center',
-    paddingRight: 8,
+    paddingRight: 2,
     alignItems: 'center',
   },
   timeCellPM: {
@@ -388,12 +417,12 @@ const styles = StyleSheet.create({
   },
   periodText: {
     color: '#666',
-    fontSize: 10,
-    fontWeight: '500',
+    fontSize: Math.max(6, SCREEN_WIDTH * 0.025),
+    fontWeight: '900',
   },
   timeText: {
     color: '#333',
-    fontSize: 12,
+    fontSize: Math.max(8, SCREEN_WIDTH * 0.025),
     fontWeight: '600',
   },
   currentTimeText: {
@@ -401,10 +430,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dayCell: {
-    flex: 1,
-    borderLeftWidth: 1,
+    width: DAY_COLUMN_WIDTH,
+    borderLeftWidth: 0.5,
     borderLeftColor: '#F3F4F6',
-    padding: 4,
+    padding: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -446,7 +475,7 @@ const styles = StyleSheet.create({
   },
   sessionMemberName: {
     color: '#1F2937',
-    fontSize: 11,
+    fontSize: Math.max(9, SCREEN_WIDTH * 0.025),
     fontWeight: '600',
   },
   sessionMemberNamePast: {

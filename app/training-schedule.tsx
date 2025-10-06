@@ -712,7 +712,6 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     flex: 1,
-    marginHorizontal: 16,
     marginBottom: 16,
   },
   calendarHeader: {
