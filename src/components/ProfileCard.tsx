@@ -32,7 +32,6 @@ export default function ProfileCard({
   textColor = 'white',
 }: ProfileCardProps) {
   const isTrainer = accountType === AccountType.TRAINER || experience || specialties || rating;
-  console.log(`AAAAAAAAAAAAAAA: ${profileImageUrl}`)
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
