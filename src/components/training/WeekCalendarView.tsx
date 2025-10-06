@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Dimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface TrainingSession {
   memberId: string;
@@ -14,7 +19,7 @@ interface TrainingSession {
   memberPhone: string;
   hour: number;
   day: string;
-  week: number;
+  weekOfYear: number;
 }
 
 interface WeekCalendarViewProps {
@@ -24,6 +29,7 @@ interface WeekCalendarViewProps {
   scrollRef?: React.RefObject<ScrollView>;
   isCurrentWeek?: boolean;
   currentWeek: number;
+  onWeekChange: (week: number) => void;
 }
 
 export default function WeekCalendarView({
@@ -32,17 +38,44 @@ export default function WeekCalendarView({
   onSelectMember,
   scrollRef,
   isCurrentWeek = false,
-  currentWeek
+  currentWeek,
+  onWeekChange
 }: WeekCalendarViewProps) {
   const currentTime = new Date();
   const currentDay = ['일', '월', '화', '수', '목', '금', '토'][currentTime.getDay()];
   const currentHour = currentTime.getHours();
 
+  const horizontalScrollRef = useRef<ScrollView>(null);
+  const [currentPageIndex, setCurrentPageIndex] = useState(1); // Start at middle page
+
+  // 현재 실제 주차 계산
+  const today = new Date();
+  const startOfYear = new Date(today.getFullYear(), 0, 1);
+  const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+
+  // 표시할 주차들 (이전주, 현재주, 다음주)
+  const weeks = [currentWeek - 1, currentWeek, currentWeek + 1].filter(week => week >= realCurrentWeek && week <= 52);
+
+  // 수평 스크롤 처리
+  const handleHorizontalScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const pageIndex = Math.round(offsetX / SCREEN_WIDTH);
+
+    if (pageIndex !== currentPageIndex) {
+      setCurrentPageIndex(pageIndex);
+      const newWeek = weeks[pageIndex];
+      if (newWeek && newWeek !== currentWeek) {
+        onWeekChange(newWeek);
+      }
+    }
+  };
+
   // 해당 주차의 날짜 계산
-  const getWeekDates = () => {
+  const getWeekDates = (weekNumber: number) => {
     const year = currentTime.getFullYear();
     const jan1 = new Date(year, 0, 1);
-    const daysOffset = (currentWeek - 1) * 7;
+    const daysOffset = (weekNumber - 1) * 7;
     const weekStart = new Date(jan1.getTime() + daysOffset * 24 * 60 * 60 * 1000);
 
     // 월요일로 조정
@@ -55,32 +88,31 @@ export default function WeekCalendarView({
     for (let i = 0; i < 7; i++) {
       const date = new Date(weekStart);
       date.setDate(weekStart.getDate() + i);
+
+      const isWeekCurrent = weekNumber === realCurrentWeek;
       dates.push({
         day: dayNames[i],
         date: date.getDate(),
         month: date.getMonth() + 1,
-        isToday: isCurrentWeek && dayNames[i] === currentDay
+        isToday: isWeekCurrent && dayNames[i] === currentDay
       });
     }
     return dates;
   };
 
-
-  const weekDates = getWeekDates();
-
   // 오늘인지 확인하는 함수
-  const isToday = (day: string) => {
-    return isCurrentWeek && day === currentDay;
+  const isTodayForWeek = (day: string, weekNumber: number) => {
+    return weekNumber === realCurrentWeek && day === currentDay;
   };
 
   // 현재 시간인지 확인하는 함수
-  const isCurrentHour = (hour: number) => {
-    return isCurrentWeek && hour === currentHour;
+  const isCurrentHourForWeek = (hour: number, weekNumber: number) => {
+    return weekNumber === realCurrentWeek && hour === currentHour;
   };
 
   // 지난 시간인지 확인하는 함수
-  const isPastSession = (day: string, hour: number) => {
-    if (!isCurrentWeek) return false;
+  const isPastSession = (day: string, hour: number, weekNumber: number) => {
+    if (weekNumber !== realCurrentWeek) return false;
 
     const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
     const dayIndex = dayOrder.indexOf(day);
@@ -91,127 +123,159 @@ export default function WeekCalendarView({
     return false;
   };
 
-  return (
-    <View style={styles.container}>
-      {/* Calendar Header with Days */}
-      <View style={styles.calendarHeader}>
-        <View style={styles.timeColumn} />
-        {weekDates.map((dateInfo) => (
-          <View
-            key={dateInfo.day}
-            style={[
-              styles.dayHeader,
-              dateInfo.isToday && styles.todayHeader
-            ]}
-          >
-            <Text style={[
-              styles.dayHeaderText,
-              dateInfo.isToday && styles.todayHeaderText
-            ]}>
-              {dateInfo.day}
-            </Text>
-            <Text style={[
-              styles.dateText,
-              dateInfo.isToday && styles.todayDateText
-            ]}>
-              {dateInfo.month}/{dateInfo.date}
-            </Text>
-            {dateInfo.isToday && (
-              <View style={styles.todayIndicator}>
-                <Text style={styles.todayIndicatorText}>오늘</Text>
-              </View>
-            )}
-          </View>
-        ))}
-      </View>
+  // 단일 주차 캘린더 렌더링
+  const renderWeekCalendar = (weekNumber: number) => {
+    const weekDates = getWeekDates(weekNumber);
+    const weekSessions = sessions.filter(s => s.weekOfYear === weekNumber);
 
-      {/* Calendar Body */}
-      <ScrollView
-        ref={scrollRef}
-        style={styles.calendarBody}
-        showsVerticalScrollIndicator={false}
-      >
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23].map((hour) => {
-          const isPM = hour >= 12;
-          const displayHour = hour === 12 ? 12 : hour > 12 ? hour - 12 : hour;
-          const period = isPM ? '오후🌙' : '오전☀️';
-          const isCurrent = isCurrentHour(hour);
-
-          return (
+    return (
+      <View key={weekNumber} style={{ width: SCREEN_WIDTH }}>
+        {/* Calendar Header with Days */}
+        <View style={styles.calendarHeader}>
+          <View style={styles.timeColumn} />
+          {weekDates.map((dateInfo) => (
             <View
-              key={`hour-${hour}`}
+              key={dateInfo.day}
               style={[
-                styles.hourRow,
-                isPM && styles.hourRowPM,
-                isCurrent && styles.currentHourRow
+                styles.dayHeader,
+                dateInfo.isToday && styles.todayHeader
               ]}
             >
-              <View style={[
-                styles.timeCell,
-                isPM && styles.timeCellPM,
-                isCurrent && styles.currentTimeCell
+              <Text style={[
+                styles.dayHeaderText,
+                dateInfo.isToday && styles.todayHeaderText
               ]}>
-                <Text style={styles.periodText}>{period}</Text>
-                <Text style={[
-                  styles.timeText,
-                  isCurrent && styles.currentTimeText
-                ]}>
-                  {displayHour}시
-                </Text>
-              </View>
-              {['월', '화', '수', '목', '금', '토', '일'].map((day) => {
-                const session = sessions.find(
-                  s => s.day === day && s.hour === hour
-                );
-                const isSelectedMember = selectedMember && session?.memberId === selectedMember;
-                const isOtherMember = selectedMember && session && session.memberId !== selectedMember;
-                const isPast = isPastSession(day, hour);
-
-                return (
-                  <TouchableOpacity
-                    key={`${day}-${hour}`}
-                    style={[
-                      styles.dayCell,
-                      isPM && styles.dayCellPM,
-                      session && !isOtherMember && !isPast && styles.dayCellWithSession,
-                      isSelectedMember && !isPast && styles.dayCellSelectedMember,
-                      isOtherMember && styles.dayCellOtherMember,
-                      isPast && styles.dayCellPast,
-                      isPast && session && styles.dayCellPastWithSession,
-                      isToday(day) && styles.dayCellToday,
-                      isCurrent && isToday(day) && styles.currentCell
-                    ]}
-                    onPress={() => session && !isPast && onSelectMember(session.memberId)}
-                    disabled={!session || isPast}
-                    activeOpacity={0.8}
-                  >
-                    {session && (
-                      <>
-                        <Text
-                          style={[
-                            styles.sessionMemberName,
-                            isPast && styles.sessionMemberNamePast
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {session.memberName}
-                        </Text>
-                        {isPast && (
-                          <Ionicons
-                            name="checkmark-circle"
-                            size={12}
-                            color="#6B7280"
-                            style={styles.completedIcon}
-                          />
-                        )}
-                      </>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+                {dateInfo.day}
+              </Text>
+              <Text style={[
+                styles.dateText,
+                dateInfo.isToday && styles.todayDateText
+              ]}>
+                {dateInfo.month}/{dateInfo.date}
+              </Text>
+              {dateInfo.isToday && (
+                <View style={styles.todayIndicator}>
+                  <Text style={styles.todayIndicatorText}>오늘</Text>
+                </View>
+              )}
             </View>
-          );
-        })}
+          ))}
+        </View>
+
+        {/* Calendar Body */}
+        <ScrollView
+          ref={scrollRef}
+          style={styles.calendarBody}
+          showsVerticalScrollIndicator={false}
+        >
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23].map((hour) => {
+            const isPM = hour >= 12;
+            const displayHour = hour === 12 ? 12 : hour > 12 ? hour - 12 : hour;
+            const period = isPM ? '오후🌙' : '오전☀️';
+            const isCurrent = isCurrentHourForWeek(hour, weekNumber);
+
+            return (
+              <View
+                key={`hour-${hour}`}
+                style={[
+                  styles.hourRow,
+                  isPM && styles.hourRowPM,
+                  isCurrent && styles.currentHourRow
+                ]}
+              >
+                <View style={[
+                  styles.timeCell,
+                  isPM && styles.timeCellPM,
+                  isCurrent && styles.currentTimeCell
+                ]}>
+                  <Text style={styles.periodText}>{period}</Text>
+                  <Text style={[
+                    styles.timeText,
+                    isCurrent && styles.currentTimeText
+                  ]}>
+                    {displayHour}시
+                  </Text>
+                </View>
+                {['월', '화', '수', '목', '금', '토', '일'].map((day) => {
+                  const session = weekSessions.find(
+                    s => s.day === day && s.hour === hour
+                  );
+                  const isSelectedMember = selectedMember && session?.memberId === selectedMember;
+                  const isOtherMember = selectedMember && session && session.memberId !== selectedMember;
+                  const isPast = isPastSession(day, hour, weekNumber);
+
+                  return (
+                    <TouchableOpacity
+                      key={`${day}-${hour}`}
+                      style={[
+                        styles.dayCell,
+                        isPM && styles.dayCellPM,
+                        session && !isOtherMember && !isPast && styles.dayCellWithSession,
+                        isSelectedMember && !isPast && styles.dayCellSelectedMember,
+                        isOtherMember && styles.dayCellOtherMember,
+                        isPast && styles.dayCellPast,
+                        isPast && session && styles.dayCellPastWithSession,
+                        isTodayForWeek(day, weekNumber) && styles.dayCellToday,
+                        isCurrent && isTodayForWeek(day, weekNumber) && styles.currentCell
+                      ]}
+                      onPress={() => session && !isPast && onSelectMember(session.memberId)}
+                      disabled={!session || isPast}
+                      activeOpacity={0.8}
+                    >
+                      {session && (
+                        <>
+                          <Text
+                            style={[
+                              styles.sessionMemberName,
+                              isPast && styles.sessionMemberNamePast
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {session.memberName}
+                          </Text>
+                          {isPast && (
+                            <Ionicons
+                              name="checkmark-circle"
+                              size={12}
+                              color="#6B7280"
+                              style={styles.completedIcon}
+                            />
+                          )}
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Scroll Indicator */}
+      <View style={styles.scrollIndicator}>
+        <View style={styles.scrollIndicatorBar}>
+          <Ionicons name="chevron-back" size={16} color="#9CA3AF" />
+          <Text style={styles.scrollIndicatorText}>좌우로 스와이프하여 주차 변경</Text>
+          <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+        </View>
+      </View>
+
+      {/* Horizontal ScrollView for weeks */}
+      <ScrollView
+        ref={horizontalScrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleHorizontalScroll}
+        scrollEventThrottle={16}
+        contentOffset={{ x: SCREEN_WIDTH * currentPageIndex, y: 0 }}
+      >
+        {weeks.map((week) => renderWeekCalendar(week))}
       </ScrollView>
     </View>
   );
@@ -220,6 +284,24 @@ export default function WeekCalendarView({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollIndicator: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  scrollIndicatorBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  scrollIndicatorText: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   calendarHeader: {
     flexDirection: 'row',

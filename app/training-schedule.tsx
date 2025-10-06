@@ -399,12 +399,13 @@ export default function TrainingScheduleScreen() {
       {/* Calendar View */}
       <View style={styles.calendarContainer}>
         <WeekCalendarView
-          sessions={weekSessions}
+          sessions={trainingSessions}
           selectedMember={selectedMember}
           onSelectMember={setSelectedMember}
           scrollRef={calendarScrollRef}
           isCurrentWeek={isCurrentWeek(currentWeek)}
           currentWeek={currentWeek}
+          onWeekChange={setCurrentWeek}
         />
       </View>
 
