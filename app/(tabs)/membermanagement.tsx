@@ -72,12 +72,6 @@ export default function MemberManagementScreen() {
                 <>
                     <View style={styles.header}>
                         <Text style={styles.title}>회원관리</Text>
-                        <TouchableOpacity
-                            onPress={() => router.push('/profile')}
-                            style={styles.settingsButton}
-                        >
-                            <Ionicons name="settings-outline" size={24} color="black"/>
-                        </TouchableOpacity>
                     </View>
 
                     <ScrollView contentContainerStyle={styles.scrollContent}>

@@ -10,9 +10,11 @@ import {
 import {Ionicons} from '@expo/vector-icons';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {AccountType} from '@/src/types/enums';
+import {useRouter} from "expo-router";
 
 export default function ProfileScreen() {
-    const {account} = useAuthStore();
+    const router = useRouter();
+    const {account, logout} = useAuthStore();
 
     // 전화번호 포맷팅 함수 (010-1234-5678 형식)
     const formatPhoneNumber = (phone: string) => {
@@ -36,6 +38,11 @@ export default function ProfileScreen() {
 
         // 그 외의 경우 원본 반환
         return phone;
+    };
+
+    const handleLogout = () => {
+        logout();
+        router.replace('/(auth)/phone-auth');
     };
 
     if (!account) {
@@ -89,7 +96,10 @@ export default function ProfileScreen() {
 
                 {/* Logout Button */}
                 <View style={styles.logoutSection}>
-                    <TouchableOpacity style={styles.logoutButton}>
+                    <TouchableOpacity
+                        onPress={handleLogout}
+                        style={styles.logoutButton}
+                    >
                         <Ionicons name="log-out-outline" size={20} color="white"/>
                         <Text style={styles.logoutText}>로그아웃</Text>
                     </TouchableOpacity>
