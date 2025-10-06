@@ -284,17 +284,6 @@ export default function TrainingScheduleScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#3B82F6" />
-        </TouchableOpacity>
-        <Text style={styles.title}>트레이닝 일정</Text>
-        <View style={{ width: 44 }} />
-      </View>
-
       {/* Week Navigator */}
       <WeekNavigator
         currentWeek={currentWeek}
@@ -303,6 +292,7 @@ export default function TrainingScheduleScreen() {
         isCurrentWeek={isCurrentWeek(currentWeek)}
         isPastWeek={isPastWeek(currentWeek)}
         isNextWeek={isNextWeek(currentWeek)}
+        onBack={() => router.back()}
       />
 
       {/* Upcoming Sessions - Only show for current week */}
@@ -530,23 +520,6 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 16,
     marginTop: 12,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  backButton: {
-    padding: 4,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
   },
   membersSummary: {
     paddingVertical: 16,

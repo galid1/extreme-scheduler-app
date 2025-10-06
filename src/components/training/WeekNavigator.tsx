@@ -14,6 +14,7 @@ interface WeekNavigatorProps {
   isCurrentWeek: boolean;
   isPastWeek: boolean;
   isNextWeek: boolean;
+  onBack: () => void;
 }
 
 export default function WeekNavigator({
@@ -22,7 +23,8 @@ export default function WeekNavigator({
   onWeekChange,
   isCurrentWeek,
   isPastWeek,
-  isNextWeek
+  isNextWeek,
+  onBack
 }: WeekNavigatorProps) {
   // 현재 실제 주차 계산 (연도 기준)
   const today = new Date();
@@ -68,18 +70,10 @@ export default function WeekNavigator({
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[
-          styles.navButton,
-          !canGoPrevious && styles.navButtonDisabled
-        ]}
-        onPress={() => canGoPrevious && onWeekChange(currentWeek - 1)}
-        disabled={!canGoPrevious}
+        style={styles.backButton}
+        onPress={onBack}
       >
-        <Ionicons
-          name="play-back"
-          size={15}
-          color={canGoPrevious ? '#3B82F6' : '#D1D5DB'}
-        />
+        <Ionicons name="arrow-back" size={24} color="#3B82F6" />
       </TouchableOpacity>
 
       <View style={styles.weekInfo}>
@@ -109,20 +103,7 @@ export default function WeekNavigator({
         <Text style={styles.weekPeriod}>{getWeekPeriod()}</Text>
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.navButton,
-          !canGoNext && styles.navButtonDisabled
-        ]}
-        onPress={() => canGoNext && onWeekChange(currentWeek + 1)}
-        disabled={!canGoNext}
-      >
-        <Ionicons
-          name="play-forward"
-          size={15}
-          color={canGoNext ? '#3B82F6' : '#D1D5DB'}
-        />
-      </TouchableOpacity>
+      <View style={{width: 44}} />
     </View>
   );
 }
@@ -133,20 +114,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  navButton: {
-    width: 40,
-    height: 40,
+  backButton: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 20,
-  },
-  navButtonDisabled: {
-    opacity: 0.4,
   },
   weekInfo: {
     flex: 1,
