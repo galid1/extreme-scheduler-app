@@ -16,7 +16,7 @@ class MemberScheduleService {
   /**
    * 회원 스케줄 조회
    */
-  async getSchedule(): Promise<GetFreeTimeScheduleResponse> {
+  async getFreeSchedule(): Promise<GetFreeTimeScheduleResponse> {
     return apiClient.get<GetFreeTimeScheduleResponse>('/api/v1/members/schedules');
   }
 

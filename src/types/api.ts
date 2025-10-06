@@ -68,9 +68,10 @@ export interface SignUpResponse {
 }
 
 export interface TrainerSearchResponse {
-    trainerAccountId: number;
-    name: string;
-    phoneNumber: string;
+    exists: boolean;
+    trainerAccountId?: number;
+    name?: string;
+    phoneNumber?: string;
     profileImageUrl?: string;
 }
 
