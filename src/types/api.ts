@@ -107,12 +107,14 @@ export interface RejectAssignmentRequest {
 
 // Schedule Types
 export interface PeriodicScheduleLine {
+    id?: number | null;
     dayOfWeek: DayOfWeek;
     startHour: number;
     endHour: number;
 }
 
 export interface OnetimeScheduleLine {
+    id?: number | null;
     scheduleDate: string;
     startHour: number;
     endHour: number;
@@ -142,36 +144,10 @@ export interface AutoSchedulingResponse {
     failedMemberIds: number[];
 }
 
-export interface Schedule {
-    scheduleId: number;
-    accountId: number;
-    scheduleDate?: string;
-    dayOfWeek?: DayOfWeek;
-    startHour: number;
-    endHour: number;
-    isPeriodic: boolean;
-    createdAt: string;
-    updatedAt: string;
-}
-
 // Schedule Response Types
-export interface PeriodicScheduleLineResponse {
-    id: number | null;
-    dayOfWeek: DayOfWeek;
-    startHour: number;
-    endHour: number;
-}
-
-export interface OnetimeScheduleLineResponse {
-    id: number | null;
-    scheduleDate: string;
-    startHour: number;
-    endHour: number;
-}
-
 export interface GetFreeTimeScheduleResponse {
-    periodicScheduleLines: PeriodicScheduleLineResponse[];
-    onetimeScheduleLines: OnetimeScheduleLineResponse[];
+    periodicScheduleLines: PeriodicScheduleLine[];
+    onetimeScheduleLines: OnetimeScheduleLine[];
 }
 
 // Page Response
@@ -202,28 +178,14 @@ export interface GetAssignedMembersResponse {
 }
 
 // Member with Schedules Types
-export interface PeriodicScheduleResponse {
-    id: number | null;
-    dayOfWeek: DayOfWeek;
-    startHour: number;
-    endHour: number;
-}
-
-export interface OnetimeScheduleResponse {
-    id: number | null;
-    scheduleDate: string;
-    startHour: number;
-    endHour: number;
-}
-
 export interface MemberWithSchedulesResponse {
     accountId: number;
     name: string;
     birthDate: string;
     gender: Gender;
     phoneNumber: string;
-    periodicSchedules: PeriodicScheduleResponse[];
-    onetimeSchedules: OnetimeScheduleResponse[];
+    periodicSchedules: PeriodicScheduleLine[];
+    onetimeSchedules: OnetimeScheduleLine[];
 }
 
 export interface GetAssignedMembersWithSchedulesResponse {
