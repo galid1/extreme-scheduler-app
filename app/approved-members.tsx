@@ -13,7 +13,7 @@ import {useRouter} from 'expo-router';
 import {trainerService} from '@/src/services/api';
 import {getYearAndWeek} from '@/src/utils/dateUtils';
 import {useAssignedMembersStore} from '@/src/store/useAssignedMembersStore';
-import FreeTimeScheduleDetailView from '@/src/components/trainer/FreeTimeScheduleDetailView';
+import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 
 export default function ApprovedMembersScreen() {
     const router = useRouter();

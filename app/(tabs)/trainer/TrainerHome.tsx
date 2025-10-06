@@ -8,7 +8,7 @@ import {TrainerStatus} from '@/src/types/enums';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
 import TrainerScheduleEditor from '@/src/components/trainer/TrainerScheduleEditor';
-import FreeTimeScheduleDetailView from '@/src/components/trainer/FreeTimeScheduleDetailView';
+import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 import ErrorRetryView from '@/src/components/ErrorRetryView';
 import WeekInfo from '@/src/components/WeekInfo';
