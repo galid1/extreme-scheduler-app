@@ -89,7 +89,7 @@ export default function ApprovedMembersScreen() {
                                         {selectedMemberId === member.accountId && (
                                             <View style={styles.memberStats}>
                                                 <View style={styles.statRow}>
-                                                    <Text style={styles.statRowLabel}>최근 세션</Text>
+                                                    <Text style={styles.statRowLabel}>마지막 세션</Text>
                                                     <Text style={styles.statRowValue}>
                                                         {formatDate(member.lastSessionDate)}
                                                     </Text>

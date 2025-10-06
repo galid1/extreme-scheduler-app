@@ -58,6 +58,7 @@ export default function TrainerScheduleEditor({
                                                   onBackToDetail,
                                               }: TrainerScheduleEditorProps) {
     const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
+    const [initialTimes, setInitialTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
 
     // Transform API response to TimeSlotSelection format
     useEffect(() => {
@@ -118,6 +119,7 @@ export default function TrainerScheduleEditor({
         });
 
         setSelectedTimes(transformedSchedule);
+        setInitialTimes(transformedSchedule); // Save initial state for comparison
     }, [periodicScheduleLines, onetimeScheduleLines]);
     // Calculate next week info
     const nextWeekInfo = useMemo(() => {
@@ -176,6 +178,13 @@ export default function TrainerScheduleEditor({
         // If a day is expanded, collapse it first
         if (expandedDay) {
             setExpandedDay(null);
+            return;
+        }
+
+        // Check if there are any changes
+        const hasChanges = JSON.stringify(selectedTimes) !== JSON.stringify(initialTimes);
+        if (!hasChanges) {
+            Alert.alert('알림', '변경된 사항이 없습니다.');
             return;
         }
 
