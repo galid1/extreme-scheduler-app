@@ -10,6 +10,7 @@ import {useConfigStore} from '@/src/store/useConfigStore';
 import {getYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
 import FreeTimeScheduleEditor from '@/src/components/freetimeschedule/FreeTimeScheduleEditor';
+import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 
 
 export default function MemberHome() {
@@ -18,8 +19,6 @@ export default function MemberHome() {
         account,
         member,
         setTrainerAccountId,
-        savedSchedule,
-        setSavedSchedule,
         setAccountData,
         setAssignedTrainer,
     } = useAuthStore();
@@ -31,6 +30,7 @@ export default function MemberHome() {
     const [showScheduleEdit, setShowScheduleEdit] = useState(false);
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
+    const [showMenuDropdown, setShowMenuDropdown] = useState(false);
     const [scheduleData, setScheduleData] = useState<{
         periodicScheduleLines: PeriodicScheduleLine[],
         onetimeScheduleLines: OnetimeScheduleLine[]
@@ -81,52 +81,6 @@ export default function MemberHome() {
     useEffect(() => {
         loadInitialData();
     }, [loadInitialData]);
-
-    // Fetch member's free time schedule
-    const fetchMemberSchedule = useCallback(async () => {
-        if (!member || mockMode) {
-            setScheduleData({periodicScheduleLines: [], onetimeScheduleLines: []});
-            return;
-        }
-
-        try {
-            const response = await memberScheduleService.getFreeSchedule();
-            setScheduleData({
-                periodicScheduleLines: response.periodicScheduleLines,
-                onetimeScheduleLines: response.onetimeScheduleLines,
-            });
-        } catch (error) {
-            console.error('Error fetching member schedule:', error);
-            setScheduleData({periodicScheduleLines: [], onetimeScheduleLines: []});
-        }
-    }, [member, mockMode]);
-
-    // Fetch weekly schedule registration status
-    const fetchWeeklyScheduleRegistration = useCallback(async () => {
-        if (!member) {
-            setWeeklyScheduleRegistration(null);
-            return;
-        }
-
-        if (mockMode) {
-            setWeeklyScheduleRegistration({registered: false, year: 2024, weekOfYear: 1});
-            return;
-        }
-
-        try {
-            const {targetYear, targetWeekOfYear} = getYearAndWeek();
-            const nextWeekOfYear = targetWeekOfYear + 1;
-
-            const status = await memberScheduleService.checkWeeklyScheduleRegistration(
-                targetYear,
-                nextWeekOfYear
-            );
-            setWeeklyScheduleRegistration(status);
-        } catch (error) {
-            console.error('Error fetching weekly schedule registration:', error);
-            setWeeklyScheduleRegistration(null);
-        }
-    }, [mockMode, member]);
 
     // Update member status when app comes to foreground
     useEffect(() => {
@@ -214,103 +168,24 @@ export default function MemberHome() {
 
     // Show schedule detail view when requested
     if (showScheduleDetail) {
-        const days = ['월', '화', '수', '목', '금', '토', '일'];
-        const hours = Array.from({length: 24}, (_, i) => i);
-
+        console.log("periodicScheduleLines = ", JSON.stringify(scheduleData.periodicScheduleLines));
         return (
-            <SafeAreaView style={[styles.container, {backgroundColor: 'white'}]}>
-                <View style={styles.scheduleDetailHeader}>
-                    <TouchableOpacity
-                        style={styles.scheduleDetailBackButton}
-                        onPress={() => setShowScheduleDetail(false)}
-                    >
-                        <Ionicons name="arrow-back" size={24} color="#3B82F6"/>
-                    </TouchableOpacity>
-                    <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
-                    <View style={{width: 44}}/>
-                </View>
-
-                <View style={styles.scheduleCalendarContainer}>
-                    {/* Days header */}
-                    <View style={styles.calendarHeader}>
-                        <View style={styles.timeColumnHeader}/>
-                        {days.map((day) => (
-                            <View key={day} style={styles.dayColumnHeader}>
-                                <Text style={styles.dayColumnText}>{day}</Text>
-                            </View>
-                        ))}
-                    </View>
-
-                    {/* Time grid */}
-                    <ScrollView style={styles.calendarBody} showsVerticalScrollIndicator={false}>
-                        {hours.map((hour) => {
-                            const isPM = hour >= 12;
-                            const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                            const period = isPM ? '오후🌙' : '오전☀️';
-
-                            return (
-                                <View key={hour} style={[styles.timeRow, isPM && styles.timeRowPM]}>
-                                    <View style={[styles.timeLabel, isPM && styles.timeLabelPM]}>
-                                        <Text style={styles.timeLabelPeriod}>{period}</Text>
-                                        <Text style={styles.timeLabelText}>
-                                            {displayHour}시
-                                        </Text>
-                                    </View>
-                                    {days.map((day) => {
-                                        const timeSlot = savedSchedule[day]?.find(t => t.hour === hour);
-                                        const state = timeSlot?.state || 'none';
-
-                                        return (
-                                            <View
-                                                key={`${day}-${hour}`}
-                                                style={[
-                                                    styles.timeCell,
-                                                    isPM && styles.timeCellPM,
-                                                    state === 'once' && styles.timeCellOnce,
-                                                    state === 'recurring' && styles.timeCellRecurring,
-                                                ]}
-                                            >
-                                                {state === 'recurring' && (
-                                                    <View style={styles.timeCellIndicator}>
-                                                        <Ionicons name="repeat" size={12} color="white"/>
-                                                    </View>
-                                                )}
-                                            </View>
-                                        );
-                                    })}
-                                </View>
-                            );
-                        })}
-                    </ScrollView>
-                </View>
-
-                {/* Legend */}
-                <View style={styles.calendarLegend}>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendColor, {
-                            backgroundColor: '#3B82F6',
-                            borderWidth: 1,
-                            borderColor: '#3B82F6'
-                        }]}/>
-                        <Text style={styles.legendText}>일회</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendColor, {
-                            backgroundColor: '#8B5CF6',
-                            borderWidth: 1,
-                            borderColor: '#8B5CF6'
-                        }]}/>
-                        <Text style={styles.legendText}>매주 반복</Text>
-                    </View>
-                </View>
-            </SafeAreaView>
+            <FreeTimeScheduleDetailView
+                periodicScheduleLines={scheduleData.periodicScheduleLines}
+                onetimeScheduleLines={scheduleData.onetimeScheduleLines}
+                onClose={() => setShowScheduleDetail(false)}
+                onEdit={() => {
+                    setShowScheduleDetail(false);
+                    setShowScheduleEdit(true);
+                }}
+            />
         );
     }
 
     // Default home screen for trainers or members with assigned trainer
     return (
         <SafeAreaView style={styles.container}>
-            <MockModeToggle/>
+            {/*<MockModeToggle/>*/}
             <View style={styles.topHeader}>
                 <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
                 {trainerAccountId && (
@@ -325,105 +200,52 @@ export default function MemberHome() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* Show welcome or other content when schedule is registered */}
+                {/* Show schedule management when schedule is registered */}
                 {trainerAccountId && weeklyScheduleRegistration?.registered === true && (
-                    <View style={styles.readyStateContainer}>
-                        <Ionicons name="checkmark-circle" size={60} color="#5B99F7"/>
-                        <Text style={styles.readyStateTitle}>일정 등록 완료</Text>
-                        <Text style={styles.readyStateSubtitle}>트레이너가 확인 중입니다</Text>
+                    <View style={[styles.trainerDashboard, {marginTop: 20}]}>
+                        <View style={styles.dashboardHeaderRow}>
+                            <View style={styles.dashboardTitleContainer}>
+                                <Text style={styles.dashboardTitle}>내 희망 일정 관리</Text>
+                                <View style={styles.statusBadge}>
+                                    <Ionicons name="checkmark-circle" size={16} color="#10B981"/>
+                                    <Text style={styles.statusBadgeText}>READY</Text>
+                                </View>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.menuButton}
+                                onPress={() => setShowMenuDropdown(!showMenuDropdown)}
+                            >
+                                <Ionicons name="ellipsis-vertical" size={15} color="#6B7280"/>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.infoTooltip}>
+                            <Ionicons name="information-circle-outline" size={16} color="#6B7280"/>
+                            <Text style={styles.infoTooltipText}>
+                                트레이너가 차주 스케줄링 대상으로 포함할 수 있습니다
+                            </Text>
+                        </View>
 
-                        <View style={styles.readyStateActions}>
-                            {/* Display saved schedule summary */}
-                            {Object.keys(savedSchedule).length > 0 && (
+                        {/* Dropdown Menu */}
+                        {showMenuDropdown && (
+                            <View style={styles.dropdownMenu}>
                                 <TouchableOpacity
-                                    style={styles.schedulePreview}
-                                    onPress={() => setShowScheduleDetail(true)}
-                                    activeOpacity={0.8}
-                                >
-                                    <View style={styles.schedulePreviewHeader}>
-                                        <Text style={styles.schedulePreviewTitle}>등록된 일정</Text>
-                                        <Ionicons name="chevron-forward" size={20} color="#1E40AF"/>
-                                    </View>
-                                    {['월', '화', '수', '목', '금', '토', '일']
-                                        .filter(day => savedSchedule[day]?.length > 0)
-                                        .map((day) => (
-                                            <View key={day} style={styles.schedulePreviewDay}>
-                                                <Text style={styles.schedulePreviewDayName}>{day}요일</Text>
-                                                <Text style={styles.schedulePreviewTimes}>
-                                                    {savedSchedule[day].length}개 시간대
-                                                </Text>
-                                            </View>
-                                        ))}
-                                </TouchableOpacity>
-                            )}
-                            <View style={styles.scheduleButtonsContainer}>
-                                <TouchableOpacity
-                                    style={[styles.modifyScheduleButton, {flex: 1}]}
+                                    style={styles.dropdownItem}
                                     onPress={async () => {
+                                        setShowMenuDropdown(false);
                                         try {
-                                            // Fetch latest member data to check schedule status
                                             // Skip API call in mock mode
                                             if (mockMode) {
                                                 return;
                                             }
-                                            const userResponse = await authService.getCurrentUser();
 
-                                            // Update member data in store
-                                            if (userResponse.member) {
-                                                setAccountData({
-                                                    account: userResponse.account,
-                                                    member: userResponse.member,
-                                                    trainer: userResponse.trainer
-                                                });
-                                            }
+                                            // Reload data to check latest status
+                                            await loadInitialData();
 
-                                            // Check if there are actual scheduled results
-                                            if (hasAutoSchedulingResults()) {
-                                                Alert.alert(
-                                                    '일정 수정 불가',
-                                                    '이미 스케줄링이 완료되었습니다. 일정을 수정할 수 없습니다.',
-                                                    [{text: '확인', style: 'default'}]
-                                                );
-                                                return;
-                                            }
-
-                                            // Load saved schedule from store for editing
-                                            setShowScheduleEdit(true);
-                                        } catch (error) {
-                                            console.error('Error checking schedule status:', error);
-                                            Alert.alert('오류', '일정 상태 확인에 실패했습니다.');
-                                        }
-                                    }}
-                                >
-                                    <Ionicons name="create-outline" size={20} color="white"/>
-                                    <Text style={styles.modifyScheduleButtonText}>일정 수정</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={[styles.unreadyButton, {flex: 1}]}
-                                    onPress={async () => {
-                                        try {
-                                            // Fetch latest member data to check schedule status
-                                            // Skip API call in mock mode
-                                            if (mockMode) {
-                                                return;
-                                            }
-                                            const userResponse = await authService.getCurrentUser();
-
-                                            // Update member data in store
-                                            if (userResponse.member) {
-                                                setAccountData({
-                                                    account: userResponse.account,
-                                                    member: userResponse.member,
-                                                    trainer: userResponse.trainer
-                                                });
-                                            }
-
-                                            // Check if there are actual scheduled results
-                                            if (hasAutoSchedulingResults()) {
+                                            // Check if trainer has already scheduled
+                                            if (trainerAutoScheduled) {
                                                 Alert.alert(
                                                     '일정 취소 불가',
-                                                    '이미 스케줄링이 완료되었습니다. 일정을 취소할 수 없습니다.',
+                                                    '이미 트레이너가 스케줄링을 완료했습니다. 일정을 취소할 수 없습니다.',
                                                     [{text: '확인', style: 'default'}]
                                                 );
                                                 return;
@@ -441,20 +263,18 @@ export default function MemberHome() {
                                                         onPress: async () => {
                                                             try {
                                                                 if (!mockMode) {
-                                                                    const {
-                                                                        targetYear,
-                                                                        targetWeekOfYear
-                                                                    } = getYearAndWeek();
+                                                                    const {targetYear, targetWeekOfYear} = getYearAndWeek();
+                                                                    const nextWeekOfYear = targetWeekOfYear + 1;
 
                                                                     await memberScheduleService.unRegisterWeeklyFreeTimeSchedule({
                                                                         targetYear,
-                                                                        targetWeekOfYear
+                                                                        targetWeekOfYear: nextWeekOfYear
                                                                     });
                                                                 }
-                                                                setSavedSchedule({});
+                                                                await loadInitialData();
                                                                 Alert.alert('완료', '일정이 취소되었습니다.');
                                                             } catch (error: any) {
-                                                                console.error('Unready error:', error);
+                                                                console.error('Unregister error:', error);
                                                                 Alert.alert(
                                                                     '취소 실패',
                                                                     error.message || '일정 취소에 실패했습니다.'
@@ -470,10 +290,53 @@ export default function MemberHome() {
                                         }
                                     }}
                                 >
-                                    <Ionicons name="close-circle-outline" size={20} color="white"/>
-                                    <Text style={styles.unreadyButtonText}>일정 취소</Text>
+                                    <Ionicons name="close-circle-outline" size={20} color="#EF4444"/>
+                                    <Text style={styles.dropdownItemTextDanger}>일정 취소</Text>
                                 </TouchableOpacity>
                             </View>
+                        )}
+
+                        <View style={styles.scheduleButtonsContainer}>
+                            <TouchableOpacity
+                                style={[styles.modifyScheduleButton, {flex: 1}]}
+                                onPress={() => setShowScheduleDetail(true)}
+                            >
+                                <Ionicons name="calendar" size={20} color="white"/>
+                                <Text style={styles.modifyScheduleButtonText}>일정 보기</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modifyScheduleButton, {flex: 1}]}
+                                onPress={async () => {
+                                    try {
+                                        // Skip API call in mock mode
+                                        if (mockMode) {
+                                            setShowScheduleEdit(true);
+                                            return;
+                                        }
+
+                                        // Reload data to check latest status
+                                        await loadInitialData();
+
+                                        // Check if trainer has already scheduled
+                                        if (trainerAutoScheduled) {
+                                            Alert.alert(
+                                                '일정 수정 불가',
+                                                '이미 트레이너가 스케줄링을 완료했습니다. 일정을 수정할 수 없습니다.',
+                                                [{text: '확인', style: 'default'}]
+                                            );
+                                            return;
+                                        }
+
+                                        setShowScheduleEdit(true);
+                                    } catch (error) {
+                                        console.error('Error checking schedule status:', error);
+                                        Alert.alert('오류', '일정 상태 확인에 실패했습니다.');
+                                    }
+                                }}
+                            >
+                                <Ionicons name="create" size={20} color="white"/>
+                                <Text style={styles.modifyScheduleButtonText}>일정 수정</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 )}
@@ -776,9 +639,83 @@ const styles = StyleSheet.create({
     },
     dashboardTitle: {
         fontSize: 20,
-        fontWeight: '700',
+        fontWeight: '600',
         color: '#1F2937',
+    },
+    dashboardTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#ECFDF5',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#10B981',
+    },
+    statusBadgeText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#10B981',
+    },
+    infoTooltip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#F9FAFB',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 8,
         marginBottom: 16,
+    },
+    infoTooltipText: {
+        fontSize: 13,
+        color: '#6B7280',
+        flex: 1,
+    },
+    dashboardHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    menuButton: {
+        padding: 8,
+    },
+    dropdownMenu: {
+        position: 'absolute',
+        top: 50,
+        right: 10,
+        backgroundColor: 'white',
+        borderRadius: 12,
+        paddingVertical: 8,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 8,
+        zIndex: 1000,
+        minWidth: 150,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        gap: 12,
+    },
+    dropdownItemTextDanger: {
+        fontSize: 15,
+        color: '#EF4444',
+        fontWeight: '500',
     },
     statsContainer: {
         flexDirection: 'row',
