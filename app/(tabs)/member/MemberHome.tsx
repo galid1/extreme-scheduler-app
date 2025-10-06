@@ -1011,7 +1011,7 @@ export default function MemberHome() {
               ) : (
                 <>
                   <Text style={styles.scheduledStateMessage}>
-                    이번 주 트레이닝 일정이 확정되었습니다.
+                    트레이닝 일정이 확정되었습니다.
                   </Text>
                   <Text style={styles.scheduledStateSubMessage}>
                     확정된 일정을 확인해주세요.

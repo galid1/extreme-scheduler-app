@@ -76,8 +76,8 @@ export default function WeekNavigator({
         disabled={!canGoPrevious}
       >
         <Ionicons
-          name="chevron-back"
-          size={24}
+          name="play-back"
+          size={15}
           color={canGoPrevious ? '#3B82F6' : '#D1D5DB'}
         />
       </TouchableOpacity>
@@ -118,8 +118,8 @@ export default function WeekNavigator({
         disabled={!canGoNext}
       >
         <Ionicons
-          name="chevron-forward"
-          size={24}
+          name="play-forward"
+          size={15}
           color={canGoNext ? '#3B82F6' : '#D1D5DB'}
         />
       </TouchableOpacity>
@@ -144,7 +144,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
   },
   navButtonDisabled: {
     opacity: 0.4,

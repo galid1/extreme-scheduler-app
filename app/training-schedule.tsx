@@ -238,56 +238,6 @@ export default function TrainingScheduleScreen() {
     }
   };
 
-  const getMemberSessionTimes = (memberId: string, week: number) => {
-    return getSessionsForWeek(week)
-      .filter(session => session.memberId === memberId)
-      .map(session => ({
-        day: session.day,
-        hour: session.hour
-      }));
-  };
-
-  const getUpcomingSessions = () => {
-    const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
-    const currentDay = dayOrder[currentTime.getDay()];
-    const currentHour = currentTime.getHours();
-    const weekSessions = getSessionsForWeek(currentWeek);
-
-    // Sort sessions by day and time
-    const sortedSessions = [...weekSessions].sort((a, b) => {
-      const aDayIndex = dayOrder.indexOf(a.day);
-      const bDayIndex = dayOrder.indexOf(b.day);
-      const currentDayIndex = dayOrder.indexOf(currentDay);
-
-      // Calculate days from current day (handle week wrap)
-      const aDaysFromNow = (aDayIndex - currentDayIndex + 7) % 7;
-      const bDaysFromNow = (bDayIndex - currentDayIndex + 7) % 7;
-
-      if (aDaysFromNow !== bDaysFromNow) {
-        return aDaysFromNow - bDaysFromNow;
-      }
-      return a.hour - b.hour;
-    });
-
-    // Filter upcoming sessions only if this is the current week
-    if (isCurrentWeek(currentWeek)) {
-      const upcoming = sortedSessions.filter(session => {
-        const dayIndex = dayOrder.indexOf(session.day);
-        const currentDayIndex = dayOrder.indexOf(currentDay);
-        const daysFromNow = (dayIndex - currentDayIndex + 7) % 7;
-
-        if (daysFromNow === 0) {
-          return session.hour > currentHour;
-        }
-        return true;
-      });
-      return upcoming.slice(0, 2);
-    }
-
-    // For future weeks, return first 2 sessions
-    return sortedSessions.slice(0, 2);
-  };
-
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -301,20 +251,6 @@ export default function TrainingScheduleScreen() {
 
   // Get unique members for current week
   const weekSessions = getSessionsForWeek(currentWeek);
-  const uniqueMembers = Array.from(new Set(weekSessions.map(s => s.memberId)))
-    .map(id => {
-      const session = weekSessions.find(s => s.memberId === id);
-      const sessionTimes = getMemberSessionTimes(id, currentWeek);
-      return session ? {
-        id,
-        name: session.memberName,
-        phone: session.memberPhone,
-        sessionTimes,
-      } : null;
-    })
-    .filter(Boolean);
-
-  const upcomingSessions = getUpcomingSessions();
 
   // Get today's sessions only
   const getTodaySessions = () => {
