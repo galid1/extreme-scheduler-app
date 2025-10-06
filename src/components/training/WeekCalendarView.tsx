@@ -58,11 +58,15 @@ export default function WeekCalendarView({
   const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
   // 표시할 주차들 (이번주, 다음주까지만)
-  const maxWeek = Math.min(realCurrentWeek + 1, 52);
-  const weeks = [realCurrentWeek, realCurrentWeek + 1].filter(week => week <= 52);
+  // 항상 [이번주, 다음주] 2개 페이지를 유지하되, 다음주보다 더 넘어가지 못하도록 제한
+  const maxAllowedWeek = Math.min(realCurrentWeek + 1, 52);
+  const weeks = [realCurrentWeek, maxAllowedWeek].filter(week => week <= 52);
+
+  console.log('📅 WeekCalendarView - realCurrentWeek:', realCurrentWeek, 'currentWeek:', currentWeek, 'weeks:', weeks);
 
   // currentWeek에 해당하는 페이지 인덱스 계산
   const initialPageIndex = weeks.indexOf(currentWeek);
+  console.log('📍 initialPageIndex:', initialPageIndex, 'for currentWeek:', currentWeek);
   const [currentPageIndex, setCurrentPageIndex] = useState(initialPageIndex >= 0 ? initialPageIndex : 0);
 
   // currentWeek가 변경되면 페이지 인덱스를 동기화
@@ -82,14 +86,29 @@ export default function WeekCalendarView({
     const offsetX = event.nativeEvent.contentOffset.x;
     const pageIndex = Math.round(offsetX / SCREEN_WIDTH);
 
+    console.log('🔄 Scroll - offsetX:', offsetX, 'pageIndex:', pageIndex, 'currentPageIndex:', currentPageIndex, 'currentWeek:', currentWeek, 'maxAllowedWeek:', maxAllowedWeek);
+
     // 이번주와 다음주 범위 내에서만 페이지 변경 허용
     if (pageIndex < 0 || pageIndex >= weeks.length) {
+      console.log('❌ Scroll blocked - out of bounds');
+      return;
+    }
+
+    const newWeek = weeks[pageIndex];
+
+    // 현재 보고 있는 주가 이미 maxAllowedWeek이고, 우측으로 스크롤하려는 경우 막기
+    if (currentWeek >= maxAllowedWeek && pageIndex > currentPageIndex) {
+      console.log('❌ Scroll blocked - already at max week, trying to go right');
+      // 현재 위치로 되돌리기
+      if (horizontalScrollRef.current) {
+        horizontalScrollRef.current.scrollTo({ x: currentPageIndex * SCREEN_WIDTH, animated: true });
+      }
       return;
     }
 
     if (pageIndex !== currentPageIndex) {
+      console.log('✅ Scroll allowed - changing to week:', newWeek);
       setCurrentPageIndex(pageIndex);
-      const newWeek = weeks[pageIndex];
       if (newWeek && newWeek !== currentWeek) {
         onWeekChange(newWeek);
       }

@@ -13,6 +13,7 @@ import trainerScheduleService from '@/src/services/api/trainer-schedule.service'
 import ErrorRetryView from '@/src/components/ErrorRetryView';
 import WeekInfo from '@/src/components/WeekInfo';
 import {PeriodicScheduleLine, OnetimeScheduleLine} from '@/src/types/api';
+import {useTrainingStore} from '@/src/store/useTrainingStore';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -258,7 +259,21 @@ export default function TrainerHome() {
                     {hasScheduledSessions ? (
                         <TouchableOpacity
                             style={styles.viewScheduleButton}
-                            onPress={() => router.push('/training-schedule')}
+                            onPress={() => {
+                                // 이번 주차로 설정하고 화면 이동
+                                const today = new Date();
+                                const startOfYear = new Date(today.getFullYear(), 0, 1);
+                                const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+                                const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+
+                                const { setCurrentWeek } = useTrainingStore.getState();
+                                setCurrentWeek(realCurrentWeek);
+
+                                console.log('🚀 TrainerHome - Setting currentWeek to:', realCurrentWeek);
+
+                                // push를 사용하여 화면 이동
+                                router.push('/training-schedule');
+                            }}
                         >
                             <Ionicons name="calendar-sharp" size={20} color="white"/>
                             <Text style={styles.autoScheduleButtonText}>트레이닝 일정 확인</Text>

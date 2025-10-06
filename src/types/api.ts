@@ -281,3 +281,7 @@ export interface GetAutoSchedulingResultApiResponse {
     weekOfYear: number;
     scheduleList: AutoSchedulingScheduleApiResponse[];
 }
+
+export interface DeleteAutoSchedulingResultApiResponse {
+    success: boolean;
+}

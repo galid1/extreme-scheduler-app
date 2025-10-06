@@ -9,7 +9,9 @@ import {
     AutoSchedulingRequest,
     GetFreeTimeScheduleResponse,
     TrainerWeeklyScheduleRegistrationStatusResponse,
-    GetAutoSchedulingResultApiResponse, AutoSchedulingResponse,
+    GetAutoSchedulingResultApiResponse,
+    AutoSchedulingResponse,
+    DeleteAutoSchedulingResultApiResponse,
 } from '../../types/api';
 
 class TrainerScheduleService {
@@ -56,6 +58,20 @@ class TrainerScheduleService {
     weekOfYear: number
   ): Promise<GetAutoSchedulingResultApiResponse> {
     return apiClient.get<GetAutoSchedulingResultApiResponse>(
+      `/api/v1/trainers/schedules/auto-scheduling?year=${year}&weekOfYear=${weekOfYear}`
+    );
+  }
+
+  /**
+   * 자동 스케줄링 결과 삭제
+   * @param year 삭제할 연도
+   * @param weekOfYear 삭제할 주차
+   */
+  async deleteAutoSchedulingResult(
+    year: number,
+    weekOfYear: number
+  ): Promise<DeleteAutoSchedulingResultApiResponse> {
+    return apiClient.delete<DeleteAutoSchedulingResultApiResponse>(
       `/api/v1/trainers/schedules/auto-scheduling?year=${year}&weekOfYear=${weekOfYear}`
     );
   }

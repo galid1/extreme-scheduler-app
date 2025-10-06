@@ -45,12 +45,19 @@ export default function TrainingScheduleScreen() {
     const calendarScrollRef = useRef<ScrollView>(null);
 
     useEffect(() => {
-        // 화면 진입 시 항상 현재 실제 주차로 초기화
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-        const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-        setCurrentWeek(realCurrentWeek);
+        // Store에 이미 주차가 설정되어 있으면 그대로 사용 (auto-scheduling에서 설정한 경우)
+        // 설정되어 있지 않거나 0이면 현재 실제 주차로 초기화
+        console.log('🔍 TrainingSchedule mounted, currentWeek:', currentWeek);
+        if (!currentWeek || currentWeek === 0) {
+            const today = new Date();
+            const startOfYear = new Date(today.getFullYear(), 0, 1);
+            const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+            const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+            console.log('📍 Setting currentWeek to realCurrentWeek:', realCurrentWeek);
+            setCurrentWeek(realCurrentWeek);
+        } else {
+            console.log('✅ Using existing currentWeek:', currentWeek);
+        }
 
         fetchTrainingSessions();
     }, []);
@@ -271,7 +278,14 @@ export default function TrainingScheduleScreen() {
                 isCurrentWeek={isCurrentWeek(currentWeek)}
                 isPastWeek={isPastWeek(currentWeek)}
                 isNextWeek={isNextWeek(currentWeek)}
-                onBack={() => router.back()}
+                onBack={() => {
+                    // router.back()이 실패하면 trainer 탭으로 이동
+                    if (router.canGoBack()) {
+                        router.back();
+                    } else {
+                        router.push('/(tabs)/trainer');
+                    }
+                }}
             />
 
             {/* Upcoming Sessions - Only show for current week */}
@@ -451,26 +465,49 @@ export default function TrainingScheduleScreen() {
                         styles.weekResetButton,
                         (isPastWeek(currentWeek) || isCurrentWeek(currentWeek)) && styles.weekResetButtonDisabled
                     ]}
-                    onPress={() => {
+                    onPress={async () => {
                         if (!isPastWeek(currentWeek) && !isCurrentWeek(currentWeek)) {
                             Alert.alert(
                                 `${currentWeek}주차 일정 재설정`,
-                                `${currentWeek}주차 트레이닝 일정을 재설정 하시겠습니까?`,
+                                `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?\n\n⚠️ 해당 주차에 배정된 모든 회원에게 일정 취소 알림이 전송됩니다.`,
                                 [
                                     {text: '취소', style: 'cancel'},
                                     {
                                         text: '재설정',
-                                        onPress: () => {
-                                            // Store에 재설정할 주차 정보 저장
-                                            resetWeek(currentWeek);
-                                            // 자동 스케줄링 화면으로 이동 (replace로 스택을 교체)
-                                            router.replace({
-                                                pathname: '/auto-scheduling',
-                                                params: {
-                                                    weekToReset: currentWeek,
-                                                    resetMode: true
+                                        onPress: async () => {
+                                            try {
+                                                setIsFixingWeekSchedule(true);
+
+                                                // 현재 연도 계산
+                                                const today = new Date();
+                                                const currentYear = today.getFullYear();
+
+                                                // 자동 스케줄링 결과 삭제 API 호출
+                                                const result = await trainerScheduleService.deleteAutoSchedulingResult(
+                                                    currentYear,
+                                                    currentWeek
+                                                );
+
+                                                if (result.success) {
+                                                    // Store에 재설정할 주차 정보 저장
+                                                    resetWeek(currentWeek);
+                                                    // 자동 스케줄링 화면으로 이동 (replace로 스택을 교체)
+                                                    router.replace({
+                                                        pathname: '/auto-scheduling',
+                                                        params: {
+                                                            weekToReset: currentWeek,
+                                                            resetMode: true
+                                                        }
+                                                    });
+                                                } else {
+                                                    Alert.alert('오류', '일정 재설정에 실패했습니다.');
                                                 }
-                                            });
+                                            } catch (error) {
+                                                console.error('일정 재설정 오류:', error);
+                                                Alert.alert('오류', '일정 재설정 중 문제가 발생했습니다.');
+                                            } finally {
+                                                setIsFixingWeekSchedule(false);
+                                            }
                                         }
                                     }
                                 ]
