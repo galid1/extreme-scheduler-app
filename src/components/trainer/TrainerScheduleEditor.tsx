@@ -204,12 +204,21 @@ export default function TrainerScheduleEditor({
                 onetimeScheduleLines: [],
             };
 
-            // Get current date for one-time schedules
+            // Get next week's date for one-time schedules
             const today = new Date();
-            const getNextDate = (dayOfWeek: string) => {
+            const getNextWeekDate = (dayOfWeek: string) => {
                 const targetDay = ['일', '월', '화', '수', '목', '금', '토'].indexOf(dayOfWeek);
                 const currentDay = today.getDay();
-                const daysUntilTarget = (targetDay - currentDay + 7) % 7 || 7; // If same day, schedule for next week
+
+                // Calculate days until next occurrence of target day
+                let daysUntilTarget = targetDay - currentDay;
+                if (daysUntilTarget <= 0) {
+                    daysUntilTarget += 7; // If today or past, get next week's date
+                }
+
+                // Add 7 more days to ensure it's always next week
+                daysUntilTarget += 7;
+
                 const nextDate = new Date(today);
                 nextDate.setDate(today.getDate() + daysUntilTarget);
                 return nextDate.toISOString().split('T')[0];
@@ -229,7 +238,7 @@ export default function TrainerScheduleEditor({
                         } else if (slot.state === 'once') {
                             // One-time schedule
                             request.onetimeScheduleLines?.push({
-                                scheduleDate: getNextDate(day),
+                                scheduleDate: getNextWeekDate(day),
                                 startHour: slot.hour,
                                 endHour: slot.hour + 1, // Assuming 1-hour slots
                             });
