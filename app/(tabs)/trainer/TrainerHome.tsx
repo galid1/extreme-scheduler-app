@@ -296,8 +296,6 @@ export default function TrainerHome() {
                                             const { setCurrentWeek, currentWeek } = useTrainingStore.getState();
                                             setCurrentWeek(realCurrentWeek + 1); // 다음 주
 
-                                            console.log(`WEEK : $$$$$$$$$$$$$ : ${currentWeek}`)
-
                                             router.push('/training-schedule');
                                         }}
                                     >

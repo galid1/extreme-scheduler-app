@@ -56,24 +56,21 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
   // 현재 실제 주차 계산
   const realCurrentWeek = getCurrentWeek();
 
-  // 표시할 주차들 (이번주, 다음주까지만)
-  // 항상 [이번주, 다음주] 2개 페이지를 유지하되, 다음주보다 더 넘어가지 못하도록 제한
+  // 표시할 주차들 - currentWeek를 기준으로 계산
+  // currentWeek가 이번주면 [이번주, 다음주], 다음주면 [이번주, 다음주]
   const maxAllowedWeek = Math.min(realCurrentWeek + 1, 52);
   const weeks = [realCurrentWeek, maxAllowedWeek].filter(week => week <= 52);
 
   // currentWeek에 해당하는 페이지 인덱스 계산
-  const initialPageIndex = weeks.indexOf(currentWeek);
-  const [currentPageIndex, setCurrentPageIndex] = useState(initialPageIndex >= 0 ? initialPageIndex : 0);
+  const currentPageIndex = weeks.indexOf(currentWeek);
 
-  // currentWeek가 변경되면 페이지 인덱스를 동기화
+  // currentWeek가 변경되면 스크롤 위치를 동기화
   useEffect(() => {
-    const newPageIndex = weeks.indexOf(currentWeek);
-    if (newPageIndex >= 0 && newPageIndex !== currentPageIndex) {
-      setCurrentPageIndex(newPageIndex);
-      // 스크롤 위치도 동기화
-      if (horizontalScrollRef.current) {
-        horizontalScrollRef.current.scrollTo({ x: newPageIndex * SCREEN_WIDTH, animated: false });
-      }
+    const pageIndex = weeks.indexOf(currentWeek);
+    if (pageIndex >= 0 && horizontalScrollRef.current) {
+      setTimeout(() => {
+        horizontalScrollRef.current?.scrollTo({ x: pageIndex * SCREEN_WIDTH, animated: false });
+      }, 0);
     }
   }, [currentWeek]);
 
@@ -113,7 +110,6 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
 
     if (pageIndex !== currentPageIndex) {
       console.log('✅ Scroll allowed - changing to week:', newWeek);
-      setCurrentPageIndex(pageIndex);
       if (newWeek && newWeek !== currentWeek) {
         onWeekChange(newWeek);
       }
