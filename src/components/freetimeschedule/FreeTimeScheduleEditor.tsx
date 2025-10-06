@@ -406,7 +406,7 @@ export default function FreeTimeScheduleEditor({
                 <Text style={styles.schedulePageTitle}>
                     {getTitle()}
                 </Text>
-                <WeekInfo style={styles.scheduleSubtitle}/>
+                <WeekInfo style={styles.scheduleSubtitle} nextWeek={true}/>
                 <View style={styles.helpContainer}>
                     <View style={styles.helpItem}>
                         <View

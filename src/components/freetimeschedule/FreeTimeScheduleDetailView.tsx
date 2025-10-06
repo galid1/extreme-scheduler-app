@@ -98,7 +98,7 @@ export default function FreeTimeScheduleDetailView({
         </TouchableOpacity>
         <View style={styles.scheduleDetailTitleContainer}>
           <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
-          <WeekInfo style={styles.scheduleDetailWeekInfo} />
+          <WeekInfo style={styles.scheduleDetailWeekInfo} nextWeek={true} />
         </View>
         <View style={{width: 44}} />
       </View>

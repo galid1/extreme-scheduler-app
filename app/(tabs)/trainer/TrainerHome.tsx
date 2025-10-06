@@ -242,8 +242,8 @@ export default function TrainerHome() {
                         {/* Schedule Management Card */}
                         <View style={[styles.trainerDashboard, {marginTop: 20}]}>
                             <View>
-                                <Text style={styles.dashboardTitle}>운영 일정 관리</Text>
-                                <WeekInfo style={styles.weekInfoText}/>
+                                <Text style={styles.dashboardTitle}>운영 일정</Text>
+                                <WeekInfo style={styles.weekInfoText} nextWeek={true}/>
                             </View>
                             <View style={styles.scheduleButtonsContainer}>
                                 <TouchableOpacity
@@ -266,8 +266,8 @@ export default function TrainerHome() {
                         {/* Training Schedule Management Card */}
                         <View style={[styles.trainerDashboard, {marginTop: 16}]}>
                             <View>
-                                <Text style={styles.dashboardTitle}>트레이닝 일정 관리</Text>
-                                <WeekInfo style={styles.weekInfoText}/>
+                                <Text style={styles.dashboardTitle}>트레이닝 일정</Text>
+                                <WeekInfo style={styles.weekInfoText} nextWeek={false}/>
                             </View>
                             <View style={styles.scheduleButtonsContainer}>
                                 <TouchableOpacity
@@ -286,7 +286,7 @@ export default function TrainerHome() {
                                     }}
                                 >
                                     <Ionicons name="calendar-sharp" size={20} color="white"/>
-                                    <Text style={styles.modifyScheduleButtonText}>트레이닝 일정 확인</Text>
+                                    <Text style={styles.modifyScheduleButtonText}>금주 트레이닝 일정</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
