@@ -9,13 +9,6 @@ import {
     WeeklyScheduleRegistrationStatusResponse
 } from '@/src/types/api';
 
-type TimeSlotState = 'none' | 'once' | 'recurring';
-
-interface TimeSlotSelection {
-  hour: number;
-  state: TimeSlotState;
-}
-
 interface AuthState {
   token: string | null;
   phoneNumber: string | null;
@@ -39,7 +32,6 @@ interface AuthState {
   setToken: (token: string) => void;
   setPhoneNumber: (phoneNumber: string) => void;
   setTempToken: (tempToken: string) => void;
-  setUserInfo: (info: { name: string; accountType: string }) => void;
   setAccountData: (data: {
     account: Account;
     trainer?: TrainerResponse;
@@ -76,11 +68,6 @@ export const useAuthStore = create<AuthState>()(
 
       setTempToken: (tempToken) => {
         set({ tempToken });
-      },
-
-      setUserInfo: (info) => {
-        // This is a placeholder for compatibility
-        console.log('User info set:', info);
       },
 
       setAccountData: (data) => {
@@ -137,19 +124,3 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
-
-// Helper selectors
-export const useAccountType = () => useAuthStore((state) => state.account?.accountType);
-export const useName = () => useAuthStore((state) => state.account?.privacyInfo?.name);
-export const useStoredPhoneNumber = () => useAuthStore((state) => state.account?.privacyInfo?.phoneNumber);
-export const useAccountId = () => useAuthStore((state) => state.account?.id);
-export const useTrainerAccountId = () => useAuthStore((state) => state.member?.trainerAccountId);
-export const useScheduleStatus = () => useAuthStore((state) => {
-  if (state.trainer) {
-    return state.trainer.scheduleStatus;
-  } else if (state.member) {
-    return state.member.scheduleStatus;
-  }
-  return null;
-});
-export const useNotificationSent = () => useAuthStore((state) => false); // Placeholder for now

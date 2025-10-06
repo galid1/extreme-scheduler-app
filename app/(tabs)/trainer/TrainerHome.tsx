@@ -293,8 +293,10 @@ export default function TrainerHome() {
                                             // 다음 주차로 설정하고 화면 이동
                                             const realCurrentWeek = getCurrentWeek();
 
-                                            const { setCurrentWeek } = useTrainingStore.getState();
+                                            const { setCurrentWeek, currentWeek } = useTrainingStore.getState();
                                             setCurrentWeek(realCurrentWeek + 1); // 다음 주
+
+                                            console.log(`WEEK : $$$$$$$$$$$$$ : ${currentWeek}`)
 
                                             router.push('/training-schedule');
                                         }}

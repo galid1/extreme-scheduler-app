@@ -1,9 +1,16 @@
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import React, {useMemo} from 'react';
+import {Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {Ionicons} from '@expo/vector-icons';
 import WeekInfo from '@/src/components/WeekInfo';
-import { PeriodicScheduleLineResponse, OnetimeScheduleLineResponse } from '@/src/types/api';
+import {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
+import {formatDateMMDD, getNextWeekDateRange} from '@/src/utils/dateUtils';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const HORIZONTAL_PADDING = 32; // paddingHorizontal: 16 * 2
+const TIME_COLUMN_WIDTH = 50;
+const AVAILABLE_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING - TIME_COLUMN_WIDTH;
+const DAY_COLUMN_WIDTH = AVAILABLE_WIDTH / 7;
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
@@ -13,8 +20,8 @@ interface TimeSlotSelection {
 }
 
 interface TrainerScheduleDetailViewProps {
-  periodicScheduleLines: PeriodicScheduleLineResponse[];
-  onetimeScheduleLines: OnetimeScheduleLineResponse[];
+  periodicScheduleLines: PeriodicScheduleLine[];
+  onetimeScheduleLines: OnetimeScheduleLine[];
   onClose: () => void;
   onEdit: () => void;
 }
@@ -27,6 +34,19 @@ export default function FreeTimeScheduleDetailView({
 }: TrainerScheduleDetailViewProps) {
   const days = ['월', '화', '수', '목', '금', '토', '일'];
   const hours = Array.from({ length: 24 }, (_, i) => i);
+
+  // Calculate next week dates
+  const weekDates = useMemo(() => {
+    const { startDate } = getNextWeekDateRange();
+    return days.map((day, index) => {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + index);
+      return {
+        day,
+        date: formatDateMMDD(date),
+      };
+    });
+  }, []);
 
   // Transform API response to TimeSlotSelection format
   const freeTimeScheduleList = useMemo(() => {
@@ -107,9 +127,10 @@ export default function FreeTimeScheduleDetailView({
         {/* Days header */}
         <View style={styles.calendarHeader}>
           <View style={styles.timeColumnHeader} />
-          {days.map((day) => (
-            <View key={day} style={styles.dayColumnHeader}>
-              <Text style={styles.dayColumnText}>{day}</Text>
+          {weekDates.map((dateInfo) => (
+            <View key={dateInfo.day} style={styles.dayColumnHeader}>
+              <Text style={styles.dayColumnText}>{dateInfo.day}</Text>
+              <Text style={styles.dateText}>{dateInfo.date}</Text>
             </View>
           ))}
         </View>
@@ -119,7 +140,7 @@ export default function FreeTimeScheduleDetailView({
           {hours.map((hour) => {
             const isPM = hour >= 12;
             const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-            const period = isPM ? '오후🌙' : '오전☀️';
+            const period = isPM ? '오후' : '오전';
 
             return (
               <View key={hour} style={[styles.timeRow, isPM && styles.timeRowPM]}>
@@ -234,17 +255,23 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
   timeColumnHeader: {
-    width: 80,
+    width: TIME_COLUMN_WIDTH,
   },
   dayColumnHeader: {
-    flex: 1,
+    width: DAY_COLUMN_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
   dayColumnText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#3B82F6',
+    fontWeight: '600',
+    color: '#333',
+  },
+  dateText: {
+    fontSize: 8,
+      fontWeight: '700',
+    color: '#6B7280',
   },
   calendarBody: {
     flex: 1,
@@ -259,8 +286,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
   },
   timeLabel: {
-    width: 80,
-    flexDirection: 'row',
+    width: TIME_COLUMN_WIDTH,
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
@@ -272,15 +299,15 @@ const styles = StyleSheet.create({
   timeLabelPeriod: {
     fontSize: 10,
     color: '#9CA3AF',
-    fontWeight: '600',
+    fontWeight: '800',
   },
   timeLabelText: {
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: '700',
     color: '#6B7280',
   },
   timeCell: {
-    flex: 1,
+    width: DAY_COLUMN_WIDTH,
     borderLeftWidth: 1,
     borderLeftColor: '#F3F4F6',
     alignItems: 'center',

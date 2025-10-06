@@ -58,33 +58,20 @@ class ApiClient {
     };
 
     try {
-      console.log(`🔄 API Request:  ${url}`);
-      if (options?.body) {
-        console.log('   Request Body:', options.body);
-      }
-
       const response = await fetch(url, defaultOptions);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         const errorMessage = errorData?.message || `${response.status} ${response.statusText}`;
-        console.error(`❌ API Error [ ${endpoint}]: ${errorMessage}`);
-        console.error('   Full URL:', url);
-        console.error('   Status:', response.status);
-        if (errorData) {
-          console.error('   Error Data:', errorData);
-        }
         throw new Error(
           `[ ${endpoint}] ${errorMessage}`
         );
       }
 
       const data = await response.json();
-      console.log(`✅ API Success [ ${endpoint}]:`, data.data ? 'Data received' : 'No data');
       return data.data as T;
     } catch (error) {
       if (error instanceof Error && !error.message.includes(endpoint)) {
-        console.error(`❌ API Network Error [ ${endpoint}]:`, error.message);
         throw new Error(`[ ${endpoint}] ${error.message}`);
       }
       throw error;
