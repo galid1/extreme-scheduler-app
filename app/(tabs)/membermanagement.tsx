@@ -6,6 +6,7 @@ import {trainerService} from "@/src/services/api";
 import {useAssignmentStore} from "@/src/store/useAssignmentStore";
 import {useAssignedMembersStore} from "@/src/store/useAssignedMembersStore";
 import {getYearAndWeek} from "@/src/utils/dateUtils";
+import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 
 export default function MemberManagementScreen() {
     const {assignmentRequests, setAssignmentRequests, setIsLoadingRequests} = useAssignmentStore();
@@ -13,6 +14,7 @@ export default function MemberManagementScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const {members, setMembers, shouldRefetch} = useAssignedMembersStore();
     const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
+    const [showScheduleView, setShowScheduleView] = useState(false);
 
     // Store 데이터를 MemberInfo 형식으로 변환
     useEffect(() => {
@@ -70,6 +72,30 @@ export default function MemberManagementScreen() {
     };
 
     const pendingRequestsCount = assignmentRequests.filter(req => req.status === 'PENDING').length;
+
+    // 스케줄 상세 뷰 표시
+    if (showScheduleView) {
+        const selectedMember = members.find((member) => {
+            return member.accountId === selectedMemberId
+        });
+
+        if (!selectedMember) {
+            // 멤버를 찾지 못한 경우 목록으로 돌아감
+            setShowScheduleView(false);
+            return null;
+        }
+
+        return (
+            <FreeTimeScheduleDetailView
+                periodicScheduleLines={selectedMember.periodicSchedules || []}
+                onetimeScheduleLines={selectedMember.onetimeSchedules || []}
+                onClose={() => setShowScheduleView(false)}
+                onEdit={() => {
+                    setShowScheduleView(false);
+                }}
+            />
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -141,7 +167,7 @@ export default function MemberManagementScreen() {
                                                     <TouchableOpacity
                                                         style={styles.actionButton}
                                                         onPress={() => {
-                                                            router.push('/approved-members');
+                                                            setShowScheduleView(true);
                                                         }}
                                                     >
                                                         <Ionicons name="calendar-outline" size={18} color="white"/>
