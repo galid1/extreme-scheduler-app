@@ -1,5 +1,14 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Dimensions, NativeSyntheticEvent, NativeScrollEvent} from 'react-native';
+import {
+    Alert,
+    AppState,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
@@ -16,18 +25,7 @@ import {PeriodicScheduleLine, OnetimeScheduleLine} from '@/src/types/api';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import {getCurrentWeek} from '@/src/utils/dateUtils';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-// Dashboard의 marginHorizontal(20*2) = 40
-const DASHBOARD_MARGIN = 40;
-// Dashboard의 padding = 20
-const DASHBOARD_PADDING = 20;
-// 카드 컨테이너의 사용 가능한 너비 (dashboard padding만 제외)
-const CARD_CONTAINER_WIDTH = SCREEN_WIDTH - DASHBOARD_MARGIN - (DASHBOARD_PADDING * 2);
-// 카드 간격
-const CARD_GAP = 12;
-// 카드의 실제 너비
-const WEEK_CARD_WIDTH = CARD_CONTAINER_WIDTH - CARD_GAP;
+import WeekSelector from '@/src/components/training/WeekSelector';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -48,7 +46,7 @@ export default function TrainerHome() {
     const name = account?.privacyInfo?.name;
     const status = trainer?.status
     const appStateRef = useRef(AppState.currentState);
-    const { shouldRefresh, setHasNextWeekScheduling } = useSchedulingEventStore();
+    const {shouldRefresh, setHasNextWeekScheduling} = useSchedulingEventStore();
     const [expandedDay, setExpandedDay] = useState<string | null>(null);
     const [showScheduleEdit, setShowScheduleEdit] = useState(false);
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
@@ -59,14 +57,11 @@ export default function TrainerHome() {
     const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
     const [hasError, setHasError] = useState(false);
     const [isRetrying, setIsRetrying] = useState(false);
-    const [scheduleData, setScheduleData] = useState<{periodicScheduleLines: PeriodicScheduleLine[], onetimeScheduleLines: OnetimeScheduleLine[]}>({periodicScheduleLines: [], onetimeScheduleLines: []});
+    const [scheduleData, setScheduleData] = useState<{
+        periodicScheduleLines: PeriodicScheduleLine[],
+        onetimeScheduleLines: OnetimeScheduleLine[]
+    }>({periodicScheduleLines: [], onetimeScheduleLines: []});
     const {mockMode} = useConfigStore();
-
-    // Week selector state
-    const realCurrentWeek = getCurrentWeek();
-    const availableWeeks = [realCurrentWeek, realCurrentWeek + 1];
-    const [selectedWeekIndex, setSelectedWeekIndex] = useState(0);
-    const weekScrollRef = useRef<ScrollView>(null);
 
     // Function to load initial data
     const loadInitialData = async () => {
@@ -284,68 +279,17 @@ export default function TrainerHome() {
                         {/* Training Schedule Management Card */}
                         <View style={[styles.trainerDashboard, {marginTop: 16}]}>
                             <Text style={styles.dashboardTitle}>트레이닝 일정</Text>
-
-                            {/* Week Selector */}
-                            <ScrollView
-                                ref={weekScrollRef}
-                                horizontal
-                                pagingEnabled
-                                showsHorizontalScrollIndicator={false}
-                                onMomentumScrollEnd={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-                                    const offsetX = event.nativeEvent.contentOffset.x;
-                                    const pageIndex = Math.round(offsetX / CARD_CONTAINER_WIDTH);
-                                    setSelectedWeekIndex(pageIndex);
-                                }}
-                                scrollEventThrottle={16}
-                                style={styles.weekSelector}
-                                snapToInterval={CARD_CONTAINER_WIDTH}
-                                decelerationRate="fast"
-                            >
-                                {availableWeeks.map((week, index) => (
-                                    <View key={week} style={[
-                                        styles.weekCard,
-                                        { width: WEEK_CARD_WIDTH },
-                                        index === 1 && styles.weekCardNextWeek
-                                    ]}>
-                                        <View style={styles.weekCardHeader}>
-                                            <Text style={[
-                                                styles.weekCardLabel,
-                                                index === 1 && styles.weekCardLabelNextWeek
-                                            ]}>
-                                                {index === 0 ? '이번 주' : '다음 주'}
-                                            </Text>
-                                        </View>
-                                        <WeekInfo style={styles.weekCardInfo} nextWeek={index === 1}/>
-                                    </View>
-                                ))}
-                            </ScrollView>
-
-                            {/* Page Indicator */}
-                            <View style={styles.weekIndicatorContainer}>
-                                {availableWeeks.map((_, index) => (
-                                    <View
-                                        key={index}
-                                        style={[
-                                            styles.weekIndicatorDot,
-                                            selectedWeekIndex === index && styles.weekIndicatorDotActive
-                                        ]}
-                                    />
-                                ))}
-                            </View>
-
-                            {/* Single Action Button */}
-                            <TouchableOpacity
-                                style={styles.viewScheduleButton}
-                                onPress={() => {
-                                    const selectedWeek = availableWeeks[selectedWeekIndex];
+                            <WeekSelector
+                                onViewSchedule={(weekNumber) => {
                                     const { setCurrentWeek } = useTrainingStore.getState();
-                                    setCurrentWeek(selectedWeek);
+                                    setCurrentWeek(weekNumber);
                                     router.push('/training-schedule');
                                 }}
-                            >
-                                <Ionicons name="calendar-sharp" size={20} color="white"/>
-                                <Text style={styles.viewScheduleButtonText}>일정 보기</Text>
-                            </TouchableOpacity>
+                            />
+                        </View>
+                        <View style={[styles.trainerDashboard, {marginTop: 16}]}>
+                            <Text style={styles.dashboardTitle}>일정 계획</Text>
+
                         </View>
                     </>
                 )}
@@ -354,7 +298,7 @@ export default function TrainerHome() {
             {/* Bottom Action Button */}
             {isRegisteredOperationSchedule === true && (
                 <View style={styles.bottomActionsContainer}>
-                    { !hasScheduledSessions && (
+                    {!hasScheduledSessions && (
                         <TouchableOpacity
                             style={styles.autoScheduleButton}
                             onPress={() => router.push('/auto-scheduling')}
@@ -1509,76 +1453,5 @@ const styles = StyleSheet.create({
     pendingInfoText: {
         fontSize: 13,
         color: '#6B7280',
-    },
-    weekSelector: {
-        marginTop: 16,
-        marginBottom: 8,
-        marginHorizontal: -20, // 부모의 padding을 상쇄
-        paddingHorizontal: 20, // 다시 padding 추가하여 카드 위치 조정
-    },
-    weekCard: {
-        backgroundColor: '#F3F4F6',
-        borderRadius: 12,
-        padding: 16,
-        marginRight: 12,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-    },
-    weekCardNextWeek: {
-        borderColor: '#E5E7EB',
-    },
-    weekCardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    weekCardLabel: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#3B82F6',
-    },
-    weekCardLabelNextWeek: {
-        color: '#F59E0B',
-    },
-    weekCardNumber: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1F2937',
-    },
-    weekCardInfo: {
-        fontSize: 13,
-        color: '#6B7280',
-    },
-    weekIndicatorContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 6,
-        marginBottom: 16,
-    },
-    weekIndicatorDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: '#D1D5DB',
-    },
-    weekIndicatorDotActive: {
-        width: 20,
-        backgroundColor: '#3B82F6',
-    },
-    viewScheduleButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#3B82F6',
-        borderRadius: 12,
-        paddingVertical: 12,
-        gap: 8,
-    },
-    viewScheduleButtonText: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: '600',
     },
 });
