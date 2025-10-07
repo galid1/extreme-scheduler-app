@@ -26,6 +26,7 @@ import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import {getCurrentWeek} from '@/src/utils/dateUtils';
 import WeekSelector from '@/src/components/training/WeekSelector';
+import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -250,66 +251,50 @@ export default function TrainerHome() {
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Show trainer dashboard or schedule management */}
-                {(isRegisteredOperationSchedule === true) && (
-                    <>
-                        {/* Schedule Management Card */}
-                        <View style={[styles.trainerDashboard, {marginTop: 5}]}>
-                            <View>
-                                <Text style={styles.dashboardTitle}>운영 일정</Text>
-                                <WeekInfo style={styles.weekInfoText} nextWeek={true}/>
-                            </View>
-                            <View style={styles.scheduleButtonsContainer}>
-                                <TouchableOpacity
-                                    style={[styles.modifyScheduleButton, {flex: 1}]}
-                                    onPress={() => setShowScheduleDetail(true)}
-                                >
-                                    <Ionicons name="calendar" size={20} color="white"/>
-                                    <Text style={styles.modifyScheduleButtonText}>일정 보기</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.modifyScheduleButton, {flex: 1}]}
-                                    onPress={() => setShowScheduleEdit(true)}
-                                >
-                                    <Ionicons name="create" size={20} color="white"/>
-                                    <Text style={styles.modifyScheduleButtonText}>일정 수정</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                <>
+                    {/* Schedule Planning Flow Card */}
+                    <View style={[styles.trainerDashboard, {marginTop: 20}]}>
+                        <Text style={styles.dashboardTitle}>일정 계획</Text>
+                        <SchedulePlanningFlow
+                            // 1단계: 운영 일정
+                            isOperationScheduleRegistered={isRegisteredOperationSchedule === true}
+                            onShowOperationSchedule={() => setShowScheduleDetail(true)}
+                            onEditOperationSchedule={() => setShowScheduleEdit(true)}
 
-                        {/* Training Schedule Management Card */}
-                        <View style={[styles.trainerDashboard, {marginTop: 16}]}>
-                            <Text style={styles.dashboardTitle}>트레이닝 일정</Text>
-                            <WeekSelector
-                                onViewSchedule={(weekNumber) => {
-                                    const { setCurrentWeek } = useTrainingStore.getState();
-                                    setCurrentWeek(weekNumber);
-                                    router.push('/training-schedule');
-                                }}
-                            />
-                        </View>
-                        <View style={[styles.trainerDashboard, {marginTop: 16}]}>
-                            <Text style={styles.dashboardTitle}>일정 계획</Text>
+                            // 2단계: 자동 스케줄링
+                            hasAutoSchedulingResult={hasScheduledSessions}
+                            onStartAutoScheduling={() => router.push('/auto-scheduling')}
+                            onViewSchedulingResult={() => {
+                                const { setCurrentWeek } = useTrainingStore.getState();
+                                setCurrentWeek(getCurrentWeek() + 1); // 다음 주
+                                router.push('/training-schedule');
+                            }}
 
-                        </View>
-                    </>
-                )}
+                            // 3단계: 일정 확정 (임시로 hasScheduledSessions 사용)
+                            isScheduleConfirmed={false}
+                            onConfirmSchedule={() => {
+                                Alert.alert('일정 확정', '일정을 확정하시겠습니까?');
+                            }}
+                            onResetSchedule={() => {
+                                // 재설정 로직은 ScheduleResetButton에서 이미 구현됨
+                                router.push('/auto-scheduling');
+                            }}
+                        />
+                    </View>
+
+                    {/* Training Schedule Management Card */}
+                    <View style={[styles.trainerDashboard, {marginTop: 16}]}>
+                        <Text style={styles.dashboardTitle}>트레이닝 일정</Text>
+                        <WeekSelector
+                            onViewSchedule={(weekNumber) => {
+                                const { setCurrentWeek } = useTrainingStore.getState();
+                                setCurrentWeek(weekNumber);
+                                router.push('/training-schedule');
+                            }}
+                        />
+                    </View>
+                </>
             </ScrollView>
-
-            {/* Bottom Action Button */}
-            {isRegisteredOperationSchedule === true && (
-                <View style={styles.bottomActionsContainer}>
-                    {!hasScheduledSessions && (
-                        <TouchableOpacity
-                            style={styles.autoScheduleButton}
-                            onPress={() => router.push('/auto-scheduling')}
-                        >
-                            <Ionicons name="calendar-outline" size={20} color="white"/>
-                            <Text style={styles.autoScheduleButtonText}>자동 스케줄링</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            )}
-
         </SafeAreaView>
     );
 }
@@ -536,6 +521,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 16,
         padding: 20,
+        paddingBottom: 5,
         marginHorizontal: 20,
         borderWidth: 1,
         borderColor: '#E5E7EB',

@@ -120,7 +120,12 @@ export default function FreeTimeScheduleDetailView({
           <Text style={styles.scheduleDetailTitle}>등록된 일정</Text>
           <WeekInfo style={styles.scheduleDetailWeekInfo} nextWeek={true} />
         </View>
-        <View style={{width: 44}} />
+        <TouchableOpacity
+          style={styles.scheduleDetailEditButton}
+          onPress={onEdit}
+        >
+          <Text style={styles.scheduleDetailEditButtonText}>수정</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.scheduleCalendarContainer}>
@@ -223,16 +228,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scheduleDetailEditButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
     backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scheduleDetailEditButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
   scheduleDetailTitleContainer: {
-    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
     alignItems: 'center',
+    zIndex: -1,
   },
   scheduleDetailTitle: {
     fontSize: 20,
