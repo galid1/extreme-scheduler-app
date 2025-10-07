@@ -75,6 +75,22 @@ class TrainerScheduleService {
       `/api/v1/trainers/schedules/auto-scheduling?year=${year}&weekOfYear=${weekOfYear}`
     );
   }
+
+  /**
+   * 자동 스케줄링 결과 확정
+   * @param year 확정할 연도
+   * @param weekOfYear 확정할 주차
+   */
+  async fixAutoScheduling(
+    year: number,
+    weekOfYear: number
+  ): Promise<{ success: boolean }> {
+    return apiClient.post<{ success: boolean }>(
+      '/api/v1/trainers/schedules/auto-scheduling/fix',
+      { year, weekOfYear }
+    );
+  }
+
 }
 
 export const trainerScheduleService = new TrainerScheduleService();

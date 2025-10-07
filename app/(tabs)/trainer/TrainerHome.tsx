@@ -27,6 +27,7 @@ import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import {getCurrentWeek} from '@/src/utils/dateUtils';
 import WeekSelector from '@/src/components/training/WeekSelector';
 import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
+import {ActivityIndicator} from 'react-native';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -63,6 +64,9 @@ export default function TrainerHome() {
         onetimeScheduleLines: OnetimeScheduleLine[]
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
     const {mockMode} = useConfigStore();
+    const [isConfirming, setIsConfirming] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
+    const {resetWeek} = useTrainingStore();
 
     // Function to load initial data
     const loadInitialData = async () => {
@@ -272,12 +276,90 @@ export default function TrainerHome() {
 
                             // 3단계: 일정 확정 (임시로 hasScheduledSessions 사용)
                             isScheduleConfirmed={false}
-                            onConfirmSchedule={() => {
-                                Alert.alert('일정 확정', '일정을 확정하시겠습니까?');
+                            onConfirmSchedule={async () => {
+                                const currentWeek = getCurrentWeek() + 1; // 다음 주
+                                Alert.alert(
+                                    `${currentWeek}주차 일정 확정`,
+                                    `${currentWeek}주차 트레이닝 일정을 확정하시겠습니까?\n\n✓ 확정된 일정은 회원들에게 알림이 전송됩니다.`,
+                                    [
+                                        {text: '취소', style: 'cancel'},
+                                        {
+                                            text: '확정',
+                                            onPress: async () => {
+                                                try {
+                                                    setIsConfirming(true);
+                                                    const today = new Date();
+                                                    const currentYear = today.getFullYear();
+
+                                                    const result = await trainerScheduleService.fixAutoScheduling(
+                                                        currentYear,
+                                                        currentWeek
+                                                    );
+
+                                                    if (result.success) {
+                                                        Alert.alert('완료', '일정이 확정되었습니다.');
+                                                        // 상태 갱신
+                                                        const {triggerRefresh} = useSchedulingEventStore.getState();
+                                                        triggerRefresh();
+                                                    } else {
+                                                        Alert.alert('오류', '일정 확정에 실패했습니다.');
+                                                    }
+                                                } catch (error) {
+                                                    console.error('일정 확정 오류:', error);
+                                                    Alert.alert('오류', '일정 확정 중 문제가 발생했습니다.');
+                                                } finally {
+                                                    setIsConfirming(false);
+                                                }
+                                            }
+                                        }
+                                    ]
+                                );
                             }}
-                            onResetSchedule={() => {
-                                // 재설정 로직은 ScheduleResetButton에서 이미 구현됨
-                                router.push('/auto-scheduling');
+                            onResetSchedule={async () => {
+                                const currentWeek = getCurrentWeek() + 1; // 다음 주
+                                Alert.alert(
+                                    `${currentWeek}주차 일정 재설정`,
+                                    `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?\n\n⚠️ 해당 주차에 배정된 모든 회원에게 일정 취소 알림이 전송됩니다.`,
+                                    [
+                                        {text: '취소', style: 'cancel'},
+                                        {
+                                            text: '재설정',
+                                            onPress: async () => {
+                                                try {
+                                                    setIsResetting(true);
+                                                    const today = new Date();
+                                                    const currentYear = today.getFullYear();
+
+                                                    const result = await trainerScheduleService.deleteAutoSchedulingResult(
+                                                        currentYear,
+                                                        currentWeek
+                                                    );
+
+                                                    if (result.success) {
+                                                        resetWeek(currentWeek);
+                                                        const {triggerRefresh} = useSchedulingEventStore.getState();
+                                                        triggerRefresh();
+
+                                                        router.replace({
+                                                            pathname: '/auto-scheduling',
+                                                            params: {
+                                                                weekToReset: currentWeek,
+                                                                resetMode: true
+                                                            }
+                                                        });
+                                                    } else {
+                                                        Alert.alert('오류', '일정 재설정에 실패했습니다.');
+                                                    }
+                                                } catch (error) {
+                                                    console.error('일정 재설정 오류:', error);
+                                                    Alert.alert('오류', '일정 재설정 중 문제가 발생했습니다.');
+                                                } finally {
+                                                    setIsResetting(false);
+                                                }
+                                            }
+                                        }
+                                    ]
+                                );
                             }}
                         />
                     </View>
