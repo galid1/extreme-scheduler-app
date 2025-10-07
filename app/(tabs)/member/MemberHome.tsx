@@ -49,8 +49,36 @@ export default function MemberHome() {
         return fixedAutoSchedulingResults !== null && fixedAutoSchedulingResults?.length > 0;
     }, [fixedAutoSchedulingResults]);
 
-    // Load initial data on mount
-    const loadInitialData = useCallback(async () => {
+    // Fetch user data and assigned trainer
+    const fetchUserData = useCallback(async () => {
+        if (!account || mockMode) return;
+
+        try {
+            const userResponse = await authService.getCurrentUser();
+            if (userResponse.member) {
+                setAccountData({
+                    account: userResponse.account,
+                    member: userResponse.member,
+                    trainer: userResponse.trainer
+                });
+
+                // Fetch assigned trainer if member has trainerAccountId
+                if (userResponse.member.trainerAccountId) {
+                    try {
+                        const assignedTrainerResponse = await memberService.getAssignedTrainer();
+                        setAssignedTrainer(assignedTrainerResponse);
+                    } catch (error) {
+                        console.error('Error fetching assigned trainer:', error);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+        }
+    }, [account, mockMode, setAccountData, setAssignedTrainer]);
+
+    // Load schedule data
+    const loadScheduleData = useCallback(async () => {
         if (!member || mockMode) return;
 
         try {
@@ -73,63 +101,39 @@ export default function MemberHome() {
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
             });
         } catch (error) {
-            console.error('Error loading initial data:', error);
+            console.error('Error loading schedule data:', error);
         }
     }, [member, mockMode]);
 
-    // Load initial data on mount
+    // Load all data on mount
     useEffect(() => {
-        loadInitialData();
-    }, [loadInitialData]);
-
-    // Update member status when app comes to foreground
-    useEffect(() => {
-        const fetchLatestUserData = async () => {
-            if (account && !mockMode) {
-                try {
-                    const userResponse = await authService.getCurrentUser();
-                    if (userResponse.member) {
-                        setAccountData({
-                            account: userResponse.account,
-                            member: userResponse.member,
-                            trainer: userResponse.trainer
-                        });
-
-                        // Fetch assigned trainer if member has trainerAccountId
-                        if (userResponse.member.trainerAccountId) {
-                            try {
-                                const assignedTrainerResponse = await memberService.getAssignedTrainer();
-                                setAssignedTrainer(assignedTrainerResponse);
-                            } catch (error) {
-                                console.error('Error fetching assigned trainer:', error);
-                            }
-                        }
-
-                        // Reload all data after updating member data
-                        await loadInitialData();
-                    }
-                } catch (error) {
-                    console.error('Error fetching latest user data:', error);
-                }
-            }
+        const loadAllData = async () => {
+            await fetchUserData();
+            await loadScheduleData();
         };
+        loadAllData();
+    }, [fetchUserData, loadScheduleData]);
 
-        // Listen for app state changes
-        const subscription = AppState.addEventListener('change', (nextAppState) => {
+    // Update data when app comes to foreground
+    useEffect(() => {
+        const handleAppStateChange = async (nextAppState: string) => {
             if (
                 appStateRef.current.match(/inactive|background/) &&
                 nextAppState === 'active'
             ) {
                 console.log('App has come to the foreground!');
-                fetchLatestUserData();
+                await fetchUserData();
+                await loadScheduleData();
             }
             appStateRef.current = nextAppState;
-        });
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
 
         return () => {
             subscription.remove();
         };
-    }, [account, loadInitialData]);
+    }, [fetchUserData, loadScheduleData]);
 
     // Show trainer assignment UI if no trainer assigned
     if (!trainerAccountId) {

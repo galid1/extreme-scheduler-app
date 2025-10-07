@@ -1,9 +1,10 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {ActivityIndicator, SafeAreaView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useRouter} from 'expo-router';
 import {Ionicons} from '@expo/vector-icons';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import ProfileCard from '@/src/components/ProfileCard';
+import {AccountType} from "@/src/types/enums";
 
 export default function TrainerProfileScreen() {
   const router = useRouter();
@@ -61,12 +62,7 @@ export default function TrainerProfileScreen() {
           name={trainerProfile.name}
           profileImageUrl={trainerProfile.profileImageUrl}
           phoneNumber={trainerProfile.phoneNumber}
-          accountType="TRAINER"
-          experience={trainerProfile.experience}
-          specialties={trainerProfile.specialties}
-          rating={trainerProfile.rating}
-          backgroundColor="#3B82F6"
-          textColor="white"
+          accountType={AccountType.TRAINER}
         />
       </View>
     </SafeAreaView>
@@ -76,7 +72,7 @@ export default function TrainerProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#f8f9fa',
   },
   header: {
     flexDirection: 'row',

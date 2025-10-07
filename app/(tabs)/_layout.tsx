@@ -45,12 +45,6 @@ export default function TabLayout() {
             />
             {/* Hide other files from tabs */}
             <Tabs.Screen
-                name="index-backup"
-                options={{
-                    href: null, // This hides the tab
-                }}
-            />
-            <Tabs.Screen
                 name="member/MemberHome"
                 options={{
                     href: null, // This hides the tab
