@@ -32,6 +32,7 @@ export default function AutoSchedulingScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
     const [showConfirmButton, setShowConfirmButton] = useState(false);
+    const [showMatchingFailure, setShowMatchingFailure] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
     const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -119,26 +120,34 @@ export default function AutoSchedulingScreen() {
             const nextWeekOfYear = targetWeekOfYear + 1
 
             // Real API call
-            const memberAccountIds = selectedMembers.map(sm => sm.memberId);
+            const memberSessionCounts: Record<number, number> = {};
+            selectedMembers.forEach(sm => {
+                memberSessionCounts[sm.memberId] = sm.sessionCount;
+            });
 
             const response = await trainerScheduleService.executeAutoScheduling({
-                memberAccountIds: memberAccountIds,
+                memberSessionCounts: memberSessionCounts,
                 targetYear: targetYear,
                 targetWeekOfYear: nextWeekOfYear,
             });
+
+            // 매칭 성공한 회원이 없는 경우
+            if (response.successfulMemberIds.length === 0) {
+                setShowMatchingFailure(true)
+            }
 
             // 스케줄링 완료 이벤트 트리거 (TrainerHome에서 데이터 새로고침)
             const { triggerRefresh } = useSchedulingEventStore.getState();
             triggerRefresh();
 
             setShowConfirmButton(true);
+            setIsProcessing(false);
         } catch (error: any) {
             console.error('Auto scheduling error:', error);
             Alert.alert(
                 '스케줄링 실패',
                 error.message || '자동 스케줄링에 실패했습니다. 다시 시도해주세요.'
             );
-        } finally {
             setIsProcessing(false);
         }
     };
@@ -207,6 +216,26 @@ export default function AutoSchedulingScreen() {
                                     color="#666"
                                     style={{marginTop: 20}}
                                 />
+                            </>
+                        ) : showMatchingFailure ? (
+                            <>
+                                <Ionicons name="alert-circle" size={80} color="#F59E0B"/>
+                                <Text style={styles.failureTitle}>스케줄 매칭 결과 없음</Text>
+                                <Text style={styles.failureMessage}>
+                                    매칭된 스케줄이 없습니다.{'\n'}
+                                    회원들의 트레이닝 가능 시간과{'\n'}
+                                    운영 일정을 확인하고 조정해보세요.
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.retryButton}
+                                    onPress={() => {
+                                        setShowMatchingFailure(false);
+                                        setShowConfirmButton(false);
+                                    }}
+                                >
+                                    <Ionicons name="refresh" size={20} color="white"/>
+                                    <Text style={styles.retryButtonText}>다시 시도</Text>
+                                </TouchableOpacity>
                             </>
                         ) : (
                             <>
@@ -712,6 +741,40 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     confirmButtonText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: 'white',
+    },
+    failureTitle: {
+        fontSize: 28,
+        fontWeight: '700',
+        color: '#F59E0B',
+        marginTop: 20,
+        marginBottom: 20,
+    },
+    failureMessage: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: 40,
+    },
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#F59E0B',
+        borderRadius: 14,
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+        gap: 8,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    retryButtonText: {
         fontSize: 18,
         fontWeight: '700',
         color: 'white',

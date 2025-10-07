@@ -134,7 +134,7 @@ export interface UnRegisterMemberFreeTimeScheduleRequest {
 }
 
 export interface AutoSchedulingRequest {
-    memberAccountIds: number[];
+    memberSessionCounts: Record<number, number>;
     targetYear: number;
     targetWeekOfYear: number;
 }
