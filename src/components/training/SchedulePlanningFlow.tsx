@@ -60,14 +60,14 @@ export default function SchedulePlanningFlow({
                     </View>
                     <View style={styles.stepHeaderRight}>
                         {isOperationScheduleRegistered && (
-                            <View style={styles.completedBadge}>
-                                <Text style={styles.completedBadgeText}>완료</Text>
+                            <View style={styles.textButton}>
+                                <Text style={styles.textButtonPrimary}>확인</Text>
                             </View>
                         )}
                         <Ionicons
                             name="chevron-forward"
                             size={ICON_SIZE_MEDIUM}
-                            color={isOperationScheduleRegistered ? "#10B981" : "#3B82F6"}
+                            color={"#3B82F6"}
                         />
                     </View>
                 </View>
@@ -118,8 +118,33 @@ export default function SchedulePlanningFlow({
                             <Text style={styles.stepTitle}>자동 스케줄링</Text>
                         </View>
                         <View style={styles.stepHeaderRight}>
-                            <View style={styles.completedBadge}>
-                                <Text style={styles.completedBadgeText}>완료</Text>
+                            <View style={styles.textButton}>
+                                <Text style={styles.textButtonPrimary}>확인</Text>
+                            </View>
+                            <Ionicons
+                                name="chevron-forward"
+                                size={ICON_SIZE_MEDIUM}
+                                color="#3B82F6"
+                            />
+                        </View>
+                    </View>
+                </TouchableOpacity>
+            ) : (
+                <TouchableOpacity
+                    style={styles.stepContainer}
+                    onPress={onStartAutoScheduling}
+                    activeOpacity={0.7}
+                >
+                    <View style={styles.stepHeader}>
+                        <View style={styles.stepTitleRow}>
+                            <View style={styles.stepNumber}>
+                                <Text style={styles.stepNumberText}>2</Text>
+                            </View>
+                            <Text style={styles.stepTitle}>자동 스케줄링</Text>
+                        </View>
+                        <View style={styles.stepHeaderRight}>
+                            <View style={styles.textButton}>
+                                <Text style={styles.textButtonPrimary}>자동 스케줄링</Text>
                             </View>
                             <Ionicons
                                 name="chevron-forward"
@@ -128,15 +153,6 @@ export default function SchedulePlanningFlow({
                             />
                         </View>
                     </View>
-                </TouchableOpacity>
-            ) : (
-                <TouchableOpacity
-                    style={styles.primaryButton}
-                    onPress={onStartAutoScheduling}
-                >
-                    <Ionicons name="flash-outline" size={ICON_SIZE_SMALL} color="white" />
-                    <Text style={styles.primaryButtonText}>자동 스케줄링 시작</Text>
-                    <Ionicons name="chevron-forward" size={ICON_SIZE_SMALL} color="white" />
                 </TouchableOpacity>
             )}
 
@@ -256,7 +272,7 @@ const styles = StyleSheet.create({
     },
     stepNumberText: {
         color: 'white',
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: '700',
     },
     stepNumberTextDisabled: {
@@ -296,7 +312,7 @@ const styles = StyleSheet.create({
     textButtonPrimary: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#10B981',
+        color: '#3B82F6',
     },
     textButtonWarning: {
         fontSize: 13,
@@ -329,11 +345,12 @@ const styles = StyleSheet.create({
         gap: 6,
         borderWidth: 1,
         borderColor: '#E5E7EB',
+        marginTop: 8,
     },
     waitingText: {
         color: '#9CA3AF',
-        fontSize: 13,
-        fontWeight: '500',
+        fontSize: 12,
+        fontWeight: '700',
     },
     divider: {
         height: 1,
