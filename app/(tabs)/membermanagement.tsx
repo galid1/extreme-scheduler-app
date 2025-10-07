@@ -12,6 +12,7 @@ export default function MemberManagementScreen() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const {members, setMembers, shouldRefetch} = useAssignedMembersStore();
+    const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
 
     // Store 데이터를 MemberInfo 형식으로 변환
     useEffect(() => {
@@ -61,6 +62,15 @@ export default function MemberManagementScreen() {
     };
 
 
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${month}/${day}`;
+    };
+
+    const pendingRequestsCount = assignmentRequests.filter(req => req.status === 'PENDING').length;
+
     return (
         <SafeAreaView style={styles.container}>
             {isLoading ? (
@@ -72,30 +82,87 @@ export default function MemberManagementScreen() {
                 <>
                     <View style={styles.header}>
                         <Text style={styles.title}>회원관리</Text>
+                        <TouchableOpacity
+                            style={styles.notificationButton}
+                            onPress={() => router.push('/assignment-requests')}
+                        >
+                            <Ionicons name="archive-outline" size={28} color="#3B82F6" />
+                            {pendingRequestsCount > 0 && (
+                                <View style={styles.badge}>
+                                    <Text style={styles.badgeText}>{pendingRequestsCount}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
                     </View>
 
                     <ScrollView contentContainerStyle={styles.scrollContent}>
-                        <View style={styles.trainerDashboard}>
-                            <Text style={styles.dashboardTitle}>담당 회원 대시보드</Text>
-                            <View style={styles.statsContainer}>
-                                <TouchableOpacity
-                                    style={styles.statCard}
-                                    onPress={() => router.push('/approved-members')}
-                                >
-                                    <Text style={styles.statNumber}>{members.length}</Text>
-                                    <Text style={styles.statLabel}>회원</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.statCard}
-                                    onPress={() => router.push('/assignment-requests')}
-                                >
-                                    <Text style={styles.statNumber}>
-                                        {assignmentRequests.filter(req => req.status === 'PENDING').length}
-                                    </Text>
-                                    <Text style={styles.statLabel}>대기중 요청</Text>
-                                </TouchableOpacity>
+                        {members.length > 0 ? (
+                            <View style={styles.memberListSection}>
+                                {members.map((member) => (
+                                    <TouchableOpacity
+                                        key={member.accountId}
+                                        style={[
+                                            styles.memberCard,
+                                            selectedMemberId === member.accountId && styles.selectedCard
+                                        ]}
+                                        onPress={() => setSelectedMemberId(
+                                            selectedMemberId === member.accountId ? null : member.accountId
+                                        )}
+                                        activeOpacity={0.8}
+                                    >
+                                        <View style={styles.memberHeader}>
+                                            <View style={styles.memberInfo}>
+                                                <View style={styles.profileIcon}>
+                                                    <Ionicons name="person-circle" size={40} color="#3B82F6"/>
+                                                </View>
+                                                <View style={styles.memberDetails}>
+                                                    <Text style={styles.memberName}>{member.name}</Text>
+                                                    <Text style={styles.memberPhone}>{member.phoneNumber}</Text>
+                                                </View>
+                                            </View>
+                                        </View>
+
+                                        {selectedMemberId === member.accountId && (
+                                            <View style={styles.memberStats}>
+                                                <View style={styles.statRow}>
+                                                    <Text style={styles.statRowLabel}>마지막 세션</Text>
+                                                    <Text style={styles.statRowValue}>
+                                                        {formatDate(member.lastSessionDate)}
+                                                    </Text>
+                                                </View>
+                                                <View style={styles.statRow}>
+                                                    <Text style={styles.statRowLabel}>총 세션</Text>
+                                                    <Text style={styles.statRowValue}>
+                                                        {member.totalSessions}회
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.memberActions}>
+                                                    <TouchableOpacity
+                                                        style={styles.actionButton}
+                                                        onPress={() => {
+                                                            router.push('/approved-members');
+                                                        }}
+                                                    >
+                                                        <Ionicons name="calendar-outline" size={18} color="white"/>
+                                                        <Text style={styles.actionButtonText}>트레이닝 가능 일정</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity style={styles.actionButton}>
+                                                        <Ionicons name="chatbubble-outline" size={18} color="white"/>
+                                                        <Text style={styles.actionButtonText}>메시지</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
                             </View>
-                        </View>
+                        ) : (
+                            <View style={styles.emptyState}>
+                                <Ionicons name="people-outline" size={64} color="#D1D5DB" />
+                                <Text style={styles.emptyStateText}>담당 회원이 없습니다</Text>
+                            </View>
+                        )}
                     </ScrollView>
                 </>
             )}
@@ -117,7 +184,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: 'white',
+        backgroundColor: '#F8FAFC',
     },
     header: {
         flexDirection: 'row',
@@ -125,92 +192,127 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingVertical: 16,
-        backgroundColor: 'white',
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
     },
     title: {
         fontSize: 24,
         fontWeight: '600',
         color: '#1F2937',
     },
-    settingsButton: {
+    notificationButton: {
+        position: 'relative',
         padding: 8,
     },
-    content: {
-        flex: 1,
-        padding: 20,
+    badge: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        backgroundColor: '#EF4444',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 6,
+    },
+    badgeText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '700',
     },
     scrollContent: {
         flexGrow: 1,
         padding: 20,
         paddingBottom: 100,
     },
-    trainerDashboard: {
-        backgroundColor: 'white',
-        borderRadius: 16,
-        padding: 20,
-        marginHorizontal: 20,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        shadowColor: '#3B82F6',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
+    memberListSection: {
+        gap: 12,
     },
-    dashboardTitle: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#1F2937',
-        marginBottom: 8,
-    },
-    statsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-    },
-    statCard: {
-        alignItems: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'white',
-        minWidth: 100,
-    },
-    statNumber: {
-        fontSize: 28,
-        fontWeight: '700',
-        color: '#3B82F6',
-    },
-    statLabel: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#6B7280',
-        marginTop: 4,
-        borderBottomWidth: 1,
-    },
-    section: {
-        marginBottom: 24,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#1F2937',
-        marginBottom: 12,
-    },
-    card: {
-        backgroundColor: '#F3F4F6',
+    memberCard: {
+        backgroundColor: '#FFFFFF',
         borderRadius: 12,
         padding: 16,
         borderWidth: 1,
         borderColor: '#E5E7EB',
     },
-    cardText: {
-        color: '#6B7280',
+    selectedCard: {
+        backgroundColor: '#E5E7EB',
+        borderColor: '#3B82F6',
+    },
+    memberHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    memberInfo: {
+        flexDirection: 'row',
+        flex: 1,
+    },
+    profileIcon: {
+        marginRight: 12,
+    },
+    memberDetails: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    memberName: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1F2937',
+        marginBottom: 2,
+    },
+    memberPhone: {
         fontSize: 14,
+        color: '#6B7280',
+    },
+    memberStats: {
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+        marginTop: 12,
+    },
+    statRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    statRowLabel: {
+        fontSize: 13,
+        color: '#6B7280',
+    },
+    statRowValue: {
+        fontSize: 13,
+        color: '#1F2937',
+        fontWeight: '600',
+    },
+    memberActions: {
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 12,
+    },
+    actionButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#3B82F6',
+        borderRadius: 8,
+        paddingVertical: 10,
+        gap: 6,
+    },
+    actionButtonText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    emptyState: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+    },
+    emptyStateText: {
+        fontSize: 16,
+        color: '#9CA3AF',
+        marginTop: 16,
     },
 });
