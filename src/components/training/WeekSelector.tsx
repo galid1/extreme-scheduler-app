@@ -30,9 +30,8 @@ export default function WeekSelector({ onViewSchedule }: WeekSelectorProps) {
     const [selectedWeekIndex, setSelectedWeekIndex] = useState(0);
     const weekScrollRef = useRef<ScrollView>(null);
 
-    const handleViewSchedule = () => {
-        const selectedWeek = availableWeeks[selectedWeekIndex];
-        onViewSchedule(selectedWeek);
+    const handleViewSchedule = (weekNumber: number) => {
+        onViewSchedule(weekNumber);
     };
 
     return (
@@ -54,21 +53,35 @@ export default function WeekSelector({ onViewSchedule }: WeekSelectorProps) {
                 decelerationRate="fast"
             >
                 {availableWeeks.map((week, index) => (
-                    <View key={week} style={[
-                        styles.weekCard,
-                        { width: WEEK_CARD_WIDTH },
-                        index === 1 && styles.weekCardNextWeek
-                    ]}>
-                        <View style={styles.weekCardHeader}>
-                            <Text style={[
-                                styles.weekCardLabel,
-                                index === 1 && styles.weekCardLabelNextWeek
-                            ]}>
-                                {index === 0 ? '이번 주' : '다음 주'}
-                            </Text>
+                    <TouchableOpacity
+                        key={week}
+                        style={[
+                            styles.weekCard,
+                            { width: WEEK_CARD_WIDTH },
+                            index === 1 && styles.weekCardNextWeek
+                        ]}
+                        onPress={() => handleViewSchedule(week)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.weekCardContent}>
+                            <View style={styles.weekCardHeader}>
+                                <View style={styles.weekCardTitleRow}>
+                                    <Text style={[
+                                        styles.weekCardLabel,
+                                        index === 1 && styles.weekCardLabelNextWeek
+                                    ]}>
+                                        {index === 0 ? '이번 주' : '다음 주'}
+                                    </Text>
+                                </View>
+                                <Ionicons
+                                    name="chevron-forward"
+                                    size={16}
+                                    color={index === 1 ? '#F59E0B' : '#3B82F6'}
+                                />
+                            </View>
+                            <WeekInfo style={styles.weekCardInfo} nextWeek={index === 1}/>
                         </View>
-                        <WeekInfo style={styles.weekCardInfo} nextWeek={index === 1}/>
-                    </View>
+                    </TouchableOpacity>
                 ))}
             </ScrollView>
 
@@ -84,15 +97,6 @@ export default function WeekSelector({ onViewSchedule }: WeekSelectorProps) {
                     />
                 ))}
             </View>
-
-            {/* Single Action Button */}
-            <TouchableOpacity
-                style={styles.viewScheduleButton}
-                onPress={handleViewSchedule}
-            >
-                <Ionicons name="calendar-sharp" size={20} color="white"/>
-                <Text style={styles.viewScheduleButtonText}>일정 보기</Text>
-            </TouchableOpacity>
         </>
     );
 }
@@ -105,33 +109,47 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     weekCard: {
-        backgroundColor: '#F3F4F6',
-        borderRadius: 12,
-        padding: 16,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 20,
         marginRight: 12,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderWidth: 2,
+        borderColor: '#E0E7FF',
+        shadowColor: '#3B82F6',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
     },
     weekCardNextWeek: {
-        backgroundColor: '#FEF3C7',
+        backgroundColor: '#FFFFFF',
         borderColor: '#FCD34D',
+        shadowColor: '#F59E0B',
+    },
+    weekCardContent: {
+        gap: 12,
     },
     weekCardHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 8,
+        marginBottom: 4,
+    },
+    weekCardTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
     weekCardLabel: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#3B82F6',
+        color: '#1F2937',
     },
     weekCardLabelNextWeek: {
-        color: '#F59E0B',
+        color: '#92400E',
     },
     weekCardInfo: {
-        fontSize: 13,
+        fontSize: 12,
         color: '#6B7280',
     },
     weekIndicatorContainer: {
@@ -139,6 +157,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         gap: 6,
+        marginTop: 12,
         marginBottom: 16,
     },
     weekIndicatorDot: {
@@ -150,19 +169,5 @@ const styles = StyleSheet.create({
     weekIndicatorDotActive: {
         width: 20,
         backgroundColor: '#3B82F6',
-    },
-    viewScheduleButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#3B82F6',
-        borderRadius: 12,
-        paddingVertical: 12,
-        gap: 8,
-    },
-    viewScheduleButtonText: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: '600',
     },
 });
