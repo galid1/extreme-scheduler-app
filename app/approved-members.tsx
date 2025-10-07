@@ -1,17 +1,7 @@
-import React, {useState, useEffect} from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    SafeAreaView,
-    StyleSheet,
-    ScrollView,
-    ActivityIndicator,
-} from 'react-native';
+import React, {useState} from 'react';
+import {SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
-import {trainerService} from '@/src/services/api';
-import {getYearAndWeek} from '@/src/utils/dateUtils';
 import {useAssignedMembersStore} from '@/src/store/useAssignedMembersStore';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 
@@ -29,14 +19,20 @@ export default function ApprovedMembersScreen() {
     };
 
     if (showScheduleView) {
-        const selectedMember = members.find((member, idx) => {
+        const selectedMember = members.find((member) => {
             return member.accountId === selectedMemberId
-        })
+        });
+
+        if (!selectedMember) {
+            // 멤버를 찾지 못한 경우 목록으로 돌아감
+            setShowScheduleView(false);
+            return null;
+        }
 
         return (
             <FreeTimeScheduleDetailView
-                periodicScheduleLines={selectedMember?.periodicSchedules}
-                onetimeScheduleLines={selectedMember?.onetimeSchedules}
+                periodicScheduleLines={selectedMember.periodicSchedules || []}
+                onetimeScheduleLines={selectedMember.onetimeSchedules || []}
                 onClose={() => setShowScheduleView(false)}
                 onEdit={() => {
                     setShowScheduleView(false);

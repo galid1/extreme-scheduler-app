@@ -14,16 +14,13 @@ import {useRouter} from 'expo-router';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView, {WeekCalendarViewRef} from '@/src/components/training/WeekCalendarView';
-import {useConfigStore} from '@/src/store/useConfigStore';
 import {AutoSchedulingResultStatus, trainerScheduleService} from '@/src/services/api';
-import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import ScheduleResetButton from '@/src/components/training/ScheduleResetButton';
 import {getCurrentWeek} from '@/src/utils/dateUtils';
 
 
 export default function TrainingScheduleScreen() {
     const router = useRouter();
-    const {mockMode} = useConfigStore();
     const {
         trainingSessions,
         currentWeek,
@@ -39,7 +36,6 @@ export default function TrainingScheduleScreen() {
         isCurrentWeek,
         isPastWeek,
         isNextWeek,
-        resetWeek,
     } = useTrainingStore();
 
     const [isLoading, setIsLoading] = useState(true);

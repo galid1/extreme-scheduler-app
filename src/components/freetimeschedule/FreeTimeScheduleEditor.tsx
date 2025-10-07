@@ -147,14 +147,14 @@ export default function FreeTimeScheduleEditor({
 
     const handleTimeSlotPress = (day: string, hour: number) => {
         setSelectedTimes((prevSelectedTimes) => {
-            const dayTimes = prevSelectedTimes[day] || [];
+            const dayTimes: TimeSlotSelection[] = prevSelectedTimes[day] || [];
             const existingIndex = dayTimes.findIndex((t) => t.hour === hour);
 
             if (existingIndex >= 0) {
                 const currentState = dayTimes[existingIndex].state;
                 if (currentState === 'recurring') {
                     // Change to once
-                    const updated = [...dayTimes];
+                    const updated: TimeSlotSelection[] = [...dayTimes];
                     updated[existingIndex] = {hour, state: 'once'};
                     return {...prevSelectedTimes, [day]: updated};
                 } else {
@@ -166,7 +166,8 @@ export default function FreeTimeScheduleEditor({
                 }
             } else {
                 // Add as recurring (with duplicate check)
-                const newDayTimes = [...dayTimes, {hour, state: 'recurring'}]
+                const newSlot: TimeSlotSelection = {hour, state: 'recurring'};
+                const newDayTimes: TimeSlotSelection[] = [...dayTimes, newSlot]
                     .filter((item, index, self) =>
                         index === self.findIndex((t) => t.hour === item.hour)
                     )
@@ -198,14 +199,14 @@ export default function FreeTimeScheduleEditor({
         }
 
         // Convert day names to DayOfWeek enum
-        const dayMapping: { [key: string]: DayOfWeek } = {
-            '월': 'MONDAY',
-            '화': 'TUESDAY',
-            '수': 'WEDNESDAY',
-            '목': 'THURSDAY',
-            '금': 'FRIDAY',
-            '토': 'SATURDAY',
-            '일': 'SUNDAY',
+        const dayMapping: Record<string, DayOfWeek> = {
+            '월': 'MONDAY' as DayOfWeek,
+            '화': 'TUESDAY' as DayOfWeek,
+            '수': 'WEDNESDAY' as DayOfWeek,
+            '목': 'THURSDAY' as DayOfWeek,
+            '금': 'FRIDAY' as DayOfWeek,
+            '토': 'SATURDAY' as DayOfWeek,
+            '일': 'SUNDAY' as DayOfWeek,
         };
 
         try {
