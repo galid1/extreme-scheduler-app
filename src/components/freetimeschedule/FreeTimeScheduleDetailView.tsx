@@ -112,13 +112,14 @@ export default function FreeTimeScheduleDetailView({
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false);
     const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
-    const [initialTimes, setInitialTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
     const [isSaving, setIsSaving] = useState(false);
     const {account} = useAuthStore();
 
     // Handle time slot press in edit mode
     const handleTimeSlotPress = (day: string, hour: number) => {
         if (!isEditMode) return;
+
+        console.log("Pressed:", day, hour);
 
         setSelectedTimes((prev) => {
             const dayTimes = prev[day] || [];
@@ -148,14 +149,12 @@ export default function FreeTimeScheduleDetailView({
     const handleEditPress = () => {
         setIsEditMode(true);
         setSelectedTimes(JSON.parse(JSON.stringify(freeTimeScheduleList)));
-        setInitialTimes(JSON.parse(JSON.stringify(freeTimeScheduleList)));
     };
 
     // Handle cancel
     const handleCancel = () => {
         setIsEditMode(false);
         setSelectedTimes({});
-        setInitialTimes({});
     };
 
     // Handle save
@@ -250,7 +249,7 @@ export default function FreeTimeScheduleDetailView({
                 </TouchableOpacity>
                 <View style={styles.scheduleDetailTitleContainer}>
                     <Text style={styles.scheduleDetailTitle}>
-                        {isEditMode ? '일정 수정' : '등록된 일정'}
+                        {account?.accountType === AccountType.TRAINER ? '운영 일정' : '희망 일정'}
                     </Text>
                     <WeekInfo style={styles.scheduleDetailWeekInfo} nextWeek={true}/>
                 </View>
