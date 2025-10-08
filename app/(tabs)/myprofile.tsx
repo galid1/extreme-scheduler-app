@@ -40,8 +40,14 @@ export default function ProfileScreen() {
         return phone;
     };
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
+
+        // 로그아웃 후 store 상태 다시 확인
+        const authStore = useAuthStore.getState();
+        console.log(`Account after logout: ${JSON.stringify(authStore.account)}`)
+        console.log(`Token after logout: ${JSON.stringify(authStore.token)}`)
+
         router.replace('/(auth)/phone-auth');
     };
 

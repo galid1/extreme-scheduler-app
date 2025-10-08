@@ -104,7 +104,8 @@ export const useAuthStore = create<AuthState>()(
         set({ weeklyScheduleRegistration: status });
       },
 
-      logout: () => {
+      logout: async () => {
+        // Store 상태 초기화
         set({
           token: null,
           phoneNumber: null,
@@ -116,6 +117,14 @@ export const useAuthStore = create<AuthState>()(
           autoSchedulingResults: null,
           weeklyScheduleRegistration: null,
         });
+
+        // AsyncStorage에서도 제거
+        try {
+          await AsyncStorage.removeItem('auth-storage');
+          console.log('AsyncStorage cleared successfully');
+        } catch (error) {
+          console.error('Failed to clear auth storage:', error);
+        }
       },
     }),
     {

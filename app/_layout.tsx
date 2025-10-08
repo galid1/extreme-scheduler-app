@@ -21,6 +21,13 @@ export default function RootLayout() {
 
   // Wait for store to hydrate from AsyncStorage
   useEffect(() => {
+      console.log("########### LAY_OUT ##########")
+      console.log("#####################")
+      console.log("#####################")
+      console.log(`${JSON.stringify(account)}`)
+      console.log(`${JSON.stringify(token)}`)
+
+
     // Force set token for testing
     const initializeAuth = async () => {
       try {
@@ -83,7 +90,7 @@ export default function RootLayout() {
     };
 
     loadUserData();
-  }, [isHydrated, mockMode, setAccountData]);
+  }, [isHydrated, mockMode]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

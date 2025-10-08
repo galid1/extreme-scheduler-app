@@ -75,7 +75,7 @@ export default function MemberHome() {
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
-    }, [account, mockMode, setAccountData, setAssignedTrainer]);
+    }, [account, mockMode]);
 
     // Load schedule data
     const loadScheduleData = useCallback(async () => {
@@ -105,14 +105,16 @@ export default function MemberHome() {
         }
     }, [member, mockMode]);
 
+    // Load initial data - can be called from buttons/events
+    const loadInitialData = useCallback(async () => {
+        await fetchUserData();
+        await loadScheduleData();
+    }, [fetchUserData, loadScheduleData]);
+
     // Load all data on mount
     useEffect(() => {
-        const loadAllData = async () => {
-            await fetchUserData();
-            await loadScheduleData();
-        };
-        loadAllData();
-    }, [fetchUserData, loadScheduleData]);
+        loadInitialData();
+    }, [loadInitialData]);
 
     // Update data when app comes to foreground
     useEffect(() => {
