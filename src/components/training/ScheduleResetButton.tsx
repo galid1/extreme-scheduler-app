@@ -10,19 +10,23 @@ interface ScheduleResetButtonProps {
     currentWeek: number;
     disabled?: boolean;
     style?: any;
+    isScheduleFixed?: boolean;
 }
 
-export default function ScheduleResetButton({currentWeek, disabled = false, style}: ScheduleResetButtonProps) {
+export default function ScheduleResetButton({currentWeek, disabled = false, style, isScheduleFixed = false}: ScheduleResetButtonProps) {
     const router = useRouter();
     const {resetWeek} = useTrainingStore();
     const {hasNextWeekScheduling} = useSchedulingEventStore();
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handleReset = async () => {
+        const alertMessage = isScheduleFixed
+            ? `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?\n\n⚠️ 해당 주차에 배정된 모든 회원에게 일정 취소 알림이 전송됩니다.`
+            : `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?`;
 
         Alert.alert(
             `${currentWeek}주차 일정 재설정`,
-            `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?\n\n⚠️ 해당 주차에 배정된 모든 회원에게 일정 취소 알림이 전송됩니다.`,
+            alertMessage,
             [
                 {text: '취소', style: 'cancel'},
                 {

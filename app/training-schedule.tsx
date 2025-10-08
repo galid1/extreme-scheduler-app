@@ -40,6 +40,7 @@ export default function TrainingScheduleScreen() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [isFixingWeekSchedule, setIsFixingWeekSchedule] = useState(false);
+    const [isScheduleFixed, setIsScheduleFixed] = useState(false);
     const [currentTime] = useState(new Date());
     const calendarViewRef = useRef<WeekCalendarViewRef>(null);
 
@@ -269,11 +270,11 @@ export default function TrainingScheduleScreen() {
                 isPastWeek={isPastWeek(currentWeek)}
                 isNextWeek={isNextWeek(currentWeek)}
                 onBack={() => {
-                    // router.back()이 실패하면 trainer 탭으로 이동
+                    // router.back()이 실패하면 홈으로 이동
                     if (router.canGoBack()) {
                         router.back();
                     } else {
-                        router.push('/(tabs)/trainer');
+                        router.replace('/(tabs)');
                     }
                 }}
             />
@@ -410,6 +411,7 @@ export default function TrainingScheduleScreen() {
                                                 // Simulate notification sending
                                                 await new Promise(resolve => setTimeout(resolve, 1500));
                                                 setWeekScheduleStatus(currentWeek, true);
+                                                setIsScheduleFixed(true);
                                                 setIsFixingWeekSchedule(false);
                                                 Alert.alert('일정 확정 및 알림 발송 완료', `${currentWeek}주차 일정이 확정되고, 알림이 발송되었습니다.`);
                                             }
@@ -440,6 +442,7 @@ export default function TrainingScheduleScreen() {
                         currentWeek={currentWeek}
                         disabled={isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
                         style={styles.weekResetButton}
+                        isScheduleFixed={isScheduleFixed}
                     />
                 </View>
             )}
