@@ -65,8 +65,6 @@ export default function TrainerHome() {
         onetimeScheduleLines: OnetimeScheduleLine[]
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
     const {mockMode} = useConfigStore();
-    const [isConfirming, setIsConfirming] = useState(false);
-    const [isResetting, setIsResetting] = useState(false);
     const {resetWeek} = useTrainingStore();
 
     // Function to load initial data
@@ -232,10 +230,6 @@ export default function TrainerHome() {
                 periodicScheduleLines={scheduleData.periodicScheduleLines}
                 onetimeScheduleLines={scheduleData.onetimeScheduleLines}
                 onClose={() => setShowScheduleDetail(false)}
-                onEdit={() => {
-                    setShowScheduleDetail(false);
-                    setShowScheduleEditFromDetail(true);
-                }}
             />
         );
     }
@@ -275,7 +269,7 @@ export default function TrainerHome() {
                                 router.push('/training-schedule');
                             }}
 
-                            // 3단계: 일정 확정 (임시로 hasScheduledSessions 사용)
+                            // 3단계: 일정 확정
                             isScheduleConfirmed={false}
                             onConfirmSchedule={async () => {
                                 const currentWeek = getCurrentWeek() + 1; // 다음 주
@@ -288,7 +282,6 @@ export default function TrainerHome() {
                                             text: '확정',
                                             onPress: async () => {
                                                 try {
-                                                    setIsConfirming(true);
                                                     const today = new Date();
                                                     const currentYear = today.getFullYear();
 
@@ -309,8 +302,6 @@ export default function TrainerHome() {
                                                 } catch (error) {
                                                     console.error('일정 확정 오류:', error);
                                                     Alert.alert('오류', '일정 확정 중 문제가 발생했습니다.');
-                                                } finally {
-                                                    setIsConfirming(false);
                                                 }
                                             }
                                         }
@@ -332,7 +323,6 @@ export default function TrainerHome() {
                                             text: '재설정',
                                             onPress: async () => {
                                                 try {
-                                                    setIsResetting(true);
                                                     const today = new Date();
                                                     const currentYear = today.getFullYear();
 
@@ -360,8 +350,6 @@ export default function TrainerHome() {
                                                 } catch (error) {
                                                     console.error('일정 재설정 오류:', error);
                                                     Alert.alert('오류', '일정 재설정 중 문제가 발생했습니다.');
-                                                } finally {
-                                                    setIsResetting(false);
                                                 }
                                             }
                                         }

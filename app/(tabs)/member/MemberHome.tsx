@@ -180,10 +180,6 @@ export default function MemberHome() {
                 periodicScheduleLines={scheduleData.periodicScheduleLines}
                 onetimeScheduleLines={scheduleData.onetimeScheduleLines}
                 onClose={() => setShowScheduleDetail(false)}
-                onEdit={() => {
-                    setShowScheduleDetail(false);
-                    setShowScheduleEdit(true);
-                }}
             />
         );
     }

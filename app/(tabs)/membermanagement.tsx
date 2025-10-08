@@ -90,9 +90,6 @@ export default function MemberManagementScreen() {
                 periodicScheduleLines={selectedMember.periodicSchedules || []}
                 onetimeScheduleLines={selectedMember.onetimeSchedules || []}
                 onClose={() => setShowScheduleView(false)}
-                onEdit={() => {
-                    setShowScheduleView(false);
-                }}
             />
         );
     }
