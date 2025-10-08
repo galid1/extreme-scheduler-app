@@ -18,10 +18,8 @@ const DAY_COLUMN_WIDTH = AVAILABLE_WIDTH / 7;
 
 type TimeSlotState = 'none' | 'once' | 'recurring';
 
-interface TimeSlotSelection {
-    hour: number;
-    state: TimeSlotState;
-}
+type DaySchedule = { [hour: number]: TimeSlotState };
+type WeekSchedule = { [day: string]: DaySchedule };
 
 interface TrainerScheduleDetailViewProps {
     periodicScheduleLines: PeriodicScheduleLine[];
@@ -50,8 +48,8 @@ export default function FreeTimeScheduleDetailView({
         });
     }, []);
 
-    // Transform API response to TimeSlotSelection format
-    const freeTimeScheduleList = useMemo(() => {
+    // Transform API response to Map format
+    const freeTimeScheduleList = useMemo((): WeekSchedule => {
         if (onetimeScheduleLines.length === 0 && periodicScheduleLines.length === 0) {
             return {};
         }
@@ -66,19 +64,16 @@ export default function FreeTimeScheduleDetailView({
             'SUNDAY': '일',
         };
 
-        const transformedSchedule: { [key: string]: TimeSlotSelection[] } = {};
+        const transformedSchedule: WeekSchedule = {};
 
         // Process periodic schedules (recurring)
         periodicScheduleLines.forEach((schedule) => {
             if (schedule.dayOfWeek) {
                 const day = dayMapping[schedule.dayOfWeek];
                 if (!transformedSchedule[day]) {
-                    transformedSchedule[day] = [];
+                    transformedSchedule[day] = {};
                 }
-                transformedSchedule[day].push({
-                    hour: schedule.startHour,
-                    state: 'recurring',
-                });
+                transformedSchedule[day][schedule.startHour] = 'recurring';
             }
         });
 
@@ -91,19 +86,10 @@ export default function FreeTimeScheduleDetailView({
                 const day = days[dayIndex];
 
                 if (!transformedSchedule[day]) {
-                    transformedSchedule[day] = [];
+                    transformedSchedule[day] = {};
                 }
-
-                transformedSchedule[day].push({
-                    hour: schedule.startHour,
-                    state: 'once',
-                });
+                transformedSchedule[day][schedule.startHour] = 'once';
             }
-        });
-
-        // Sort time slots by hour for each day
-        Object.keys(transformedSchedule).forEach((day) => {
-            transformedSchedule[day].sort((a, b) => a.hour - b.hour);
         });
 
         return transformedSchedule;
@@ -111,7 +97,7 @@ export default function FreeTimeScheduleDetailView({
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false);
-    const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
+    const [selectedTimes, setSelectedTimes] = useState<WeekSchedule>({});
     const [isSaving, setIsSaving] = useState(false);
     const {account} = useAuthStore();
 
@@ -119,30 +105,39 @@ export default function FreeTimeScheduleDetailView({
     const handleTimeSlotPress = (day: string, hour: number) => {
         if (!isEditMode) return;
 
-        console.log("Pressed:", day, hour);
+        console.log("#############")
+        console.log("#############")
+        console.log("befor: ", selectedTimes);
 
         setSelectedTimes((prev) => {
-            const dayTimes = prev[day] || [];
-            const existingIndex = dayTimes.findIndex((t) => t.hour === hour);
+            console.log("clicked : ", day, hour);
 
-            if (existingIndex >= 0) {
-                const currentState = dayTimes[existingIndex].state;
-                if (currentState === 'recurring') {
-                    // Change to once
-                    const updated = [...dayTimes];
-                    updated[existingIndex] = {hour, state: 'once'};
-                    return {...prev, [day]: updated};
-                } else {
-                    // Remove (once -> none)
-                    return {...prev, [day]: dayTimes.filter((t) => t.hour !== hour)};
-                }
+
+            const daySchedule = prev[day] || {};
+            const currentState = daySchedule[hour] || 'none';
+
+            console.log("daySchedule: ", daySchedule);
+            console.log("currentState: ", currentState);
+
+            const newDaySchedule = {...daySchedule};
+
+            if (currentState === 'none') {
+                // 없음 -> 반복
+                newDaySchedule[hour] = 'recurring';
+            } else if (currentState === 'recurring') {
+                // 반복 -> 일회
+                newDaySchedule[hour] = 'once';
             } else {
-                // Add as recurring
-                const newDayTimes = [...dayTimes, {hour, state: 'recurring'}]
-                    .sort((a, b) => a.hour - b.hour);
-                return {...prev, [day]: newDayTimes};
+                // 일회 -> 없음
+                delete newDaySchedule[hour];
             }
+
+            return {...prev, [day]: newDaySchedule};
         });
+
+        console.log("#############")
+        console.log("#############")
+        console.log("after: ", selectedTimes);
     };
 
     // Handle edit button press
@@ -180,15 +175,17 @@ export default function FreeTimeScheduleDetailView({
             // Build one-time schedules
             const onetimeSchedules: { scheduleDate: string; startHour: number; endHour: number }[] = [];
 
-            Object.entries(selectedTimes).forEach(([day, slots]) => {
-                slots.forEach((slot) => {
-                    if (slot.state === 'recurring') {
+            Object.entries(selectedTimes).forEach(([day, daySchedule]) => {
+                Object.entries(daySchedule).forEach(([hourStr, state]) => {
+                    const hour = parseInt(hourStr);
+
+                    if (state === 'recurring') {
                         periodicSchedules.push({
                             dayOfWeek: dayMapping[day],
-                            startHour: slot.hour,
-                            endHour: slot.hour + 1,
+                            startHour: hour,
+                            endHour: hour + 1,
                         });
-                    } else if (slot.state === 'once') {
+                    } else if (state === 'once') {
                         // Calculate date for this day
                         const dayIndex = days.indexOf(day);
                         const date = new Date(startDate);
@@ -197,8 +194,8 @@ export default function FreeTimeScheduleDetailView({
 
                         onetimeSchedules.push({
                             scheduleDate,
-                            startHour: slot.hour,
-                            endHour: slot.hour + 1,
+                            startHour: hour,
+                            endHour: hour + 1,
                         });
                     }
                 });
@@ -301,8 +298,7 @@ export default function FreeTimeScheduleDetailView({
                                     <Text style={styles.timeLabelText}>{displayHour}시</Text>
                                 </View>
                                 {days.map((day) => {
-                                    const timeSlot = displaySchedule?.[day]?.find((t) => t.hour === hour);
-                                    const state = timeSlot?.state || 'none';
+                                    const state = displaySchedule?.[day]?.[hour] || 'none';
 
                                     const cellContent = (
                                         <View
