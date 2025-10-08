@@ -57,6 +57,7 @@ export default function TrainerHome() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isRegisteredOperationSchedule, setIsRegisteredOperationSchedule] = useState<boolean | null>(null);
     const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
+    const [isScheduleFixed, setIsScheduleFixed] = useState<boolean>(false);
     const [hasError, setHasError] = useState(false);
     const [isRetrying, setIsRetrying] = useState(false);
     const [scheduleData, setScheduleData] = useState<{
@@ -297,6 +298,7 @@ export default function TrainerHome() {
                                                     );
 
                                                     if (result.success) {
+                                                        setIsScheduleFixed(true);
                                                         Alert.alert('완료', '일정이 확정되었습니다.');
                                                         // 상태 갱신
                                                         const {triggerRefresh} = useSchedulingEventStore.getState();
@@ -317,9 +319,13 @@ export default function TrainerHome() {
                             }}
                             onResetSchedule={async () => {
                                 const currentWeek = getCurrentWeek() + 1; // 다음 주
+                                const alertMessage = isScheduleFixed
+                                    ? `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?\n\n⚠️ 해당 주차에 배정된 모든 회원에게 일정 취소 알림이 전송됩니다.`
+                                    : `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?`;
+
                                 Alert.alert(
                                     `${currentWeek}주차 일정 재설정`,
-                                    `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?\n\n⚠️ 해당 주차에 배정된 모든 회원에게 일정 취소 알림이 전송됩니다.`,
+                                    alertMessage,
                                     [
                                         {text: '취소', style: 'cancel'},
                                         {
@@ -336,6 +342,7 @@ export default function TrainerHome() {
                                                     );
 
                                                     if (result.success) {
+                                                        setIsScheduleFixed(false);
                                                         resetWeek(currentWeek);
                                                         const {triggerRefresh} = useSchedulingEventStore.getState();
                                                         triggerRefresh();
