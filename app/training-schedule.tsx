@@ -30,13 +30,10 @@ export default function TrainingScheduleScreen() {
         currentWeek,
         totalWeeks,
         selectedMember,
-        weekScheduleStatus,
         setTrainingSessions,
         setCurrentWeek,
         setSelectedMember,
-        setWeekScheduleStatus,
         getSessionsForWeek: storeGetSessionsForWeek,
-        canSendNotification,
         isCurrentWeek,
         isPastWeek,
         isNextWeek,
@@ -44,8 +41,9 @@ export default function TrainingScheduleScreen() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [isFixingWeekSchedule, setIsFixingWeekSchedule] = useState(false);
-    const [isScheduleFixed, setIsScheduleFixed] = useState(false);
     const [currentTime] = useState(new Date());
+    const [currentWeekAutoSchedulingStatus, setCurrentWeekAutoSchedulingStatus] = useState<AutoSchedulingResultStatus | undefined>(undefined);
+    const [nextWeekAutoSchedulingStatus, setNextWeekAutoSchedulingStatus] = useState<AutoSchedulingResultStatus | undefined>(undefined);
     const calendarViewRef = useRef<WeekCalendarViewRef>(null);
 
     useEffect(() => {
@@ -168,6 +166,10 @@ export default function TrainingScheduleScreen() {
                     currentTime.getFullYear(),
                     realCurrentWeek + 1
                 );
+
+                // Store the status for both weeks
+                setCurrentWeekAutoSchedulingStatus(currentWeekResponse.weeklyAutoSchedulingResultStatus)
+                setNextWeekAutoSchedulingStatus(nextWeekResponse.weeklyAutoSchedulingResultStatus)
             } else {
                 // 회원: memberScheduleService 사용 (배열을 scheduleList로 감싸기)
                 const currentWeekData = await memberScheduleService.getFixedAutoSchedulingResult(
@@ -180,6 +182,7 @@ export default function TrainingScheduleScreen() {
                 );
                 currentWeekResponse = { scheduleList: currentWeekData };
                 nextWeekResponse = { scheduleList: nextWeekData };
+                // Members don't have status info, so leave as undefined
             }
 
             // 요일 매핑 (DayOfWeek enum -> 한글)
@@ -280,6 +283,29 @@ export default function TrainingScheduleScreen() {
     };
 
     const todaySessions = getTodaySessions();
+
+    // Helper to get scheduling status for the currently viewing week
+    const getCurrentViewingWeekStatus = (): AutoSchedulingResultStatus | undefined => {
+        const realCurrentWeek = getCurrentWeek();
+        if (currentWeek === realCurrentWeek) {
+            return currentWeekAutoSchedulingStatus;
+        } else if (currentWeek === realCurrentWeek + 1) {
+            return nextWeekAutoSchedulingStatus;
+        }
+        // For other weeks, we don't have status info
+        return undefined;
+    };
+
+    const currentViewingWeekStatus = getCurrentViewingWeekStatus();
+
+    // Check if we can show the confirm button (only for trainers, only for next week)
+    const canShowConfirmButton =
+        account?.accountType === AccountType.TRAINER &&
+        isNextWeek(currentWeek) &&
+        !isPastWeek(currentWeek);
+
+    // Check if schedule is already fixed
+    const isAlreadyFixed = currentViewingWeekStatus === AutoSchedulingResultStatus.FIXED;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -411,78 +437,76 @@ export default function TrainingScheduleScreen() {
                 />
             </View>
 
-            {/* Bottom Action Buttons - Only show for trainers and future weeks */}
-            {account?.accountType === AccountType.TRAINER && !isCurrentWeek(currentWeek) && !isPastWeek(currentWeek) && (
+            {/* Bottom Action Buttons - Only show for trainers and next week */}
+            {canShowConfirmButton && (
                 <View style={styles.bottomButtonsContainer}>
                     <ScheduleResetButton
                         currentWeek={currentWeek}
                         disabled={isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
                         style={styles.weekResetButton}
-                        isScheduleFixed={isScheduleFixed}
+                        isScheduleFixed={isAlreadyFixed}
                     />
 
                     <TouchableOpacity
                         style={[
                             styles.notificationButton,
-                            (!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == AutoSchedulingResultStatus.FIXED) && styles.notificationButtonDisabled
+                            isAlreadyFixed && styles.notificationButtonDisabled
                         ]}
                         onPress={() => {
-                            if (canSendNotification(currentWeek)) {
-                                Alert.alert(
-                                    '일정 확정 확인',
-                                    `${currentWeek}주차 트레이닝 일정을 확정하고, 모든 회원에게 알림을 발송하시겠습니까?`,
-                                    [
-                                        {text: '취소', style: 'cancel'},
-                                        {
-                                            text: '확정',
-                                            onPress: async () => {
-                                                setIsFixingWeekSchedule(true);
-                                                try {
-                                                    const today = new Date();
-                                                    const currentYear = today.getFullYear();
+                            Alert.alert(
+                                '일정 확정 확인',
+                                `${currentWeek}주차 트레이닝 일정을 확정하고, 모든 회원에게 알림을 발송하시겠습니까?`,
+                                [
+                                    {text: '취소', style: 'cancel'},
+                                    {
+                                        text: '확정',
+                                        onPress: async () => {
+                                            setIsFixingWeekSchedule(true);
+                                            try {
+                                                const today = new Date();
+                                                const currentYear = today.getFullYear();
 
-                                                    const result = await trainerScheduleService.fixAutoScheduling(
-                                                        currentYear,
-                                                        currentWeek
-                                                    );
+                                                const result = await trainerScheduleService.fixAutoScheduling(
+                                                    currentYear,
+                                                    currentWeek
+                                                );
 
-                                                    if (result.success) {
-                                                        setWeekScheduleStatus(currentWeek, true);
-                                                        setIsScheduleFixed(true);
+                                                if (result.success) {
+                                                    // Update the status to FIXED
+                                                    setNextWeekAutoSchedulingStatus(AutoSchedulingResultStatus.FIXED);
 
-                                                        // 상태 갱신 (TrainerHome 새로고침)
-                                                        const {triggerRefresh} = useSchedulingEventStore.getState();
-                                                        triggerRefresh();
+                                                    // 상태 갱신 (TrainerHome 새로고침)
+                                                    const {triggerRefresh} = useSchedulingEventStore.getState();
+                                                    triggerRefresh();
 
-                                                        Alert.alert('완료', '일정이 확정되고, 알림이 발송되었습니다.');
-                                                    } else {
-                                                        Alert.alert('오류', '일정 확정에 실패했습니다.');
-                                                    }
-                                                } catch (error) {
-                                                    console.error('일정 확정 오류:', error);
-                                                    Alert.alert('오류', '일정 확정 중 문제가 발생했습니다.');
-                                                } finally {
-                                                    setIsFixingWeekSchedule(false);
+                                                    Alert.alert('완료', '일정이 확정되고, 알림이 발송되었습니다.');
+                                                } else {
+                                                    Alert.alert('오류', '일정 확정에 실패했습니다.');
                                                 }
+                                            } catch (error) {
+                                                console.error('일정 확정 오류:', error);
+                                                Alert.alert('오류', '일정 확정 중 문제가 발생했습니다.');
+                                            } finally {
+                                                setIsFixingWeekSchedule(false);
                                             }
                                         }
-                                    ]
-                                );
-                            }
+                                    }
+                                ]
+                            );
                         }}
-                        disabled={!canSendNotification(currentWeek) || weekScheduleStatus[currentWeek] == AutoSchedulingResultStatus.FIXED || isFixingWeekSchedule}
+                        disabled={isAlreadyFixed || isFixingWeekSchedule}
                     >
                         {isFixingWeekSchedule ? (
                             <ActivityIndicator size="small" color="white"/>
                         ) : (
                             <>
                                 <Ionicons
-                                    name={weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? "checkmark-circle" : "notifications-outline"}
+                                    name={isAlreadyFixed ? "checkmark-circle" : "notifications-outline"}
                                     size={18}
                                     color="white"
                                 />
                                 <Text style={styles.notificationButtonText}>
-                                    {weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? '일정 확정됨' : '일정 확정'}
+                                    {isAlreadyFixed ? '일정 확정됨' : '일정 확정'}
                                 </Text>
                             </>
                         )}
