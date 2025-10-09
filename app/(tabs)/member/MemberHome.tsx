@@ -37,15 +37,13 @@ export default function MemberHome() {
     // Local state for auto scheduling results and registration status
     const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<any[] | null>(null);
     const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
-    const [trainerAutoScheduled, setTrainerAutoScheduled] = useState<boolean>(false);
 
     const {mockMode} = useConfigStore();
 
     // Helper function to check if auto scheduling is completed with results
-    const hasAutoSchedulingResults = useCallback(() => {
-        console.log("JSON.stringify(autoSchedulingResults) = ", JSON.stringify(fixedAutoSchedulingResults));
+    const hasAutoSchedulingResults = () => {
         return fixedAutoSchedulingResults !== null && fixedAutoSchedulingResults?.length > 0;
-    }, [fixedAutoSchedulingResults]);
+    };
 
     // Fetch user data and assigned trainer
     const fetchUserData = useCallback(async () => {
@@ -82,16 +80,14 @@ export default function MemberHome() {
             const nextWeekOfYear = targetWeekOfYear + 1;
 
             // Load all APIs in parallel
-            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, trainerStatusResponse] = await Promise.all([
+            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse] = await Promise.all([
                 memberScheduleService.checkWeeklyScheduleRegistration(targetYear, nextWeekOfYear),
-                memberScheduleService.getFixedAutoSchedulingResult(targetYear, targetWeekOfYear),
+                memberScheduleService.getFixedAutoSchedulingResult(targetYear, nextWeekOfYear),
                 memberScheduleService.getFreeSchedule(),
-                memberScheduleService.getTrainerAutoSchedulingStatus(targetYear, targetWeekOfYear)
             ]);
 
             setWeeklyScheduleRegistration(registrationResponse);
             setFixedAutoSchedulingResults(autoSchedulingResponse.data);
-            setTrainerAutoScheduled(trainerStatusResponse);
             setScheduleData({
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
@@ -233,7 +229,7 @@ export default function MemberHome() {
                                             await loadInitialData();
 
                                             // Check if trainer has already scheduled
-                                            if (trainerAutoScheduled) {
+                                            if (hasAutoSchedulingResults()) {
                                                 Alert.alert(
                                                     '일정 취소 불가',
                                                     '이미 트레이너가 스케줄링을 완료했습니다. 일정을 취소할 수 없습니다.',
@@ -309,7 +305,7 @@ export default function MemberHome() {
                                         await loadInitialData();
 
                                         // Check if trainer has already scheduled
-                                        if (trainerAutoScheduled) {
+                                        if (hasAutoSchedulingResults()) {
                                             Alert.alert(
                                                 '일정 수정 불가',
                                                 '이미 트레이너가 스케줄링을 완료했습니다. 일정을 수정할 수 없습니다.',
@@ -333,7 +329,7 @@ export default function MemberHome() {
                 )}
 
                 {/* Show member's scheduled state */}
-                {trainerAccountId && trainerAutoScheduled && (
+                {trainerAccountId && hasAutoSchedulingResults() && (
                     <View style={styles.scheduledStateContainer}>
                         <View style={styles.scheduledStateCard}>
                             <View style={styles.scheduledStateHeader}>
