@@ -414,6 +414,13 @@ export default function TrainingScheduleScreen() {
             {/* Bottom Action Buttons - Only show for trainers and future weeks */}
             {account?.accountType === AccountType.TRAINER && !isCurrentWeek(currentWeek) && !isPastWeek(currentWeek) && (
                 <View style={styles.bottomButtonsContainer}>
+                    <ScheduleResetButton
+                        currentWeek={currentWeek}
+                        disabled={isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
+                        style={styles.weekResetButton}
+                        isScheduleFixed={isScheduleFixed}
+                    />
+
                     <TouchableOpacity
                         style={[
                             styles.notificationButton,
@@ -480,13 +487,6 @@ export default function TrainingScheduleScreen() {
                             </>
                         )}
                     </TouchableOpacity>
-
-                    <ScheduleResetButton
-                        currentWeek={currentWeek}
-                        disabled={isPastWeek(currentWeek) || isCurrentWeek(currentWeek)}
-                        style={styles.weekResetButton}
-                        isScheduleFixed={isScheduleFixed}
-                    />
                 </View>
             )}
 
