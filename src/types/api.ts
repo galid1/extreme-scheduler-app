@@ -295,3 +295,22 @@ export interface CancelAutoSchedulingApiResponse {
     success: boolean;
     message?: string;
 }
+
+export interface CancelRequestResponse {
+    requestId: number;
+    autoSchedulingResultId: number;
+    year: number;
+    weekOfYear: number;
+    dayOfWeek: DayOfWeek;
+    startHour: number;
+    endHour: number;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectedReason?: string;
+    createdAt: string;
+    processedAt?: string;
+}
+
+export interface GetCancelRequestsResponse {
+    data: CancelRequestResponse[];
+}
+

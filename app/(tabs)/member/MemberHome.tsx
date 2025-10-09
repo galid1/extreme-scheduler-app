@@ -3,7 +3,13 @@ import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOp
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
-import {authService, AutoSchedulingScheduleApiResponse, memberScheduleService, memberService} from '@/src/services/api';
+import {
+    authService,
+    AutoSchedulingScheduleApiResponse,
+    GetCancelRequestsResponse,
+    memberScheduleService,
+    memberService
+} from '@/src/services/api';
 import type {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import {getCurrentWeek, getYearAndWeek} from '@/src/utils/dateUtils';
@@ -36,6 +42,7 @@ export default function MemberHome() {
         periodicScheduleLines: PeriodicScheduleLine[],
         onetimeScheduleLines: OnetimeScheduleLine[]
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
+    const [cancelRequests, setCancelRequests] = useState<GetCancelRequestsResponse[]>([]);
 
     // Local state for auto scheduling results and registration status
     const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[] | null>(null);
@@ -83,10 +90,11 @@ export default function MemberHome() {
             const nextWeekOfYear = targetWeekOfYear + 1;
 
             // Load all APIs in parallel
-            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse] = await Promise.all([
+            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, cancelRequestResponse] = await Promise.all([
                 memberScheduleService.checkWeeklyScheduleRegistration(targetYear, nextWeekOfYear),
                 memberScheduleService.getFixedAutoSchedulingResult(targetYear, nextWeekOfYear),
                 memberScheduleService.getFreeSchedule(),
+                memberScheduleService.getCancelRequests(targetYear, nextWeekOfYear),
             ]);
 
             setWeeklyScheduleRegistration(registrationResponse);
@@ -95,6 +103,7 @@ export default function MemberHome() {
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
             });
+            setCancelRequests(cancelRequestResponse);
         } catch (error) {
             console.error('Error loading schedule data:', error);
         }
@@ -231,6 +240,7 @@ export default function MemberHome() {
                                 setCurrentWeek(getCurrentWeek() + 1);
                                 router.push('/training-schedule');
                             } : undefined}
+                            cancelRequests={cancelRequests}
                         />
                     </View>
                 )}

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SchedulingCompletedCard from "@/src/components/member/SchedulingCompletedCard";
 import { memberScheduleService } from '@/src/services/api/member-schedule.service';
 import {getYearAndWeek} from "@/src/utils/dateUtils";
+import {CancelRequestDto, CancelRequestResponse} from '@/src/types/api';
 
 // Icon sizes
 const ICON_SIZE_SMALL = 10;
@@ -24,6 +25,9 @@ interface MemberSchedulePlanningFlowProps {
     isTrainerScheduled: boolean;
     hasSchedulingResults: boolean;
     onViewTrainingSchedule?: () => void;
+
+    // 취소 요청 목록
+    cancelRequests?: CancelRequestResponse[];
 }
 
 export default function MemberSchedulePlanningFlow({
@@ -36,7 +40,34 @@ export default function MemberSchedulePlanningFlow({
     isTrainerScheduled,
     hasSchedulingResults,
     onViewTrainingSchedule,
+    cancelRequests = [],
 }: MemberSchedulePlanningFlowProps) {
+    // 취소 요청 섹션 펼침/접힘 상태
+    const [isCancelRequestsExpanded, setIsCancelRequestsExpanded] = useState(false);
+
+    // 요일을 한글로 변환하는 헬퍼 함수
+    const getDayOfWeekText = (dayOfWeek: string) => {
+        const days: Record<string, string> = {
+            'MONDAY': '월요일',
+            'TUESDAY': '화요일',
+            'WEDNESDAY': '수요일',
+            'THURSDAY': '목요일',
+            'FRIDAY': '금요일',
+            'SATURDAY': '토요일',
+            'SUNDAY': '일요일',
+        };
+        return days[dayOfWeek] || dayOfWeek;
+    };
+
+    // 상태 뱃지 텍스트
+    const getStatusText = (status: string) => {
+        const statusTexts: Record<string, string> = {
+            'PENDING': '대기중',
+            'APPROVED': '승인됨',
+            'REJECTED': '거절됨',
+        };
+        return statusTexts[status] || status;
+    };
     return (
         <View style={styles.container}>
             {/* 1단계: 담당 트레이너 지정 */}
@@ -243,6 +274,47 @@ export default function MemberSchedulePlanningFlow({
                                 hasAutoSchedulingResults={hasSchedulingResults}
                                 compact={true}
                             />
+
+                            {/* 취소 요청 섹션 */}
+                            {cancelRequests.length > 0 && (
+                                <View style={styles.cancelRequestSection}>
+                                    <TouchableOpacity
+                                        style={styles.sectionHeader}
+                                        onPress={() => setIsCancelRequestsExpanded(!isCancelRequestsExpanded)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={styles.sectionHeaderLeft}>
+                                            <Ionicons name="time-outline" size={16} color="#F59E0B" />
+                                            <Text style={styles.sectionTitle}>
+                                                취소 대기중인 일정 ({cancelRequests.length})
+                                            </Text>
+                                        </View>
+                                        <Ionicons
+                                            name={isCancelRequestsExpanded ? "chevron-up" : "chevron-down"}
+                                            size={18}
+                                            color="#92400E"
+                                        />
+                                    </TouchableOpacity>
+
+                                    {isCancelRequestsExpanded && cancelRequests.map((request) => (
+                                        <View key={request.requestId} style={styles.cancelRequestCard}>
+                                            <View style={styles.requestInfo}>
+                                                <Text style={styles.requestTime}>
+                                                    {getDayOfWeekText(request.dayOfWeek)} {request.startHour}:00
+                                                </Text>
+                                                <View style={styles.statusBadge}>
+                                                    <Text style={styles.statusBadgeText}>
+                                                        {getStatusText(request.status)}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                            <Text style={styles.requestDate}>
+                                                요청일: {new Date(request.createdAt).toLocaleDateString('ko-KR')}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
                         </View>
                     </TouchableOpacity>
                 ) : (
@@ -354,5 +426,63 @@ const styles = StyleSheet.create({
         height: 1,
         backgroundColor: '#E5E7EB',
         marginVertical: 0,
+    },
+    cancelRequestSection: {
+        marginTop: 12,
+        gap: 1,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        backgroundColor: '#FEF3C7',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#FDE68A',
+    },
+    sectionHeaderLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    sectionTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#92400E',
+    },
+    cancelRequestCard: {
+        backgroundColor: '#FEF3C7',
+        borderRadius: 8,
+        padding: 10,
+        borderWidth: 1,
+        borderColor: '#FDE68A',
+    },
+    requestInfo: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    requestTime: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#92400E',
+    },
+    statusBadge: {
+        backgroundColor: '#FBBF24',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 12,
+    },
+    statusBadgeText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#78350F',
+    },
+    requestDate: {
+        fontSize: 11,
+        color: '#A16207',
     },
 });
