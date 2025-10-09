@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SchedulingCompletedCard from "@/src/components/member/SchedulingCompletedCard";
+import { memberScheduleService } from '@/src/services/api/member-schedule.service';
+import {getYearAndWeek} from "@/src/utils/dateUtils";
 
 // Icon sizes
 const ICON_SIZE_SMALL = 10;

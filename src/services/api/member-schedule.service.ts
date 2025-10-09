@@ -10,7 +10,8 @@ import {
   UnRegisterMemberFreeTimeScheduleRequest,
   GetFixedAutoSchedulingResultResponse,
   WeeklyScheduleRegistrationStatusResponse,
-  RegisterMemberFreeTimeScheduleResponse
+  RegisterMemberFreeTimeScheduleResponse,
+  ScheduleModificationAvailabilityResponse
 } from '../../types/api';
 
 class MemberScheduleService {
@@ -64,6 +65,22 @@ class MemberScheduleService {
     });
     return apiClient.get<WeeklyScheduleRegistrationStatusResponse>(
       `/api/v1/members/schedules/registration-status?${queryParams}`
+    );
+  }
+
+  /**
+   * 일정 수정 가능 여부 확인
+   */
+  async checkScheduleModificationAvailability(
+    targetYear: number,
+    targetWeekOfYear: number
+  ): Promise<ScheduleModificationAvailabilityResponse> {
+    const queryParams = new URLSearchParams({
+      targetYear: targetYear.toString(),
+      targetWeekOfYear: targetWeekOfYear.toString()
+    });
+    return apiClient.get<ScheduleModificationAvailabilityResponse>(
+      `/api/v1/members/schedules/modification-availability?${queryParams}`
     );
   }
 }

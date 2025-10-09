@@ -4,7 +4,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import WeekInfo from '@/src/components/WeekInfo';
 import {DayOfWeek, OnetimeScheduleLine, PeriodicScheduleLine, RegisterScheduleRequest} from '@/src/types/api';
-import {formatDateMMDD, getNextWeekDateRange, getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
+import {formatDateMMDD, getNextWeekDateRange, getNextWeekYearAndWeek, getYearAndWeek} from '@/src/utils/dateUtils';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {AccountType} from '@/src/types/enums';
 import {memberScheduleService, trainerScheduleService} from '@/src/services/api';
@@ -136,7 +136,28 @@ export default function FreeTimeScheduleDetailView({
     };
 
     // Handle edit button press
-    const handleEditPress = () => {
+    const handleEditPress = async () => {
+        if(account?.accountType === AccountType.MEMBER) {
+                try {
+                    const {targetYear, targetWeekOfYear} = getYearAndWeek();
+                    const nextWeekOfYear = targetWeekOfYear + 1;
+
+                    const result = await memberScheduleService.checkScheduleModificationAvailability(
+                        targetYear,
+                        nextWeekOfYear
+                    );
+
+                    if (!result.canModify) {
+                        Alert.alert('알림', result.message || '일정을 수정할 수 없습니다.');
+                        return;
+                    }
+
+                } catch (error) {
+                    console.error('일정 수정 가능 여부 확인 오류:', error);
+                    Alert.alert('오류', '일정 확인 중 문제가 발생했습니다.');
+                }
+        }
+
         setIsEditMode(true);
         setSelectedTimes(JSON.parse(JSON.stringify(freeTimeScheduleList)));
 

@@ -285,3 +285,8 @@ export interface GetAutoSchedulingResultApiResponse {
 export interface CancelAutoSchedulingResultApiResponse {
     success: boolean;
 }
+
+export interface ScheduleModificationAvailabilityResponse {
+    canModify: boolean;
+    message?: string;
+}
