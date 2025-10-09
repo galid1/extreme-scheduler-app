@@ -13,7 +13,7 @@ import {useSchedulingEventStore} from "@/src/store/useSchedulingEventStore";
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const HORIZONTAL_PADDING = 32; // paddingHorizontal: 16 * 2
-const TIME_COLUMN_WIDTH = 50;
+const TIME_COLUMN_WIDTH = 40;
 const AVAILABLE_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING - TIME_COLUMN_WIDTH;
 const DAY_COLUMN_WIDTH = AVAILABLE_WIDTH / 7;
 
@@ -484,6 +484,7 @@ const styles = StyleSheet.create({
     },
     timeCell: {
         width: DAY_COLUMN_WIDTH,
+        height: 48,
         borderLeftWidth: 1,
         borderLeftColor: '#F3F4F6',
         alignItems: 'center',
