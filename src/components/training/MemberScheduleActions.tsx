@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TrainingSession } from '@/src/store/useTrainingStore';
 import {memberScheduleService} from "@/src/services/api";
+import { useSchedulingEventStore } from '@/src/store/useSchedulingEventStore';
 
 interface MemberScheduleActionsProps {
     selectedSession: TrainingSession | null;
@@ -13,6 +14,8 @@ export default function MemberScheduleActions({
     selectedSession,
     currentAccountId,
 }: MemberScheduleActionsProps) {
+    const { triggerRefresh } = useSchedulingEventStore();
+
     // 버튼 활성화 조건:
     // 1. selectedSession이 있어야 함
     // 2. selectedSession.memberId === currentAccountId (본인의 일정)
@@ -44,6 +47,8 @@ export default function MemberScheduleActions({
 
                             if (result.success) {
                                 Alert.alert('완료', result.message || '일정 취소 요청이 완료되었습니다.');
+                                // Trigger refresh to update MemberHome
+                                triggerRefresh();
                             } else {
                                 Alert.alert('알림', result.message || '일정 취소 요청에 실패했습니다.');
                             }

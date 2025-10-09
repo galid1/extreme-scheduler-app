@@ -21,6 +21,8 @@ import {AccountType} from '@/src/types/enums';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import TrainerScheduleActions from '@/src/components/training/TrainerScheduleActions';
 import MemberScheduleActions from '@/src/components/training/MemberScheduleActions';
+import TrainerCancelRequestsSection from '@/src/components/training/TrainerCancelRequestsSection';
+import {CancelRequestDetailResponse} from '@/src/types/api';
 
 
 export default function TrainingScheduleScreen() {
@@ -46,6 +48,7 @@ export default function TrainingScheduleScreen() {
     const [currentWeekAutoSchedulingStatus, setCurrentWeekAutoSchedulingStatus] = useState<AutoSchedulingResultStatus | undefined>(undefined);
     const [nextWeekAutoSchedulingStatus, setNextWeekAutoSchedulingStatus] = useState<AutoSchedulingResultStatus | undefined>(undefined);
     const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
+    const [cancelRequests, setCancelRequests] = useState<CancelRequestDetailResponse[]>([]);
     const calendarViewRef = useRef<WeekCalendarViewRef>(null);
 
     useEffect(() => {
@@ -145,6 +148,40 @@ export default function TrainingScheduleScreen() {
         return storeGetSessionsForWeek(week);
     };
 
+    // 취소 요청 데이터 가져오기
+    const fetchCancelRequests = async () => {
+        if (account?.accountType !== AccountType.TRAINER) {
+            return;
+        }
+
+        try {
+            const today = new Date();
+            const startOfYear = new Date(today.getFullYear(), 0, 1);
+            const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+            const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+
+            // 현재 주차와 다음 주차의 취소 요청 가져오기
+            const currentWeekRequests = await trainerScheduleService.getCancelRequests(
+                today.getFullYear(),
+                realCurrentWeek
+            );
+            const nextWeekRequests = await trainerScheduleService.getCancelRequests(
+                today.getFullYear(),
+                realCurrentWeek + 1
+            );
+
+            // 두 주차의 요청을 합쳐서 저장
+            const allRequests = [
+                ...currentWeekRequests.cancelRequests,
+                ...nextWeekRequests.cancelRequests
+            ];
+
+            setCancelRequests(allRequests);
+        } catch (error) {
+            console.error('Error fetching cancel requests:', error);
+        }
+    };
+
     const fetchTrainingSessions = async () => {
         setIsLoading(true);
         try {
@@ -235,6 +272,9 @@ export default function TrainingScheduleScreen() {
             const allSessions = [...currentWeekSessions, ...nextWeekSessions];
             console.log(`Total sessions loaded: ${allSessions.length}`);
             setTrainingSessions(allSessions);
+
+            // 트레이너인 경우 취소 요청도 가져오기
+            await fetchCancelRequests();
         } catch (error) {
             console.error('Error fetching training sessions:', error);
             Alert.alert('오류', '스케줄을 불러오는데 실패했습니다.');
@@ -323,6 +363,18 @@ export default function TrainingScheduleScreen() {
                     }
                 }}
             />
+
+            {/* Cancel Requests Section - Only show for trainers */}
+            {account?.accountType === AccountType.TRAINER && (
+                <TrainerCancelRequestsSection
+                    requests={cancelRequests}
+                    onRequestProcessed={() => {
+                        // 요청 처리 후 데이터 다시 로드
+                        fetchCancelRequests();
+                        fetchTrainingSessions();
+                    }}
+                />
+            )}
 
             {/* Upcoming Sessions - Only show for current week */}
             {isCurrentWeek(currentWeek) && (
