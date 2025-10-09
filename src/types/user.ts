@@ -1,14 +1,11 @@
-export type AccountType = 'MEMBER' | 'TRAINER';
-
-export type ScheduleStatus = 'NOT_READY' | 'READY' | 'SCHEDULED';
+import { AccountType, Gender } from './enums';
 
 export interface User {
   name: string;
   birthDate: string;
-  gender: 'MALE' | 'FEMALE';
+  gender: Gender;
   phoneNumber: string;
   accountType: AccountType;
   // Member specific fields
   trainerAccountId?: string | null;
-  scheduleStatus?: ScheduleStatus;
 }

@@ -1,119 +1,114 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import {create} from 'zustand';
+import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AccountType, ScheduleStatus } from '@/src/types/user';
-
-type TimeSlotState = 'none' | 'once' | 'recurring';
-
-interface TimeSlotSelection {
-  hour: number;
-  state: TimeSlotState;
-}
+import {Account, MemberResponse, TrainerResponse, WeeklyScheduleRegistrationStatusResponse} from '@/src/types/api';
 
 interface AuthState {
   token: string | null;
-  isAuthenticated: boolean;
   phoneNumber: string | null;
-  name: string | null;
-  accountType: AccountType;
-  // Schedule status for both member and trainer
-  scheduleStatus: ScheduleStatus;
+  tempToken: string | null;
 
-  // Member specific fields
-  trainerAccountId: string | null;
+  // Full account data from API
+  account: Account | null;
+  trainer: TrainerResponse | null;
+  member: MemberResponse | null;
 
-  // Schedule data for both member and trainer
-  savedSchedule: { [key: string]: TimeSlotSelection[] };
+  // Assigned trainer data for member
+  assignedTrainer: any | null;
 
-  // Notification status
-  notificationSent: boolean;
+  // Weekly schedule registration status for member
+  weeklyScheduleRegistration: WeeklyScheduleRegistrationStatusResponse | null;
 
   // Actions
   setToken: (token: string) => void;
   setPhoneNumber: (phoneNumber: string) => void;
-  setUserInfo: (info: {
-    name: string;
-    accountType: AccountType;
+  setTempToken: (tempToken: string) => void;
+  setAccountData: (data: {
+    account: Account;
+    trainer?: TrainerResponse;
+    member?: MemberResponse;
   }) => void;
-  setTrainerAccountId: (id: string | null) => void;
-  setScheduleStatus: (status: ScheduleStatus) => void;
-  setSavedSchedule: (schedule: { [key: string]: TimeSlotSelection[] }) => void;
-  setNotificationSent: (sent: boolean) => void;
+  setTrainerAccountId: (id: number | null) => void;
+  setAssignedTrainer: (trainer: any | null) => void;
+  setWeeklyScheduleRegistration: (status: WeeklyScheduleRegistrationStatusResponse | null) => void;
   logout: () => void;
-  checkAuth: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
+      // 초기값은 null로 설정 - AsyncStorage에서 로드됨
       token: null,
-      isAuthenticated: false,
       phoneNumber: null,
-      name: null,
-      accountType: 'MEMBER',
-      trainerAccountId: null,
-      scheduleStatus: 'NOT_READY',
-      savedSchedule: {},
-      notificationSent: false,
+      tempToken: null,
+      account: null,
+      trainer: null,
+      member: null,
+      assignedTrainer: null,
+      weeklyScheduleRegistration: null,
 
       setToken: (token) => {
-        set({ token, isAuthenticated: true });
+        set({ token });
       },
 
       setPhoneNumber: (phoneNumber) => {
         set({ phoneNumber });
       },
 
-      setUserInfo: (info) => {
+      setTempToken: (tempToken) => {
+        set({ tempToken });
+      },
+
+      setAccountData: (data) => {
         set({
-          name: info.name,
-          accountType: info.accountType,
-          // Reset member-specific fields if switching to trainer
-          trainerAccountId: info.accountType === 'TRAINER' ? null : get().trainerAccountId,
-          // Both member and trainer have scheduleStatus
-          scheduleStatus: 'NOT_READY',
-          // Reset schedule when switching accounts
-          savedSchedule: {},
+          account: data.account,
+          trainer: data.trainer || null,
+          member: data.member || null,
         });
       },
 
       setTrainerAccountId: (id) => {
-        set({ trainerAccountId: id });
-      },
-
-      setScheduleStatus: (status) => {
-        set({
-          scheduleStatus: status,
-          // Reset notification status when schedule status changes to READY
-          notificationSent: status === 'READY' ? false : get().notificationSent
+        set((state) => {
+          if (state.member) {
+            return {
+              member: {
+                ...state.member,
+                trainerAccountId: id || undefined
+              }
+            };
+          }
+          return {};
         });
       },
 
-      setSavedSchedule: (schedule) => {
-        set({ savedSchedule: schedule });
+      setAssignedTrainer: (trainer) => {
+        set({ assignedTrainer: trainer });
       },
 
-      setNotificationSent: (sent) => {
-        set({ notificationSent: sent });
+      setWeeklyScheduleRegistration: (status) => {
+        set({ weeklyScheduleRegistration: status });
       },
 
-      logout: () => {
+      logout: async () => {
+        // Store 상태 초기화
         set({
           token: null,
-          isAuthenticated: false,
           phoneNumber: null,
-          name: null,
-          accountType: 'MEMBER',
-          trainerAccountId: null,
-          scheduleStatus: 'NOT_READY',
-          savedSchedule: {},
-          notificationSent: false,
+          tempToken: null,
+          account: null,
+          trainer: null,
+          member: null,
+          assignedTrainer: null,
+          weeklyScheduleRegistration: null,
         });
-      },
 
-      checkAuth: () => {
-        const state = get();
-        return !!state.token && state.isAuthenticated;
+        // AsyncStorage에서도 제거
+        try {
+          await AsyncStorage.removeItem('auth-storage');
+          console.log('AsyncStorage cleared successfully');
+        } catch (error) {
+          console.error('Failed to clear auth storage:', error);
+        }
       },
     }),
     {

@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useConfigStore } from './useConfigStore';
+import { mockTrainingSessions } from '@/src/mock/mockData';
+import {AutoSchedulingResultStatus, WeekScheduleStatus} from "@/src/types/enums";
 
 export interface TrainingSession {
   memberId: string;
@@ -24,15 +27,15 @@ interface TrainingState {
   // 선택된 회원
   selectedMember: string | null;
 
-  // 알림 발송 상태 (주차별)
-  weekNotificationStatus: { [week: number]: boolean };
+  // 주차별 자동 스케줄링 일정 상태
+  weekScheduleStatus: { [week: number]: WeekScheduleStatus };
 
   // Actions
   setTrainingSessions: (sessions: TrainingSession[]) => void;
   setCurrentWeek: (week: number) => void;
   setTotalWeeks: (weeks: number) => void;
   setSelectedMember: (memberId: string | null) => void;
-  setWeekNotificationSent: (week: number, sent: boolean) => void;
+  setWeekScheduleStatus: (week: number, status: WeekScheduleStatus) => void;
 
   // Helper functions
   getSessionsForWeek: (week: number) => TrainingSession[];
@@ -44,16 +47,17 @@ interface TrainingState {
   isNextWeek: (week: number) => boolean;
   resetWeek: (week: number) => void;
   resetTraining: () => void;
+  loadMockData: () => void;
 }
 
 export const useTrainingStore = create<TrainingState>()(
   persist(
     (set, get) => ({
       trainingSessions: [],
-      currentWeek: 1,
+      currentWeek: 0, // persist에서 제외되므로 초기값은 의미 없음
       totalWeeks: 12, // 기본 12주 프로그램
       selectedMember: null,
-      weekNotificationStatus: {},
+      weekScheduleStatus: {},
 
       setTrainingSessions: (sessions) => {
         set({ trainingSessions: sessions });
@@ -71,11 +75,11 @@ export const useTrainingStore = create<TrainingState>()(
         set({ selectedMember: memberId });
       },
 
-      setWeekNotificationSent: (week, sent) => {
+      setWeekScheduleStatus: (week, status) => {
         set((state) => ({
-          weekNotificationStatus: {
-            ...state.weekNotificationStatus,
-            [week]: sent,
+          weekScheduleStatus: {
+            ...state.weekScheduleStatus,
+            [week]: status,
           }
         }));
       },
@@ -108,7 +112,7 @@ export const useTrainingStore = create<TrainingState>()(
         if (week === currentWeekNumber) return false;
 
         // 이미 발송된 주차는 불가능
-        return !state.weekNotificationStatus[week];
+        return !state.weekScheduleStatus[week];
       },
 
       isCurrentWeek: (week) => {
@@ -137,9 +141,9 @@ export const useTrainingStore = create<TrainingState>()(
 
       resetWeek: (week) => {
         set((state) => ({
-          weekNotificationStatus: {
-            ...state.weekNotificationStatus,
-            [week]: false,
+          weekScheduleStatus: {
+            ...state.weekScheduleStatus,
+            [week]: AutoSchedulingResultStatus.NOT_FIXED,
           }
         }));
       },
@@ -147,15 +151,31 @@ export const useTrainingStore = create<TrainingState>()(
       resetTraining: () => {
         set({
           trainingSessions: [],
-          currentWeek: 1,
+          currentWeek: 0,
           selectedMember: null,
-          weekNotificationStatus: {},
+          weekScheduleStatus: {},
+        });
+      },
+
+      loadMockData: () => {
+        set({
+          trainingSessions: mockTrainingSessions,
+          currentWeek: 3,
+          totalWeeks: 12,
+          weekScheduleStatus: { 1: true, 2: true },
         });
       },
     }),
     {
       name: 'training-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      // currentWeek는 persist에서 제외 (항상 현재 실제 주차로 시작)
+      partialize: (state) => ({
+        trainingSessions: state.trainingSessions,
+        totalWeeks: state.totalWeeks,
+        selectedMember: state.selectedMember,
+        weekScheduleStatus: state.weekScheduleStatus,
+      }),
     }
   )
 );

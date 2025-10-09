@@ -1,0 +1,770 @@
+import React, {useMemo, useEffect, useState} from 'react';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    ScrollView,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {Ionicons} from '@expo/vector-icons';
+import type {
+    DayOfWeek,
+    RegisterScheduleRequest,
+    PeriodicScheduleLine,
+    OnetimeScheduleLine
+} from '@/src/types/api';
+import {trainerScheduleService, memberScheduleService} from '@/src/services/api';
+import {getNextWeekYearAndWeek, getNextWeekDateRange, formatDateMMDD} from '@/src/utils/dateUtils';
+import WeekInfo from '@/src/components/WeekInfo';
+import {useAuthStore} from '@/src/store/useAuthStore';
+import {AccountType} from '@/src/types/enums';
+
+type TimeSlotState = 'none' | 'once' | 'recurring';
+
+interface TimeSlotSelection {
+    hour: number;
+    state: TimeSlotState;
+}
+
+interface FreeTimeScheduleEditorProps {
+    showEdit: boolean;
+    periodicScheduleLines: PeriodicScheduleLine[];
+    onetimeScheduleLines: OnetimeScheduleLine[];
+    expandedDay: string | null;
+    setExpandedDay: (day: string | null) => void;
+    isSubmitting: boolean;
+    setIsSubmitting: (value: boolean) => void;
+    onCancel: () => void;
+    onSuccess: () => void;
+    fromDetail?: boolean;
+    onBackToDetail?: () => void;
+}
+
+export default function FreeTimeScheduleEditor({
+                                                  showEdit,
+                                                  periodicScheduleLines,
+                                                  onetimeScheduleLines,
+                                                  expandedDay,
+                                                  setExpandedDay,
+                                                  isSubmitting,
+                                                  setIsSubmitting,
+                                                  onCancel,
+                                                  onSuccess,
+                                                  fromDetail = false,
+                                                  onBackToDetail,
+                                              }: FreeTimeScheduleEditorProps) {
+    const {account} = useAuthStore();
+    const accountType = account?.accountType;
+    const [selectedTimes, setSelectedTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
+    const [initialTimes, setInitialTimes] = useState<{ [key: string]: TimeSlotSelection[] }>({});
+
+    // Transform API response to TimeSlotSelection format
+    useEffect(() => {
+        if (onetimeScheduleLines.length === 0 && periodicScheduleLines.length === 0) {
+            setSelectedTimes({});
+            return;
+        }
+
+        const dayMapping: { [key: string]: string } = {
+            'MONDAY': '월',
+            'TUESDAY': '화',
+            'WEDNESDAY': '수',
+            'THURSDAY': '목',
+            'FRIDAY': '금',
+            'SATURDAY': '토',
+            'SUNDAY': '일',
+        };
+
+        const transformedSchedule: { [key: string]: TimeSlotSelection[] } = {};
+
+        // Process periodic schedules (recurring)
+        periodicScheduleLines.forEach((schedule) => {
+            if (schedule.dayOfWeek) {
+                const day = dayMapping[schedule.dayOfWeek];
+                if (!transformedSchedule[day]) {
+                    transformedSchedule[day] = [];
+                }
+
+                transformedSchedule[day].push({
+                    hour: schedule.startHour,
+                    state: 'recurring',
+                });
+            }
+        });
+
+        // Process one-time schedules
+        onetimeScheduleLines.forEach((schedule) => {
+            if (schedule.scheduleDate) {
+                const date = new Date(schedule.scheduleDate);
+                const dayIndex = date.getDay();
+                const days = ['일', '월', '화', '수', '목', '금', '토'];
+                const day = days[dayIndex];
+
+                if (!transformedSchedule[day]) {
+                    transformedSchedule[day] = [];
+                }
+
+                transformedSchedule[day].push({
+                    hour: schedule.startHour,
+                    state: 'once',
+                });
+            }
+        });
+
+        // Sort time slots by hour for each day
+        Object.keys(transformedSchedule).forEach((day) => {
+            transformedSchedule[day].sort((a, b) => a.hour - b.hour);
+        });
+
+        setSelectedTimes(transformedSchedule);
+        setInitialTimes(transformedSchedule); // Save initial state for comparison
+    }, [periodicScheduleLines, onetimeScheduleLines]);
+
+    // Calculate next week info
+    const nextWeekInfo = useMemo(() => {
+        const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
+        const {startDate, endDate} = getNextWeekDateRange();
+
+        // Calculate dates for each day of the week
+        const dayDates: { [key: string]: string } = {};
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            const dayIndex = date.getDay();
+            dayDates[days[dayIndex]] = formatDateMMDD(date);
+        }
+
+        return {
+            weekNumber: targetWeekOfYear,
+            dateRange: `${formatDateMMDD(startDate)} ~ ${formatDateMMDD(endDate)}`,
+            dayDates,
+        };
+    }, []);
+
+    const handleTimeSlotPress = (day: string, hour: number) => {
+        setSelectedTimes((prevSelectedTimes) => {
+            const dayTimes: TimeSlotSelection[] = prevSelectedTimes[day] || [];
+            const existingIndex = dayTimes.findIndex((t) => t.hour === hour);
+
+            if (existingIndex >= 0) {
+                const currentState = dayTimes[existingIndex].state;
+                if (currentState === 'recurring') {
+                    // Change to once
+                    const updated: TimeSlotSelection[] = [...dayTimes];
+                    updated[existingIndex] = {hour, state: 'once'};
+                    return {...prevSelectedTimes, [day]: updated};
+                } else {
+                    // Remove (once -> none)
+                    return {
+                        ...prevSelectedTimes,
+                        [day]: dayTimes.filter((t) => t.hour !== hour),
+                    };
+                }
+            } else {
+                // Add as recurring (with duplicate check)
+                const newSlot: TimeSlotSelection = {hour, state: 'recurring'};
+                const newDayTimes: TimeSlotSelection[] = [...dayTimes, newSlot]
+                    .filter((item, index, self) =>
+                        index === self.findIndex((t) => t.hour === item.hour)
+                    )
+                    .sort((a, b) => a.hour - b.hour);
+                return {
+                    ...prevSelectedTimes,
+                    [day]: newDayTimes,
+                };
+            }
+        });
+    };
+
+    const handleSubmit = async () => {
+        if (!Object.keys(selectedTimes).some((day) => selectedTimes[day]?.length > 0)) {
+            return;
+        }
+
+        // If a day is expanded, collapse it first
+        if (expandedDay) {
+            setExpandedDay(null);
+            return;
+        }
+
+        // Check if there are any changes
+        const hasChanges = JSON.stringify(selectedTimes) !== JSON.stringify(initialTimes);
+        if (!hasChanges) {
+            Alert.alert('알림', '변경된 사항이 없습니다.');
+            return;
+        }
+
+        // Convert day names to DayOfWeek enum
+        const dayMapping: Record<string, DayOfWeek> = {
+            '월': 'MONDAY' as DayOfWeek,
+            '화': 'TUESDAY' as DayOfWeek,
+            '수': 'WEDNESDAY' as DayOfWeek,
+            '목': 'THURSDAY' as DayOfWeek,
+            '금': 'FRIDAY' as DayOfWeek,
+            '토': 'SATURDAY' as DayOfWeek,
+            '일': 'SUNDAY' as DayOfWeek,
+        };
+
+        try {
+            setIsSubmitting(true);
+
+            // Get next week's year and week number
+            const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
+
+            // Prepare schedule data for API
+            const request: RegisterScheduleRequest = {
+                targetYear,
+                targetWeekOfYear,
+                periodicScheduleLines: [],
+                onetimeScheduleLines: [],
+            };
+
+            // Get next week's date for one-time schedules
+            const today = new Date();
+            const getNextWeekDate = (dayOfWeek: string) => {
+                const targetDay = ['일', '월', '화', '수', '목', '금', '토'].indexOf(dayOfWeek);
+                const currentDay = today.getDay();
+
+                // Calculate days until next occurrence of target day
+                let daysUntilTarget = targetDay - currentDay;
+                if (daysUntilTarget <= 0) {
+                    daysUntilTarget += 7; // If today or past, get next week's date
+                }
+
+                // Add 7 more days to ensure it's always next week
+                daysUntilTarget += 7;
+
+                const nextDate = new Date(today);
+                nextDate.setDate(today.getDate() + daysUntilTarget);
+                return nextDate.toISOString().split('T')[0];
+            };
+
+            // Process selected times
+            Object.entries(selectedTimes).forEach(([day, slots]) => {
+                if (slots && slots.length > 0) {
+                    slots.forEach((slot) => {
+                        if (slot.state === 'recurring') {
+                            // Periodic schedule
+                            request.periodicScheduleLines?.push({
+                                dayOfWeek: dayMapping[day],
+                                startHour: slot.hour,
+                                endHour: slot.hour + 1, // Assuming 1-hour slots
+                            });
+                        } else if (slot.state === 'once') {
+                            // One-time schedule
+                            request.onetimeScheduleLines?.push({
+                                scheduleDate: getNextWeekDate(day),
+                                startHour: slot.hour,
+                                endHour: slot.hour + 1, // Assuming 1-hour slots
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Call appropriate service based on account type
+            if (accountType === AccountType.TRAINER) {
+                await trainerScheduleService.registerSchedule(request);
+            } else if (accountType === AccountType.MEMBER) {
+                await memberScheduleService.registerSchedule(request);
+            } else {
+                throw new Error('Invalid account type');
+            }
+
+            // Notify parent of success
+            onSuccess();
+
+            if (showEdit) {
+                Alert.alert('성공', '일정 수정이 완료되었습니다.');
+            } else {
+                Alert.alert('성공', '일정 등록이 완료되었습니다.');
+            }
+        } catch (error: any) {
+            console.error('Schedule registration error:', error);
+            Alert.alert(
+                '등록 실패',
+                error.message || '일정 등록에 실패했습니다. 다시 시도해주세요.'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const renderTimeSlot = (day: string, hour: number, period: 'am' | 'pm') => {
+        const timeSlot = selectedTimes[day]?.find((t) => t.hour === hour);
+        const state = timeSlot?.state || 'none';
+        const displayHour = hour === 0 || hour === 12 ? 12 : hour % 12;
+
+        const formatTimeRange = () => {
+            if (period === 'am') {
+                return hour === 0
+                    ? `오전 12:00 - 01:00`
+                    : `오전 ${displayHour.toString().padStart(2, '0')}:00 - ${(displayHour + 1)
+                        .toString()
+                        .padStart(2, '0')}:00`;
+            } else {
+                if (hour === 12) {
+                    return `오후 12:00 - 01:00`;
+                } else if (hour === 23) {
+                    return `오후 ${displayHour.toString().padStart(2, '0')}:00 - 12:00`;
+                } else {
+                    return `오후 ${displayHour.toString().padStart(2, '0')}:00 - ${(displayHour + 1)
+                        .toString()
+                        .padStart(2, '0')}:00`;
+                }
+            }
+        };
+
+        return (
+            <TouchableOpacity
+                key={hour}
+                style={[
+                    styles.timeFullSlot,
+                    state === 'once' && styles.timeSlotOnce,
+                    state === 'recurring' && styles.timeSlotRecurring,
+                ]}
+                onPress={() => handleTimeSlotPress(day, hour)}
+            >
+                <View style={styles.timeSlotContent}>
+                    <Text
+                        style={[
+                            styles.timeFullSlotText,
+                            state !== 'none' && styles.timeSlotTextSelected,
+                        ]}
+                    >
+                        {formatTimeRange()}
+                    </Text>
+                    <View style={styles.timeSlotStateOptions}>
+                        <View
+                            style={[
+                                styles.stateOptionBadge,
+                                state === 'recurring' && styles.stateOptionActiveRecurring,
+                            ]}
+                        >
+                            <Ionicons
+                                name="repeat"
+                                size={14}
+                                color={state === 'recurring' ? 'white' : '#cbd5e1'}
+                            />
+                            <Text
+                                style={[
+                                    styles.stateOptionText,
+                                    state === 'recurring' && styles.stateOptionTextActive,
+                                ]}
+                            >
+                                반복
+                            </Text>
+                        </View>
+                        <View
+                            style={[
+                                styles.stateOptionBadge,
+                                state === 'once' && styles.stateOptionActive,
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.stateOptionText,
+                                    state === 'once' && styles.stateOptionTextActive,
+                                ]}
+                            >
+                                일회
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+    const days = ['월', '화', '수', '목', '금', '토', '일'];
+    // Sort days to put expanded day first
+    const sortedDays = expandedDay
+        ? [expandedDay, ...days.filter((d) => d !== expandedDay)]
+        : days;
+
+    // Determine title based on account type
+    const getTitle = () => {
+        if (showEdit) return '일정 수정';
+        if (accountType === AccountType.TRAINER) return '운영 가능 일정 등록';
+        return '차주의 원하는 일정을 등록하세요';
+    };
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.scheduleHeader}>
+                {(showEdit || fromDetail) && (
+                    <TouchableOpacity
+                        style={styles.scheduleBackButton}
+                        onPress={fromDetail && onBackToDetail ? onBackToDetail : onCancel}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#3B82F6"/>
+                    </TouchableOpacity>
+                )}
+                <Text style={styles.schedulePageTitle}>
+                    {getTitle()}
+                </Text>
+                <WeekInfo style={styles.scheduleSubtitle} nextWeek={true}/>
+                <View style={styles.helpContainer}>
+                    <View style={styles.helpItem}>
+                        <View
+                            style={[
+                                styles.helpIndicator,
+                                {backgroundColor: 'rgba(139, 92, 246, 0.3)'},
+                            ]}
+                        >
+                            <Ionicons name="repeat" size={12} color="white"/>
+                            <Text style={styles.helpIndicatorText}>반복</Text>
+                        </View>
+                        <Text style={styles.helpText}>매주 반복</Text>
+                    </View>
+                    <View style={styles.helpItem}>
+                        <View
+                            style={[
+                                styles.helpIndicator,
+                                {backgroundColor: 'rgba(91, 153, 247, 0.3)'},
+                            ]}
+                        >
+                            <Text style={styles.helpIndicatorText}>일회</Text>
+                        </View>
+                        <Text style={styles.helpText}>한 번만</Text>
+                    </View>
+                </View>
+            </View>
+
+            <ScrollView
+                style={styles.scheduleScrollView}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.daysContainer}>
+                    {sortedDays.map((day) => (
+                        <View key={day} style={styles.daySection}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.dayButton,
+                                    expandedDay === day && styles.dayButtonActive,
+                                ]}
+                                onPress={() => setExpandedDay(expandedDay === day ? null : day)}
+                            >
+                                <View style={styles.dayButtonLeft}>
+                                    <Text
+                                        style={[
+                                            styles.dayButtonText,
+                                            expandedDay === day && styles.dayButtonTextActive,
+                                        ]}
+                                    >
+                                        {day}요일
+                                    </Text>
+                                    <Text style={styles.dayDateText}>
+                                        {nextWeekInfo.dayDates[day]}
+                                    </Text>
+                                </View>
+                                <View style={styles.dayButtonRight}>
+                                    {selectedTimes[day]?.length > 0 && (
+                                        <View style={styles.dayCountBadge}>
+                                            <Text style={styles.dayCountText}>
+                                                {selectedTimes[day].length}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    <Ionicons
+                                        name={expandedDay === day ? 'chevron-up' : 'chevron-down'}
+                                        size={20}
+                                        color="white"
+                                        style={{marginLeft: 8}}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+
+                            {expandedDay === day && (
+                                <View style={styles.timeFullSlots}>
+                                    <ScrollView
+                                        style={styles.timeFullSlotsScroll}
+                                        showsVerticalScrollIndicator={false}
+                                    >
+                                        {/* Morning Section */}
+                                        <View style={styles.timePeriodSection}>
+                                            <Text style={styles.timePeriodLabel}>오전</Text>
+                                            {Array.from({length: 12}, (_, i) => i).map((hour) =>
+                                                renderTimeSlot(day, hour, 'am')
+                                            )}
+                                        </View>
+
+                                        {/* Afternoon/Evening Section */}
+                                        <View style={styles.timePeriodSection}>
+                                            <Text style={styles.timePeriodLabel}>오후</Text>
+                                            {Array.from({length: 12}, (_, i) => i + 12).map((hour) =>
+                                                renderTimeSlot(day, hour, 'pm')
+                                            )}
+                                        </View>
+                                    </ScrollView>
+                                </View>
+                            )}
+                        </View>
+                    ))}
+                </View>
+            </ScrollView>
+
+            <View style={styles.scheduleBottomBar}>
+                <TouchableOpacity
+                    style={[
+                        styles.scheduleSubmitButton,
+                        Object.keys(selectedTimes).some((day) => selectedTimes[day]?.length > 0)
+                            ? styles.scheduleSubmitButtonActive
+                            : styles.scheduleSubmitButtonDisabled,
+                    ]}
+                    onPress={handleSubmit}
+                    disabled={
+                        !Object.keys(selectedTimes).some((day) => selectedTimes[day]?.length > 0) ||
+                        isSubmitting
+                    }
+                >
+                    {isSubmitting ? (
+                        <ActivityIndicator color="white"/>
+                    ) : (
+                        <Text style={styles.scheduleSubmitButtonText}>
+                            {expandedDay
+                                ? '완료'
+                                : showEdit
+                                    ? '수정 요청 완료'
+                                    : '일정 등록 완료'}
+                        </Text>
+                    )}
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    scheduleHeader: {
+        paddingTop: 40,
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+        position: 'relative',
+    },
+    scheduleBackButton: {
+        position: 'absolute',
+        left: 20,
+        top: 40,
+        padding: 4,
+        zIndex: 1,
+    },
+    schedulePageTitle: {
+        fontSize: 24,
+        fontWeight: '600',
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    scheduleSubtitle: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+    },
+    helpContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 16,
+        gap: 24,
+    },
+    helpItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    helpIndicator: {
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+    },
+    helpIndicatorText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: '600',
+    },
+    helpText: {
+        color: '#666',
+        fontSize: 12,
+    },
+    scheduleScrollView: {
+        flex: 1,
+    },
+    daysContainer: {
+        padding: 16,
+    },
+    daySection: {
+        marginBottom: 12,
+    },
+    dayButton: {
+        backgroundColor: '#f8f9fa',
+        borderRadius: 12,
+        padding: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#e9ecef',
+    },
+    dayButtonActive: {
+        backgroundColor: '#e3f2fd',
+        borderColor: '#3B82F6',
+    },
+    dayButtonLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    dayButtonText: {
+        color: '#333',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    dayButtonTextActive: {
+        fontWeight: '700',
+        color: '#3B82F6',
+    },
+    dayDateText: {
+        fontSize: 12,
+        color: '#9CA3AF',
+        fontWeight: '500',
+    },
+    dayButtonRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    dayCountBadge: {
+        backgroundColor: '#3B82F6',
+        borderRadius: 12,
+        minWidth: 24,
+        height: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 8,
+    },
+    dayCountText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    timeFullSlots: {
+        marginTop: 8,
+        backgroundColor: '#f8f9fa',
+        borderRadius: 12,
+        padding: 12,
+    },
+    timeFullSlotsScroll: {
+        maxHeight: 350,
+    },
+    timePeriodSection: {
+        marginBottom: 20,
+    },
+    timePeriodLabel: {
+        color: '#333',
+        fontSize: 12,
+        fontWeight: '600',
+        marginBottom: 8,
+        marginLeft: 4,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        backgroundColor: '#e9ecef',
+        alignSelf: 'flex-start',
+        borderRadius: 6,
+    },
+    timeFullSlot: {
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        marginBottom: 8,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#e9ecef',
+    },
+    timeSlotOnce: {
+        backgroundColor: 'rgba(91, 153, 247, 0.3)',
+        borderWidth: 2,
+        borderColor: '#5B99F7',
+    },
+    timeSlotRecurring: {
+        backgroundColor: 'rgba(139, 92, 246, 0.3)',
+        borderWidth: 2,
+        borderColor: '#8B5CF6',
+    },
+    timeSlotContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    timeFullSlotText: {
+        fontSize: 15,
+        color: '#666',
+        fontWeight: '600',
+    },
+    timeSlotTextSelected: {
+        color: '#1F2937',
+        fontWeight: '600',
+    },
+    timeSlotStateOptions: {
+        flexDirection: 'row',
+        gap: 6,
+    },
+    stateOptionBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        backgroundColor: 'rgba(203, 213, 225, 0.3)',
+        gap: 4,
+    },
+    stateOptionActive: {
+        backgroundColor: '#3B82F6',
+    },
+    stateOptionActiveRecurring: {
+        backgroundColor: '#8B5CF6',
+    },
+    stateOptionText: {
+        fontSize: 12,
+        color: '#cbd5e1',
+        fontWeight: '700',
+    },
+    stateOptionTextActive: {
+        color: 'white',
+        fontWeight: '700',
+    },
+    scheduleBottomBar: {
+        padding: 20,
+        paddingBottom: 30,
+        backgroundColor: 'white',
+        borderTopWidth: 1,
+        borderTopColor: '#e9ecef',
+    },
+    scheduleSubmitButton: {
+        borderRadius: 14,
+        paddingVertical: 18,
+        alignItems: 'center',
+    },
+    scheduleSubmitButtonActive: {
+        backgroundColor: '#3B82F6',
+    },
+    scheduleSubmitButtonDisabled: {
+        backgroundColor: '#E0E0E0',
+    },
+    scheduleSubmitButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: '600',
+    },
+});

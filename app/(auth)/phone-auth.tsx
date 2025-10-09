@@ -15,18 +15,24 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/src/store/useAuthStore';
+import { useConfigStore } from '@/src/store/useConfigStore';
+import authService from '@/src/services/api/auth.service';
+import * as Device from 'expo-device';
+import MockModeToggle from "@/src/components/MockModeToggle";
 
 const { height } = Dimensions.get('window');
 
 export default function PhoneAuthScreen() {
   const router = useRouter();
-  const { setToken, setPhoneNumber } = useAuthStore();
+  const { setToken, setPhoneNumber, setAccountData } = useAuthStore();
+  const { mockMode, skipStates, setSkipState } = useConfigStore();
 
   const [localPhoneNumber, setLocalPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isPhoneSubmitted, setIsPhoneSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [remainingTime, setRemainingTime] = useState(180); // 3 minutes
+  const [tempToken, setTempToken] = useState<string>('');
 
   // Phone number validation
   const isValidPhone = localPhoneNumber.match(/^010\d{8}$/);
@@ -64,11 +70,14 @@ export default function PhoneAuthScreen() {
   const handleSendCode = async () => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual SMS verification API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const deviceId = Device.modelId || 'unknown-device';
+      const formattedPhone = `${localPhoneNumber.slice(0, 3)}-${localPhoneNumber.slice(3, 7)}-${localPhoneNumber.slice(7)}`;
+
+      await authService.sendSmsCode(formattedPhone, deviceId);
       setIsPhoneSubmitted(true);
       setRemainingTime(180);
-    } catch {
+    } catch (error) {
+      console.error('SMS send error:', error);
       Alert.alert('오류', '인증번호 전송에 실패했습니다.');
     } finally {
       setIsLoading(false);
@@ -78,31 +87,49 @@ export default function PhoneAuthScreen() {
   const handleVerifyCode = async () => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual verification API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const formattedPhone = `${localPhoneNumber.slice(0, 3)}-${localPhoneNumber.slice(3, 7)}-${localPhoneNumber.slice(7)}`;
 
-      // Simulate successful verification
-      if (verificationCode === '123456') {
-        // Check if user exists in server
-        // For now, we'll assume user doesn't exist and redirect to signup
-        const userExists = false; // This would be from server response
+      const response = await authService.signIn(formattedPhone, verificationCode);
 
-        if (userExists) {
-          setToken('dummy_token');
-          router.replace('/(tabs)');
-        } else {
-          // Save phone number for signup
-          setPhoneNumber(localPhoneNumber);
-          router.replace('/(auth)/signup');
+      if (response.accessToken) {
+        // Login successful - save token
+        setToken(response.accessToken);
+
+        // Get current user data
+        try {
+          const userResponse = await authService.getCurrentUser(response.accessToken);
+          setAccountData({
+            account: userResponse.account,
+            trainer: userResponse.trainer,
+            member: userResponse.member,
+          });
+        } catch (error) {
+          console.error('Failed to get user data:', error);
         }
-      } else {
-        Alert.alert('오류', '잘못된 인증번호입니다.');
+
+        // Navigate to home
+        router.replace('/(tabs)');
       }
-    } catch {
-      Alert.alert('오류', '인증에 실패했습니다.');
+    } catch (error: any) {
+      if (error.response?.status === 404 || error.response?.data?.code === 'USER_NOT_FOUND') {
+        // User not found - save phone number and temp token for signup
+        setPhoneNumber(localPhoneNumber);
+        if (error.response?.data?.tempTokenForSignUp) {
+          setTempToken(error.response.data.tempTokenForSignUp);
+        }
+        router.replace('/(auth)/signup');
+      } else {
+        Alert.alert('오류', '인증에 실패했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSkip = () => {
+    setSkipState('phoneAuth', true);
+    // Navigate to signup in mock mode
+    router.replace('/(auth)/signup');
   };
 
   return (
@@ -113,13 +140,14 @@ export default function PhoneAuthScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView style={{ flex: 1 }}>
+            <MockModeToggle/>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{ flex: 1 }}>
               {/* Title at the top */}
               <View style={{ marginTop: 60, paddingHorizontal: 24 }}>
                 <Text style={{
                   fontSize: 24,
-                  fontWeight: '600',
+                  fontWeight: '800',
                   color: '#3B82F6',
                   textAlign: 'center'
                 }}>
@@ -128,6 +156,7 @@ export default function PhoneAuthScreen() {
                 <Text style={{
                   fontSize: 14,
                   color: '#666',
+                    fontWeight: '600',
                   textAlign: 'center',
                   marginTop: 8
                 }}>
@@ -226,6 +255,26 @@ export default function PhoneAuthScreen() {
             right: 0,
             backgroundColor: 'white',
           }}>
+            {mockMode && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#F59E0B',
+                  paddingVertical: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: '#E5E7EB',
+                }}
+                onPress={handleSkip}
+              >
+                <Text style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: 14,
+                  fontWeight: '700',
+                }}>
+                  Skip (Mock Mode)
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={{
                 backgroundColor: (!isPhoneSubmitted && isValidPhone) || (isPhoneSubmitted && verificationCode.length === 6)

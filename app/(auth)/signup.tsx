@@ -15,8 +15,13 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/src/store/useAuthStore';
+import authService from '@/src/services/api/auth.service';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import { useConfigStore } from '@/src/store/useConfigStore';
+import { MockDataManager } from '@/src/mock/mockDataManager';
 
 const { height } = Dimensions.get('window');
 
@@ -38,7 +43,9 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { phoneNumber, setToken, setUserInfo } = useAuthStore();
+  const { phoneNumber, setToken, setUserInfo, setAccountData } = useAuthStore();
+  const { mockMode, skipStates, setSkipState } = useConfigStore();
+  const params = useLocalSearchParams<{ tempToken?: string }>();
 
   const [completedSteps, setCompletedSteps] = useState<SignupStep[]>([]);
   const [name, setName] = useState('');
@@ -158,33 +165,105 @@ export default function SignupScreen() {
       const day = birthDate.substring(4, 6);
       const formattedBirthDate = `${fullYear}-${month}-${day}`;
 
+      // Get push token if permission granted
+      let pushTokenData = undefined;
+      try {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status === 'granted') {
+          const token = await Notifications.getExpoPushTokenAsync();
+          pushTokenData = {
+            token: token.data,
+            deviceId: Device.modelId || 'unknown-device',
+            platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID' as any,
+          };
+        }
+      } catch (error) {
+        console.log('Failed to get push token:', error);
+      }
+
+      const formattedPhone = phoneNumber ? `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3, 7)}-${phoneNumber.slice(7)}` : '';
+
       const signupData = {
+        tempTokenForSignUp: params.tempToken || 'temp-token-' + Date.now(),
         name,
         birthDate: formattedBirthDate,
         gender: getGenderFromDigit(genderDigit),
-        phoneNumber: phoneNumber || '',
+        phoneNumber: formattedPhone,
         accountType,
+        pushTokenInfo: pushTokenData,
       };
 
-      console.log('Signup data:', signupData);
+      let response;
 
-      // TODO: Implement actual signup API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (mockMode) {
+        // In mock mode, initialize mock data directly
+        const role = accountType === 'TRAINER' ? 'trainer' : 'member';
+        await MockDataManager.initializeAllStores(role);
+        Alert.alert('성공', '회원가입이 완료되었습니다 (Mock Mode)');
+        router.replace('/(tabs)');
+        return;
+      } else {
+        response = await authService.signUp(signupData);
+      }
 
-      // Save user info to store
-      setUserInfo({
-        name,
-        accountType,
-      });
+      if (response && response.accessToken) {
+        // Save token and user info
+        setToken(response.accessToken);
+        setUserInfo({
+          name: response.name,
+          accountType: response.accountType,
+        });
 
-      // Simulate successful signup
-      setToken('dummy_token_with_signup');
-      router.replace('/(tabs)');
-    } catch {
-      Alert.alert('오류', '회원가입에 실패했습니다.');
+        // Get full account data
+        try {
+          const userResponse = await authService.getCurrentUser(response.accessToken);
+          setAccountData({
+            account: userResponse.account,
+            trainer: userResponse.trainer,
+            member: userResponse.member,
+          });
+        } catch (error) {
+          console.error('Failed to get user data:', error);
+        }
+
+        // Navigate to home
+        router.replace('/(tabs)');
+      }
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      Alert.alert('오류', error.response?.data?.message || '회원가입에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSkip = async () => {
+    setSkipState('signup', true);
+    // In mock mode, choose a role and initialize
+    Alert.alert(
+      'Mock 모드',
+      '계정 유형을 선택하세요',
+      [
+        {
+          text: '트레이너',
+          onPress: async () => {
+            await MockDataManager.initializeAllStores('trainer');
+            router.replace('/(tabs)');
+          }
+        },
+        {
+          text: '회원',
+          onPress: async () => {
+            await MockDataManager.initializeAllStores('member');
+            router.replace('/(tabs)');
+          }
+        },
+        {
+          text: '취소',
+          style: 'cancel'
+        }
+      ]
+    );
   };
 
 
@@ -199,7 +278,7 @@ export default function SignupScreen() {
           <View style={{ marginTop: 40, paddingHorizontal: 24, marginBottom: 20 }}>
             <Text style={{
               fontSize: 26,
-              fontWeight: '600',
+              fontWeight: '700',
               color: '#3B82F6',
               textAlign: 'center'
             }}>
@@ -240,7 +319,7 @@ export default function SignupScreen() {
                 fontSize: 16,
                 color: '#333',
                 marginBottom: 12,
-                fontWeight: '500'
+                fontWeight: '600'
               }}>
                 이름을 입력해주세요
               </Text>
@@ -291,7 +370,7 @@ export default function SignupScreen() {
                   fontSize: 16,
                   color: '#333',
                   marginBottom: 12,
-                  fontWeight: '500'
+                  fontWeight: '600'
                 }}>
                   생년월일을 입력해주세요
                 </Text>
@@ -368,7 +447,7 @@ export default function SignupScreen() {
                     fontSize: 12,
                     marginTop: 4,
                     textAlign: 'center',
-                    fontWeight: '500'
+                    fontWeight: '600'
                   }}>
                     올바른 날짜를 입력해주세요 (예: 990229는 불가능)
                   </Text>
@@ -399,7 +478,7 @@ export default function SignupScreen() {
                   fontSize: 16,
                   color: '#333',
                   marginBottom: 12,
-                  fontWeight: '500'
+                  fontWeight: '600'
                 }}>
                   계정 유형을 선택해주세요
                 </Text>
@@ -423,7 +502,7 @@ export default function SignupScreen() {
                         color: accountType === type ? 'white' : '#333',
                         fontSize: 18,
                         textAlign: 'center',
-                        fontWeight: accountType === type ? '600' : '400',
+                        fontWeight: accountType === type ? '700' : '500',
                       }}>
                         {ACCOUNT_TYPE_LABELS[type]}
                       </Text>
@@ -443,6 +522,26 @@ export default function SignupScreen() {
             borderTopWidth: 1,
             borderTopColor: '#F3F4F6'
           }}>
+            {mockMode && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#F59E0B',
+                  borderRadius: 12,
+                  paddingVertical: 10,
+                  marginBottom: 10,
+                }}
+                onPress={handleSkip}
+              >
+                <Text style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: 14,
+                  fontWeight: '700',
+                }}>
+                  Skip (Mock Mode)
+                </Text>
+              </TouchableOpacity>
+            )}
             {/* Name Step Button */}
             {!completedSteps.includes('name') && (
               <TouchableOpacity
@@ -458,7 +557,7 @@ export default function SignupScreen() {
                   color: 'white',
                   textAlign: 'center',
                   fontSize: 16,
-                  fontWeight: '600',
+                  fontWeight: '700',
                 }}>
                   다음
                 </Text>
@@ -480,7 +579,7 @@ export default function SignupScreen() {
                   color: 'white',
                   textAlign: 'center',
                   fontSize: 16,
-                  fontWeight: '600',
+                  fontWeight: '700',
                 }}>
                   다음
                 </Text>
@@ -505,7 +604,7 @@ export default function SignupScreen() {
                     color: 'white',
                     textAlign: 'center',
                     fontSize: 18,
-                    fontWeight: '600',
+                    fontWeight: '700',
                   }}>
                     가입 완료
                   </Text>

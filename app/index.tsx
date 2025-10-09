@@ -2,10 +2,10 @@ import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/src/store/useAuthStore';
 
 export default function Index() {
-  const { checkAuth } = useAuthStore();
-  const isAuthenticated = checkAuth();
+  const { token, account } = useAuthStore();
 
-  if (isAuthenticated) {
+  // Check if user has token or account data
+  if (token || account) {
     return <Redirect href="/(tabs)" />;
   }
 
