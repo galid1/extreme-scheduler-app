@@ -314,3 +314,35 @@ export interface GetCancelRequestsResponse {
     data: CancelRequestResponse[];
 }
 
+// Trainer Cancel Request Types
+export interface CancelRequestDetailResponse {
+    requestId: number;
+    autoSchedulingResultId: number;
+    memberAccountId: number;
+    memberName: string;
+    year: number;
+    weekOfYear: number;
+    dayOfWeek: DayOfWeek;
+    startHour: number;
+    endHour: number;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectedReason?: string;
+    createdAt: string;
+    processedAt?: string;
+}
+
+export interface GetCancelRequestsApiResponse {
+    cancelRequests: CancelRequestDetailResponse[];
+}
+
+export interface ProcessCancelRequestApiRequest {
+    action: 'APPROVE' | 'REJECT';
+    rejectedReason?: string;
+}
+
+export interface ProcessCancelRequestApiResponse {
+    success: boolean;
+    status: 'APPROVED' | 'REJECTED';
+    processedAt: string;
+}
+

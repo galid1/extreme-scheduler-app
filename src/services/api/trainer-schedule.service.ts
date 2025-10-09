@@ -13,6 +13,9 @@ import {
     AutoSchedulingResponse,
     CancelAutoSchedulingResultApiResponse,
     RegisterMemberFreeTimeScheduleResponse,
+    GetCancelRequestsApiResponse,
+    ProcessCancelRequestApiRequest,
+    ProcessCancelRequestApiResponse,
 } from '../../types/api';
 
 class TrainerScheduleService {
@@ -89,6 +92,39 @@ class TrainerScheduleService {
     return apiClient.post<{ success: boolean }>(
       '/api/v1/trainers/schedules/auto-scheduling/fix',
       { year, weekOfYear }
+    );
+  }
+
+  /**
+   * 멤버의 취소 요청 목록 조회
+   * @param year 조회할 연도
+   * @param weekOfYear 조회할 주차
+   */
+  async getCancelRequests(
+    year: number,
+    weekOfYear: number
+  ): Promise<GetCancelRequestsApiResponse> {
+    const queryParams = new URLSearchParams({
+      year: year.toString(),
+      weekOfYear: weekOfYear.toString()
+    });
+    return apiClient.get<GetCancelRequestsApiResponse>(
+      `/api/v1/trainers/schedules/auto-scheduling/cancel-requests?${queryParams}`
+    );
+  }
+
+  /**
+   * 취소 요청 승인/거절
+   * @param requestId 취소 요청 ID
+   * @param request 처리 요청 데이터 (action, rejectedReason)
+   */
+  async processCancelRequest(
+    requestId: number,
+    request: ProcessCancelRequestApiRequest
+  ): Promise<ProcessCancelRequestApiResponse> {
+    return apiClient.put<ProcessCancelRequestApiResponse>(
+      `/api/v1/trainers/schedules/auto-scheduling/cancel-requests/${requestId}`,
+      request
     );
   }
 
