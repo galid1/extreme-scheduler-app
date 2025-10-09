@@ -180,6 +180,7 @@ export default function TrainingScheduleScreen() {
                     currentTime.getFullYear(),
                     realCurrentWeek + 1
                 );
+
                 currentWeekResponse = { scheduleList: currentWeekData };
                 nextWeekResponse = { scheduleList: nextWeekData };
                 // Members don't have status info, so leave as undefined
