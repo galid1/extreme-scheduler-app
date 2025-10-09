@@ -12,6 +12,7 @@ import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTi
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import MemberSchedulePlanningFlow from '@/src/components/member/MemberSchedulePlanningFlow';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
+import WeekSelector from '@/src/components/training/WeekSelector';
 
 
 export default function MemberHome() {
@@ -233,6 +234,20 @@ export default function MemberHome() {
                                 setCurrentWeek(getCurrentWeek() + 1);
                                 router.push('/training-schedule');
                             } : undefined}
+                        />
+                    </View>
+                )}
+
+                {/* Training Schedule Management Card */}
+                {trainerAccountId && (
+                    <View style={styles.weekSelectorContainer}>
+                        <Text style={styles.dashboardTitle}>트레이닝 일정</Text>
+                        <WeekSelector
+                            onViewSchedule={(weekNumber) => {
+                                const { setCurrentWeek } = useTrainingStore.getState();
+                                setCurrentWeek(weekNumber);
+                                router.push('/training-schedule');
+                            }}
                         />
                     </View>
                 )}
@@ -1377,5 +1392,23 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 4,
         elevation: 2,
+    },
+    weekSelectorContainer: {
+        backgroundColor: 'white',
+        borderRadius: 16,
+        padding: 20,
+        paddingBottom: 5,
+        marginHorizontal: 20,
+        marginTop: 16,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        shadowColor: '#3B82F6',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
     },
 });

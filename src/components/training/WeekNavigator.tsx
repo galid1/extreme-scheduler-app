@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   currentWeekBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#3B82F6',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   nextWeekBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#F59E0B',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
