@@ -31,7 +31,9 @@ export default function ProfileCard({
                             style={styles.profileImage}
                         />
                     ) : (
-                        <Ionicons name="person" size={50} color="#6B7280"/>
+                        <View style={styles.profileIconPlaceholder}>
+                            <Ionicons name="person" size={50} color="#3B82F6"/>
+                        </View>
                     )}
                 </View>
                 <View style={styles.profileInfo}>
@@ -76,6 +78,16 @@ const styles = StyleSheet.create({
         borderRadius: 40,
         borderWidth: 2,
         borderColor: '#E5E7EB',
+    },
+    profileIconPlaceholder: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        borderWidth: 2,
+        borderColor: '#3B82F6',
+        backgroundColor: '#EFF6FF',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     profileInfo: {
         flex: 1,
