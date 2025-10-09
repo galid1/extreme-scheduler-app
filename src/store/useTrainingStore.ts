@@ -35,13 +35,11 @@ interface TrainingState {
   setCurrentWeek: (week: number) => void;
   setTotalWeeks: (weeks: number) => void;
   setSelectedMember: (memberId: string | null) => void;
-  setWeekScheduleStatus: (week: number, status: WeekScheduleStatus) => void;
 
   // Helper functions
   getSessionsForWeek: (week: number) => TrainingSession[];
   getCurrentWeekSessions: () => TrainingSession[];
   canEditWeek: (week: number) => boolean;
-  canSendNotification: (week: number) => boolean;
   isCurrentWeek: (week: number) => boolean;
   isPastWeek: (week: number) => boolean;
   isNextWeek: (week: number) => boolean;
@@ -75,15 +73,6 @@ export const useTrainingStore = create<TrainingState>()(
         set({ selectedMember: memberId });
       },
 
-      setWeekScheduleStatus: (week, status) => {
-        set((state) => ({
-          weekScheduleStatus: {
-            ...state.weekScheduleStatus,
-            [week]: status,
-          }
-        }));
-      },
-
       getSessionsForWeek: (week) => {
         return get().trainingSessions.filter(session => session.weekOfYear === week);
       },
@@ -100,19 +89,6 @@ export const useTrainingStore = create<TrainingState>()(
         const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
         const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
         return week !== currentWeekNumber;
-      },
-
-      canSendNotification: (week) => {
-        const state = get();
-        // 이번 주는 알림 발송 불가능
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-        const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-        if (week === currentWeekNumber) return false;
-
-        // 이미 발송된 주차는 불가능
-        return !state.weekScheduleStatus[week];
       },
 
       isCurrentWeek: (week) => {
