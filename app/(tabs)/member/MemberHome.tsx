@@ -44,8 +44,6 @@ export default function MemberHome() {
 
     // Helper function to check if auto scheduling is completed with results
     const hasAutoSchedulingResults = () => {
-        console.log("################")
-        console.log(JSON.stringify(fixedAutoSchedulingResults))
         return fixedAutoSchedulingResults !== null && fixedAutoSchedulingResults?.length > 0;
     };
 

@@ -167,7 +167,6 @@ export default function MemberSchedulePlanningFlow({
             <View style={styles.divider} />
 
             {/* 3단계: 트레이너 스케줄링 대기 */}
-            <View style={styles.stepContainer}>
                 {!isScheduleRegistered ? (
                     <>
                         <View style={styles.stepHeader}>
@@ -253,7 +252,6 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                     </View>
                 )}
-            </View>
         </View>
     );
 }
@@ -269,6 +267,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        paddingTop: 10,
+        paddingBottom: 10,
     },
     stepHeaderRight: {
         flexDirection: 'row',
