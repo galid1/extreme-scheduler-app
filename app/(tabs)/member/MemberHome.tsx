@@ -6,11 +6,12 @@ import {useRouter} from 'expo-router';
 import {authService, AutoSchedulingScheduleApiResponse, memberScheduleService, memberService} from '@/src/services/api';
 import type {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {useConfigStore} from '@/src/store/useConfigStore';
-import {getYearAndWeek} from '@/src/utils/dateUtils';
+import {getCurrentWeek, getYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import MemberSchedulePlanningFlow from '@/src/components/member/MemberSchedulePlanningFlow';
+import {useTrainingStore} from '@/src/store/useTrainingStore';
 
 
 export default function MemberHome() {
@@ -226,7 +227,12 @@ export default function MemberHome() {
                             }}
                             isTrainerScheduled={hasAutoSchedulingResults()}
                             hasSchedulingResults={hasAutoSchedulingResults()}
-                            onViewTrainingSchedule={hasAutoSchedulingResults() ? () => router.push('/training-schedule') : undefined}
+                            onViewTrainingSchedule={hasAutoSchedulingResults() ? () => {
+                                // 다음 주 일정으로 이동
+                                const { setCurrentWeek } = useTrainingStore.getState();
+                                setCurrentWeek(getCurrentWeek() + 1);
+                                router.push('/training-schedule');
+                            } : undefined}
                         />
                     </View>
                 )}
