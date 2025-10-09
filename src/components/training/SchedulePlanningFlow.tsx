@@ -36,12 +36,20 @@ export default function SchedulePlanningFlow({
     onConfirmSchedule,
     onResetSchedule,
 }: SchedulePlanningFlowProps) {
+    const handleOnShowOperationSchedule = () => {
+        if (isOperationScheduleRegistered) {
+            onShowOperationSchedule();
+        } else {
+            onEditOperationSchedule();
+        }
+    }
+
     return (
         <View style={styles.container}>
             {/* 1단계: 운영 일정 설정 */}
             <TouchableOpacity
                 style={styles.stepContainer}
-                onPress={onShowOperationSchedule}
+                onPress={handleOnShowOperationSchedule}
                 activeOpacity={0.7}
             >
                 <View style={styles.stepHeader}>
