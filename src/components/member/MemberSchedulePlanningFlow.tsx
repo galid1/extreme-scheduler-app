@@ -119,11 +119,13 @@ export default function MemberSchedulePlanningFlow({
                             >
                                 <Text style={styles.textButtonPrimary}>확인</Text>
                             </TouchableOpacity>
-                            <Ionicons
-                                name="chevron-forward"
-                                size={ICON_SIZE_MEDIUM}
-                                color={"#3B82F6"}
-                            />
+                            {isTrainerScheduled && (
+                                <Ionicons
+                                    name="chevron-forward"
+                                    size={ICON_SIZE_MEDIUM}
+                                    color={"#3B82F6"}
+                                />
+                            )}
                             {!isTrainerScheduled && (
                                 <TouchableOpacity
                                     style={styles.textButton}
@@ -191,7 +193,7 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                     </>
                 ) : !isTrainerScheduled ? (
-                    <>
+                    <View style={styles.stepContainer}>
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
                                 <View style={styles.stepNumber}>
@@ -206,7 +208,7 @@ export default function MemberSchedulePlanningFlow({
                                 트레이너가 스케줄링 중입니다
                             </Text>
                         </View>
-                    </>
+                    </View>
                 ) : hasSchedulingResults && onViewTrainingSchedule ? (
                     <TouchableOpacity
                         style={styles.stepContainer}
@@ -237,6 +239,7 @@ export default function MemberSchedulePlanningFlow({
                         <View>
                             <SchedulingCompletedCard
                                 hasAutoSchedulingResults={hasSchedulingResults}
+                                compact={true}
                             />
                         </View>
                     </TouchableOpacity>
@@ -251,11 +254,10 @@ export default function MemberSchedulePlanningFlow({
                             </View>
                             <Text style={styles.stepTitle}>트레이너 스케줄링</Text>
                         </View>
-                        <View style={styles.noResultBadge}>
-                            <SchedulingCompletedCard
-                                hasAutoSchedulingResults={hasSchedulingResults}
-                            />
-                        </View>
+                        <SchedulingCompletedCard
+                            hasAutoSchedulingResults={hasSchedulingResults}
+                            compact={true}
+                        />
                     </View>
                 )}
         </View>
@@ -273,8 +275,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: 10,
-        paddingBottom: 10,
+        paddingVertical: 10,
     },
     stepHeaderRight: {
         flexDirection: 'row',
@@ -344,17 +345,6 @@ const styles = StyleSheet.create({
     },
     waitingText: {
         color: '#9CA3AF',
-        fontSize: 12,
-        fontWeight: '700',
-    },
-    noResultBadge: {
-        backgroundColor: '#FEF3C7',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    noResultText: {
-        color: '#92400E',
         fontSize: 12,
         fontWeight: '700',
     },

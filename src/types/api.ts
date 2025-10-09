@@ -240,16 +240,8 @@ export interface CurrentAccountResponse {
     trainer?: TrainerResponse;
 }
 
-// Auto Scheduling Result Types
-export interface MemberFixedAutoSchedulingScheduleDetail {
-    autoSchedulingResultId: number;
-    status: AutoSchedulingResultStatus;
-    year: number;
-    weekOfYear: number;
-}
-
 export interface GetFixedAutoSchedulingResultResponse {
-    data: MemberFixedAutoSchedulingScheduleDetail[];
+    data: AutoSchedulingScheduleApiResponse[];
 }
 
 // Weekly Schedule Registration Status Types

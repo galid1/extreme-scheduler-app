@@ -65,24 +65,6 @@ class MemberScheduleService {
       `/api/v1/members/schedules/registration-status?${queryParams}`
     );
   }
-
-  /**
-   * 담당 트레이너의 자동 스케줄링 상태 확인
-   */
-  async getTrainerAutoSchedulingStatus(
-    targetYear: number,
-    targetWeekOfYear: number
-  ): Promise<boolean> {
-    const queryParams = new URLSearchParams({
-      targetYear: targetYear.toString(),
-      targetWeekOfYear: targetWeekOfYear.toString()
-    });
-    const response = await apiClient.get<{ data: boolean }>(
-      `/api/v1/members/schedules/auto-scheduling/trainer-status?${queryParams}`
-    );
-    return response.data;
-  }
-
 }
 
 export const memberScheduleService = new MemberScheduleService();

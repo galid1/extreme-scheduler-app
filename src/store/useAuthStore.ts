@@ -1,13 +1,7 @@
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-    Account,
-    MemberFixedAutoSchedulingScheduleDetail,
-    MemberResponse,
-    TrainerResponse,
-    WeeklyScheduleRegistrationStatusResponse
-} from '@/src/types/api';
+import {Account, MemberResponse, TrainerResponse, WeeklyScheduleRegistrationStatusResponse} from '@/src/types/api';
 
 interface AuthState {
   token: string | null;
@@ -21,9 +15,6 @@ interface AuthState {
 
   // Assigned trainer data for member
   assignedTrainer: any | null;
-
-  // Auto scheduling results for member
-  autoSchedulingResults: MemberFixedAutoSchedulingScheduleDetail[] | null;
 
   // Weekly schedule registration status for member
   weeklyScheduleRegistration: WeeklyScheduleRegistrationStatusResponse | null;
@@ -39,7 +30,6 @@ interface AuthState {
   }) => void;
   setTrainerAccountId: (id: number | null) => void;
   setAssignedTrainer: (trainer: any | null) => void;
-  setAutoSchedulingResults: (results: MemberFixedAutoSchedulingScheduleDetail[] | null) => void;
   setWeeklyScheduleRegistration: (status: WeeklyScheduleRegistrationStatusResponse | null) => void;
   logout: () => void;
 }
@@ -55,7 +45,6 @@ export const useAuthStore = create<AuthState>()(
       trainer: null,
       member: null,
       assignedTrainer: null,
-      autoSchedulingResults: null,
       weeklyScheduleRegistration: null,
 
       setToken: (token) => {
@@ -96,10 +85,6 @@ export const useAuthStore = create<AuthState>()(
         set({ assignedTrainer: trainer });
       },
 
-      setAutoSchedulingResults: (results) => {
-        set({ autoSchedulingResults: results });
-      },
-
       setWeeklyScheduleRegistration: (status) => {
         set({ weeklyScheduleRegistration: status });
       },
@@ -114,7 +99,6 @@ export const useAuthStore = create<AuthState>()(
           trainer: null,
           member: null,
           assignedTrainer: null,
-          autoSchedulingResults: null,
           weeklyScheduleRegistration: null,
         });
 

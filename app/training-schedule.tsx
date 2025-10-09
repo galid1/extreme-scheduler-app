@@ -14,13 +14,16 @@ import {useRouter} from 'expo-router';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView, {WeekCalendarViewRef} from '@/src/components/training/WeekCalendarView';
-import {AutoSchedulingResultStatus, trainerScheduleService} from '@/src/services/api';
+import {AutoSchedulingResultStatus, trainerScheduleService, memberScheduleService} from '@/src/services/api';
 import ScheduleResetButton from '@/src/components/training/ScheduleResetButton';
 import {getCurrentWeek} from '@/src/utils/dateUtils';
+import {useAuthStore} from '@/src/store/useAuthStore';
+import {AccountType} from '@/src/types/enums';
 
 
 export default function TrainingScheduleScreen() {
     const router = useRouter();
+    const {account} = useAuthStore();
     const {
         trainingSessions,
         currentWeek,
@@ -151,14 +154,32 @@ export default function TrainingScheduleScreen() {
             const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
             // 이번주와 다음주 데이터 가져오기
-            const currentWeekResponse = await trainerScheduleService.getAutoSchedulingResult(
-                currentTime.getFullYear(),
-                realCurrentWeek
-            )
-            const nextWeekResponse = await trainerScheduleService.getAutoSchedulingResult(
-                currentTime.getFullYear(),
-                realCurrentWeek + 1
-            )
+            let currentWeekResponse;
+            let nextWeekResponse;
+
+            if (account?.accountType === AccountType.TRAINER) {
+                // 트레이너: 기존 API 사용
+                currentWeekResponse = await trainerScheduleService.getAutoSchedulingResult(
+                    currentTime.getFullYear(),
+                    realCurrentWeek
+                );
+                nextWeekResponse = await trainerScheduleService.getAutoSchedulingResult(
+                    currentTime.getFullYear(),
+                    realCurrentWeek + 1
+                );
+            } else {
+                // 회원: memberScheduleService 사용 (배열을 scheduleList로 감싸기)
+                const currentWeekData = await memberScheduleService.getFixedAutoSchedulingResult(
+                    currentTime.getFullYear(),
+                    realCurrentWeek
+                );
+                const nextWeekData = await memberScheduleService.getFixedAutoSchedulingResult(
+                    currentTime.getFullYear(),
+                    realCurrentWeek + 1
+                );
+                currentWeekResponse = { scheduleList: currentWeekData };
+                nextWeekResponse = { scheduleList: nextWeekData };
+            }
 
             // 요일 매핑 (DayOfWeek enum -> 한글)
             const dayOfWeekMap: { [key: string]: string } = {

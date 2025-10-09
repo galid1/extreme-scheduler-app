@@ -3,7 +3,7 @@ import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOp
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
-import {authService, memberScheduleService, memberService} from '@/src/services/api';
+import {authService, AutoSchedulingScheduleApiResponse, memberScheduleService, memberService} from '@/src/services/api';
 import type {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import {getYearAndWeek} from '@/src/utils/dateUtils';
@@ -36,7 +36,7 @@ export default function MemberHome() {
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
 
     // Local state for auto scheduling results and registration status
-    const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<any[] | null>(null);
+    const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[] | null>(null);
     const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
 
     const {mockMode} = useConfigStore();
