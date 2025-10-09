@@ -131,6 +131,13 @@ export default function FreeTimeScheduleDetailView({
     const handleEditPress = () => {
         setIsEditMode(true);
         setSelectedTimes(JSON.parse(JSON.stringify(freeTimeScheduleList)));
+
+        // Show usage guide
+        Alert.alert(
+            '일정 수정 방법',
+            '셀을 반복해서 눌러 변경할 수 있습니다.\n\n없음 → 매주 반복 → 일회 → 없음',
+            [{text: '확인'}]
+        );
     };
 
     // Handle cancel
