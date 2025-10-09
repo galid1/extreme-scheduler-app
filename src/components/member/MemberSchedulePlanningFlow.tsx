@@ -133,7 +133,6 @@ export default function MemberSchedulePlanningFlow({
                                 </TouchableOpacity>
                             )}
                         </View>
-                        {/*SchedulingCompletedCard*/}
                     </View>
                 </View>
             ) : (
@@ -235,6 +234,11 @@ export default function MemberSchedulePlanningFlow({
                                 />
                             </View>
                         </View>
+                        <View>
+                            <SchedulingCompletedCard
+                                hasAutoSchedulingResults={hasSchedulingResults}
+                            />
+                        </View>
                     </TouchableOpacity>
                 ) : (
                     <View style={styles.stepHeader}>
@@ -248,7 +252,9 @@ export default function MemberSchedulePlanningFlow({
                             <Text style={styles.stepTitle}>트레이너 스케줄링</Text>
                         </View>
                         <View style={styles.noResultBadge}>
-                            <Text style={styles.noResultText}>일정 없음</Text>
+                            <SchedulingCompletedCard
+                                hasAutoSchedulingResults={hasSchedulingResults}
+                            />
                         </View>
                     </View>
                 )}

@@ -10,7 +10,6 @@ import {getYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
-import SchedulingCompletedCard from '@/src/components/member/SchedulingCompletedCard';
 import MemberSchedulePlanningFlow from '@/src/components/member/MemberSchedulePlanningFlow';
 
 
