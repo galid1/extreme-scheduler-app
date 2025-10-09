@@ -259,6 +259,7 @@ export interface TrainerWeeklyScheduleRegistrationStatusResponse {
 
 // Auto Scheduling Result Types
 export interface AutoSchedulingScheduleApiResponse {
+    autoSchedulingResultId?: number; // Individual schedule item ID for cancellation
     memberName: string;
     memberAccountId: number;
     year: number;
@@ -276,6 +277,6 @@ export interface GetAutoSchedulingResultApiResponse {
     scheduleList: AutoSchedulingScheduleApiResponse[];
 }
 
-export interface DeleteAutoSchedulingResultApiResponse {
+export interface CancelAutoSchedulingResultApiResponse {
     success: boolean;
 }

@@ -11,7 +11,7 @@ import {
     TrainerWeeklyScheduleRegistrationStatusResponse,
     GetAutoSchedulingResultApiResponse,
     AutoSchedulingResponse,
-    DeleteAutoSchedulingResultApiResponse,
+    CancelAutoSchedulingResultApiResponse,
 } from '../../types/api';
 
 class TrainerScheduleService {
@@ -67,11 +67,11 @@ class TrainerScheduleService {
    * @param year 삭제할 연도
    * @param weekOfYear 삭제할 주차
    */
-  async deleteAutoSchedulingResult(
+  async cancelAutoSchedulingResult(
     year: number,
     weekOfYear: number
-  ): Promise<DeleteAutoSchedulingResultApiResponse> {
-    return apiClient.delete<DeleteAutoSchedulingResultApiResponse>(
+  ): Promise<CancelAutoSchedulingResultApiResponse> {
+    return apiClient.delete<CancelAutoSchedulingResultApiResponse>(
       `/api/v1/trainers/schedules/auto-scheduling?year=${year}&weekOfYear=${weekOfYear}`
     );
   }

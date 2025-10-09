@@ -40,7 +40,7 @@ export default function ScheduleResetButton({currentWeek, disabled = false, styl
                             const currentYear = today.getFullYear();
 
                             // 자동 스케줄링 결과 삭제 API 호출
-                            const result = await trainerScheduleService.deleteAutoSchedulingResult(
+                            const result = await trainerScheduleService.cancelAutoSchedulingResult(
                                 currentYear,
                                 currentWeek
                             );

@@ -253,7 +253,7 @@ export default function TrainerHome() {
                                                     const today = new Date();
                                                     const currentYear = today.getFullYear();
 
-                                                    const result = await trainerScheduleService.deleteAutoSchedulingResult(
+                                                    const result = await trainerScheduleService.cancelAutoSchedulingResult(
                                                         currentYear,
                                                         currentWeek
                                                     );
