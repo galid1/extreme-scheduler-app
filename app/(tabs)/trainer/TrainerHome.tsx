@@ -1,33 +1,21 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {
-    Alert,
-    AppState,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
-import {authService, trainerService} from '@/src/services/api';
+import {authService} from '@/src/services/api';
 import {TrainerStatus} from '@/src/types/enums';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
-import FreeTimeScheduleEditor from '@/src/components/freetimeschedule/FreeTimeScheduleEditor';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
 import ErrorRetryView from '@/src/components/ErrorRetryView';
-import WeekInfo from '@/src/components/WeekInfo';
-import {PeriodicScheduleLine, OnetimeScheduleLine} from '@/src/types/api';
+import {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import {getCurrentWeek} from '@/src/utils/dateUtils';
 import WeekSelector from '@/src/components/training/WeekSelector';
 import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
-import {ActivityIndicator} from 'react-native';
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -49,11 +37,8 @@ export default function TrainerHome() {
     const status = trainer?.status
     const appStateRef = useRef(AppState.currentState);
     const {shouldRefresh, setHasNextWeekScheduling} = useSchedulingEventStore();
-    const [expandedDay, setExpandedDay] = useState<string | null>(null);
-    const [showScheduleEdit, setShowScheduleEdit] = useState(false);
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
-    const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isRegisteredOperationSchedule, setIsRegisteredOperationSchedule] = useState<boolean | null>(null);
     const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
@@ -187,49 +172,24 @@ export default function TrainerHome() {
         return <TrainerPendingApprovalScreen onRefresh={handleRefresh} isRefreshing={isRefreshing}/>;
     }
 
-    // Show schedule registration as full page for NOT_READY status or when editing
-    if (isRegisteredOperationSchedule === false || showScheduleEdit || showScheduleEditFromDetail) {
-        return (
-            <FreeTimeScheduleEditor
-                showEdit={showScheduleEdit || showScheduleEditFromDetail}
-                periodicScheduleLines={scheduleData.periodicScheduleLines}
-                onetimeScheduleLines={scheduleData.onetimeScheduleLines}
-                expandedDay={expandedDay}
-                setExpandedDay={setExpandedDay}
-                isSubmitting={isSubmittingSchedule}
-                setIsSubmitting={setIsSubmittingSchedule}
-                fromDetail={showScheduleEditFromDetail}
-                onBackToDetail={() => {
-                    setShowScheduleEditFromDetail(false);
-                    setShowScheduleDetail(true);
-                    setExpandedDay(null);
-                }}
-                onCancel={() => {
-                    setShowScheduleEdit(false);
-                    setShowScheduleEditFromDetail(false);
-                    setExpandedDay(null);
-                }}
-                onSuccess={async () => {
-                    setShowScheduleEdit(false);
-                    setShowScheduleEditFromDetail(false);
+    // Show schedule detail view (or edit mode from detail)
+    if (showScheduleDetail || showScheduleEditFromDetail || isRegisteredOperationSchedule === false) {
+        const isInitialRegistration = isRegisteredOperationSchedule === false;
+        const isEditMode = showScheduleEditFromDetail || isInitialRegistration;
 
-                    // Reload registration status after schedule registration
-                    await loadInitialData();
-                    if (showScheduleEditFromDetail) {
-                        setShowScheduleDetail(true);
-                    }
-                }}
-            />
-        );
-    }
-
-    // Show schedule detail view when requested
-    if (showScheduleDetail) {
         return (
             <FreeTimeScheduleDetailView
                 periodicScheduleLines={scheduleData.periodicScheduleLines}
                 onetimeScheduleLines={scheduleData.onetimeScheduleLines}
-                onClose={() => setShowScheduleDetail(false)}
+                onClose={async () => {
+                    setShowScheduleDetail(false);
+                    setShowScheduleEditFromDetail(false);
+                    // Reload data after closing
+                    if (isEditMode) {
+                        await loadInitialData();
+                    }
+                }}
+                initialEditMode={isEditMode}
             />
         );
     }
@@ -258,7 +218,7 @@ export default function TrainerHome() {
                             // 1단계: 운영 일정
                             isOperationScheduleRegistered={isRegisteredOperationSchedule === true}
                             onShowOperationSchedule={() => setShowScheduleDetail(true)}
-                            onEditOperationSchedule={() => setShowScheduleEdit(true)}
+                            onEditOperationSchedule={() => setShowScheduleEditFromDetail(true)}
 
                             // 2단계: 자동 스케줄링
                             hasAutoSchedulingResult={hasScheduledSessions}

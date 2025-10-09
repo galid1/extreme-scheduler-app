@@ -26,12 +26,14 @@ interface TrainerScheduleDetailViewProps {
     periodicScheduleLines: PeriodicScheduleLine[];
     onetimeScheduleLines: OnetimeScheduleLine[];
     onClose: () => void;
+    initialEditMode?: boolean;
 }
 
 export default function FreeTimeScheduleDetailView({
                                                        periodicScheduleLines,
                                                        onetimeScheduleLines,
                                                        onClose,
+                                                       initialEditMode,
                                                    }: TrainerScheduleDetailViewProps) {
     const days = ['월', '화', '수', '목', '금', '토', '일'];
     const hours = Array.from({length: 24}, (_, i) => i);
@@ -97,10 +99,17 @@ export default function FreeTimeScheduleDetailView({
     }, [periodicScheduleLines, onetimeScheduleLines]);
 
     // Edit mode state
-    const [isEditMode, setIsEditMode] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(initialEditMode);
     const [selectedTimes, setSelectedTimes] = useState<WeekSchedule>({});
     const [isSaving, setIsSaving] = useState(false);
     const {account} = useAuthStore();
+
+    // Initialize selectedTimes if initialEditMode is true
+    React.useEffect(() => {
+        if (initialEditMode) {
+            setSelectedTimes(JSON.parse(JSON.stringify(freeTimeScheduleList)));
+        }
+    }, [initialEditMode, freeTimeScheduleList]);
 
     // Handle time slot press in edit mode
     const handleTimeSlotPress = (day: string, hour: number) => {
