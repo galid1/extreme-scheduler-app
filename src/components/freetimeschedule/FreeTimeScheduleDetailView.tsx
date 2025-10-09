@@ -4,11 +4,10 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import WeekInfo from '@/src/components/WeekInfo';
 import {DayOfWeek, OnetimeScheduleLine, PeriodicScheduleLine, RegisterScheduleRequest} from '@/src/types/api';
-import {formatDateMMDD, getNextWeekDateRange} from '@/src/utils/dateUtils';
+import {formatDateMMDD, getNextWeekDateRange, getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {AccountType} from '@/src/types/enums';
 import {memberScheduleService, trainerScheduleService} from '@/src/services/api';
-import {getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
 import {useSchedulingEventStore} from "@/src/store/useSchedulingEventStore";
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -161,13 +160,13 @@ export default function FreeTimeScheduleDetailView({
             setIsSaving(true);
 
             const dayMapping: { [key: string]: DayOfWeek } = {
-                '월': 'MONDAY',
-                '화': 'TUESDAY',
-                '수': 'WEDNESDAY',
-                '목': 'THURSDAY',
-                '금': 'FRIDAY',
-                '토': 'SATURDAY',
-                '일': 'SUNDAY',
+                '월': DayOfWeek.MONDAY,
+                '화': DayOfWeek.TUESDAY,
+                '수': DayOfWeek.WEDNESDAY,
+                '목': DayOfWeek.THURSDAY,
+                '금': DayOfWeek.FRIDAY,
+                '토': DayOfWeek.SATURDAY,
+                '일': DayOfWeek.SUNDAY,
             };
 
             const {startDate} = getNextWeekDateRange();

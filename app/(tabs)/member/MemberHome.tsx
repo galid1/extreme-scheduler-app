@@ -5,11 +5,9 @@ import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
 import {authService, memberScheduleService, memberService} from '@/src/services/api';
 import type {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
-import MockModeToggle from '@/src/components/MockModeToggle';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import {getYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
-import FreeTimeScheduleEditor from '@/src/components/freetimeschedule/FreeTimeScheduleEditor';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 
 
@@ -26,10 +24,8 @@ export default function MemberHome() {
     const trainerAccountId = member?.trainerAccountId;
 
     const appStateRef = useRef(AppState.currentState);
-    const [expandedDay, setExpandedDay] = useState<string | null>(null);
-    const [showScheduleEdit, setShowScheduleEdit] = useState(false);
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
-    const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
+    const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
     const [showMenuDropdown, setShowMenuDropdown] = useState(false);
     const [scheduleData, setScheduleData] = useState<{
         periodicScheduleLines: PeriodicScheduleLine[],
@@ -147,39 +143,24 @@ export default function MemberHome() {
         );
     }
 
-  // Show schedule registration as full page for NOT registered status or when editing
-  // Schedule editing view for members with trainer assigned
-  if (trainerAccountId && (weeklyScheduleRegistration?.registered === false || showScheduleEdit)) {
-    return (
-      <FreeTimeScheduleEditor
-                showEdit={showScheduleEdit}
-                periodicScheduleLines={scheduleData.periodicScheduleLines}
-                onetimeScheduleLines={scheduleData.onetimeScheduleLines}
-                expandedDay={expandedDay}
-                setExpandedDay={setExpandedDay}
-                isSubmitting={isSubmittingSchedule}
-                setIsSubmitting={setIsSubmittingSchedule}
-                onCancel={() => {
-                    setShowScheduleEdit(false);
-                    setExpandedDay(null);
-                }}
-                onSuccess={async () => {
-                    setShowScheduleEdit(false);
-                    // Reload all data after schedule registration
-                    await loadInitialData();
-                }}
-            />
-        );
-    }
+    // Show schedule detail view (or edit mode from detail)
+    if (showScheduleDetail || showScheduleEditFromDetail || weeklyScheduleRegistration?.registered === false) {
+        const isInitialRegistration = weeklyScheduleRegistration?.registered === false;
+        const isEditMode = showScheduleEditFromDetail || isInitialRegistration;
 
-    // Show schedule detail view when requested
-    if (showScheduleDetail) {
-        console.log("periodicScheduleLines = ", JSON.stringify(scheduleData.periodicScheduleLines));
         return (
             <FreeTimeScheduleDetailView
                 periodicScheduleLines={scheduleData.periodicScheduleLines}
                 onetimeScheduleLines={scheduleData.onetimeScheduleLines}
-                onClose={() => setShowScheduleDetail(false)}
+                onClose={async () => {
+                    setShowScheduleDetail(false);
+                    setShowScheduleEditFromDetail(false);
+                    // Reload data after closing
+                    if (isEditMode) {
+                        await loadInitialData();
+                    }
+                }}
+                initialEditMode={isEditMode}
             />
         );
     }
@@ -312,7 +293,7 @@ export default function MemberHome() {
                                     try {
                                         // Skip API call in mock mode
                                         if (mockMode) {
-                                            setShowScheduleEdit(true);
+                                            setShowScheduleEditFromDetail(true);
                                             return;
                                         }
 
@@ -329,7 +310,7 @@ export default function MemberHome() {
                                             return;
                                         }
 
-                                        setShowScheduleEdit(true);
+                                        setShowScheduleEditFromDetail(true);
                                     } catch (error) {
                                         console.error('Error checking schedule status:', error);
                                         Alert.alert('오류', '일정 상태 확인에 실패했습니다.');

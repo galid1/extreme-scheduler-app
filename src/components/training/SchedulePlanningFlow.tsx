@@ -219,9 +219,12 @@ export default function SchedulePlanningFlow({
                             </View>
                             <Text style={styles.stepTitle}>일정 확정</Text>
                         </View>
-                        <View style={styles.completedBadge}>
-                            <Text style={styles.completedBadgeText}>확정됨</Text>
-                        </View>
+                        <TouchableOpacity
+                            style={styles.textButton}
+                            onPress={onResetSchedule}
+                        >
+                            <Text style={styles.textButtonWarning}>재설정</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
             </View>

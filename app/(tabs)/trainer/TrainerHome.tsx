@@ -3,7 +3,7 @@ import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOp
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
-import {authService} from '@/src/services/api';
+import {authService, AutoSchedulingResultStatus} from '@/src/services/api';
 import {TrainerStatus} from '@/src/types/enums';
 import {useConfigStore} from '@/src/store/useConfigStore';
 import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
@@ -36,13 +36,12 @@ export default function TrainerHome() {
     const name = account?.privacyInfo?.name;
     const status = trainer?.status
     const appStateRef = useRef(AppState.currentState);
-    const {shouldRefresh, setHasNextWeekScheduling} = useSchedulingEventStore();
+    const {shouldRefresh, hasNextWeekScheduling, setHasNextWeekScheduling} = useSchedulingEventStore();
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isRegisteredOperationSchedule, setIsRegisteredOperationSchedule] = useState<boolean | null>(null);
-    const [hasScheduledSessions, setHasScheduledSessions] = useState<boolean>(false);
-    const [isScheduleFixed, setIsScheduleFixed] = useState<boolean>(false);
+    const [nextWeekAutoSchedulingResultFixed, setNextWeekAutoSchedulingResultFixed] = useState<boolean>(false);
     const [hasError, setHasError] = useState(false);
     const [isRetrying, setIsRetrying] = useState(false);
     const [scheduleData, setScheduleData] = useState<{
@@ -62,16 +61,16 @@ export default function TrainerHome() {
             const nextWeekOfYear = weekOfYear + 1;
 
             // Load both APIs in parallel
-            const [registrationResponse, schedulingResponse, freeTimeScheduleResponse] = await Promise.all([
+            const [registrationResponse, autoSchedulingResultResponse, freeTimeScheduleResponse] = await Promise.all([
                 trainerScheduleService.checkWeeklyScheduleRegistration(year, nextWeekOfYear),
                 trainerScheduleService.getAutoSchedulingResult(year, nextWeekOfYear),
                 trainerScheduleService.getFreeSchedule()
             ]);
 
             setIsRegisteredOperationSchedule(registrationResponse.registered);
-            const hasScheduling = schedulingResponse.scheduleList.length > 0;
-            setHasScheduledSessions(hasScheduling);
+            const hasScheduling = autoSchedulingResultResponse.weeklyAutoSchedulingResultStatus != null;
             setHasNextWeekScheduling(hasScheduling); // Store에 저장
+            setNextWeekAutoSchedulingResultFixed(autoSchedulingResultResponse.weeklyAutoSchedulingResultStatus == AutoSchedulingResultStatus.FIXED)
             setScheduleData({
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
@@ -173,9 +172,8 @@ export default function TrainerHome() {
     }
 
     // Show schedule detail view (or edit mode from detail)
-    if (showScheduleDetail || showScheduleEditFromDetail || isRegisteredOperationSchedule === false) {
-        const isInitialRegistration = isRegisteredOperationSchedule === false;
-        const isEditMode = showScheduleEditFromDetail || isInitialRegistration;
+    if (showScheduleDetail || showScheduleEditFromDetail) {
+        const isEditMode = showScheduleEditFromDetail;
 
         return (
             <FreeTimeScheduleDetailView
@@ -221,7 +219,7 @@ export default function TrainerHome() {
                             onEditOperationSchedule={() => setShowScheduleEditFromDetail(true)}
 
                             // 2단계: 자동 스케줄링
-                            hasAutoSchedulingResult={hasScheduledSessions}
+                            hasAutoSchedulingResult={hasNextWeekScheduling}
                             onStartAutoScheduling={() => router.push('/auto-scheduling')}
                             onViewSchedulingResult={() => {
                                 const { setCurrentWeek } = useTrainingStore.getState();
@@ -230,7 +228,7 @@ export default function TrainerHome() {
                             }}
 
                             // 3단계: 일정 확정
-                            isScheduleConfirmed={false}
+                            isScheduleConfirmed={nextWeekAutoSchedulingResultFixed}
                             onConfirmSchedule={async () => {
                                 const currentWeek = getCurrentWeek() + 1; // 다음 주
                                 Alert.alert(
@@ -251,7 +249,6 @@ export default function TrainerHome() {
                                                     );
 
                                                     if (result.success) {
-                                                        setIsScheduleFixed(true);
                                                         Alert.alert('완료', '일정이 확정되었습니다.');
                                                         // 상태 갱신
                                                         const {triggerRefresh} = useSchedulingEventStore.getState();
@@ -270,7 +267,7 @@ export default function TrainerHome() {
                             }}
                             onResetSchedule={async () => {
                                 const currentWeek = getCurrentWeek() + 1; // 다음 주
-                                const alertMessage = isScheduleFixed
+                                const alertMessage = nextWeekAutoSchedulingResultFixed
                                     ? `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?\n\n⚠️ 해당 주차에 배정된 모든 회원에게 일정 취소 알림이 전송됩니다.`
                                     : `${currentWeek}주차 트레이닝 일정을 재설정하시겠습니까?`;
 
@@ -292,7 +289,6 @@ export default function TrainerHome() {
                                                     );
 
                                                     if (result.success) {
-                                                        setIsScheduleFixed(false);
                                                         resetWeek(currentWeek);
                                                         const {triggerRefresh} = useSchedulingEventStore.getState();
                                                         triggerRefresh();

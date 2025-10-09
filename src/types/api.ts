@@ -277,6 +277,7 @@ export interface AutoSchedulingScheduleApiResponse {
 }
 
 export interface GetAutoSchedulingResultApiResponse {
+    weeklyAutoSchedulingResultStatus?: AutoSchedulingResultStatus;
     year: number;
     weekOfYear: number;
     scheduleList: AutoSchedulingScheduleApiResponse[];
