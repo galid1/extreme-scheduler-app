@@ -1,23 +1,69 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { TrainingSession } from '@/src/store/useTrainingStore';
 
 interface MemberScheduleActionsProps {
-    currentWeek: number;
+    selectedSession: TrainingSession | null;
+    currentAccountId: number | undefined;
 }
 
 export default function MemberScheduleActions({
-    currentWeek,
+    selectedSession,
+    currentAccountId,
 }: MemberScheduleActionsProps) {
+    console.log("@@@@@@@@@@")
+    console.log(JSON.stringify(selectedSession))
+    console.log(currentAccountId)
+
+    // 버튼 활성화 조건:
+    // 1. selectedSession이 있어야 함
+    // 2. selectedSession.memberId === currentAccountId (본인의 일정)
+    // 3. autoSchedulingResultId가 있어야 함
+    const isEnabled =
+        selectedSession !== null &&
+        currentAccountId !== undefined &&
+        selectedSession.memberId === currentAccountId.toString() &&
+        selectedSession.autoSchedulingResultLineId !== undefined;
+
     const handleCancelRequest = async () => {
-        // TODO: 구현 예정
+        if (!selectedSession || !selectedSession.autoSchedulingResultLineId) {
+            Alert.alert('오류', '취소할 일정을 선택해주세요.');
+            return;
+        }
+
+        Alert.alert(
+            '일정 취소 확인',
+            `${selectedSession.day}요일 ${selectedSession.hour}시 트레이닝 일정을 취소 요청하시겠습니까?`,
+            [
+                { text: '아니오', style: 'cancel' },
+                {
+                    text: '예',
+                    onPress: async () => {
+                        try {
+                            // TODO: API 호출 구현
+                            // await memberScheduleService.cancelSchedule(selectedSession.autoSchedulingResultId);
+                            console.log('Canceling schedule with ID:', selectedSession.autoSchedulingResultId);
+                            Alert.alert('완료', '일정 취소 요청이 완료되었습니다.');
+                        } catch (error) {
+                            console.error('일정 취소 오류:', error);
+                            Alert.alert('오류', '일정 취소 중 문제가 발생했습니다.');
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     return (
         <View style={styles.container}>
             <TouchableOpacity
-                style={styles.cancelButton}
+                style={[
+                    styles.cancelButton,
+                    !isEnabled && styles.cancelButtonDisabled
+                ]}
                 onPress={handleCancelRequest}
+                disabled={!isEnabled}
             >
                 <Ionicons
                     name="close-circle-outline"
@@ -52,6 +98,10 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 4,
         elevation: 4,
+    },
+    cancelButtonDisabled: {
+        backgroundColor: '#94A3B8',
+        opacity: 0.6,
     },
     cancelButtonText: {
         color: 'white',

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
-import {useTrainingStore} from '@/src/store/useTrainingStore';
+import {useTrainingStore, TrainingSession} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView, {WeekCalendarViewRef} from '@/src/components/training/WeekCalendarView';
 import {AutoSchedulingResultStatus, trainerScheduleService, memberScheduleService} from '@/src/services/api';
@@ -45,6 +45,7 @@ export default function TrainingScheduleScreen() {
     const [currentTime] = useState(new Date());
     const [currentWeekAutoSchedulingStatus, setCurrentWeekAutoSchedulingStatus] = useState<AutoSchedulingResultStatus | undefined>(undefined);
     const [nextWeekAutoSchedulingStatus, setNextWeekAutoSchedulingStatus] = useState<AutoSchedulingResultStatus | undefined>(undefined);
+    const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
     const calendarViewRef = useRef<WeekCalendarViewRef>(null);
 
     useEffect(() => {
@@ -213,7 +214,8 @@ export default function TrainingScheduleScreen() {
                             memberPhone: '', // API 응답에 없으면 빈 문자열
                             hour: hour,
                             day: day,
-                            weekOfYear: weekOfYear
+                            weekOfYear: weekOfYear,
+                            autoSchedulingResultLineId: schedule.autoSchedulingResultLineId // Include ID for cancellation
                         });
                     }
                 });
@@ -231,7 +233,6 @@ export default function TrainingScheduleScreen() {
             );
 
             const allSessions = [...currentWeekSessions, ...nextWeekSessions];
-
             console.log(`Total sessions loaded: ${allSessions.length}`);
             setTrainingSessions(allSessions);
         } catch (error) {
@@ -427,7 +428,9 @@ export default function TrainingScheduleScreen() {
                     ref={calendarViewRef}
                     sessions={trainingSessions}
                     selectedMember={selectedMember}
+                    selectedSession={selectedSession}
                     onSelectMember={setSelectedMember}
+                    onSelectSession={setSelectedSession}
                     currentWeek={currentWeek}
                     onWeekChange={setCurrentWeek}
                 />
@@ -450,7 +453,8 @@ export default function TrainingScheduleScreen() {
             {/* Member Schedule Actions - Only show for members */}
             {account?.accountType === AccountType.MEMBER && (
                 <MemberScheduleActions
-                    currentWeek={currentWeek}
+                    selectedSession={selectedSession}
+                    currentAccountId={account?.id}
                 />
             )}
 

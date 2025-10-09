@@ -12,6 +12,7 @@ export interface TrainingSession {
   hour: number;
   day: string;
   weekOfYear: number; // 연도 기준 주차 (1-52)
+  autoSchedulingResultLineId?: number; // Individual schedule item ID for cancellation
 }
 
 interface TrainingState {

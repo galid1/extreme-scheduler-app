@@ -25,12 +25,15 @@ interface TrainingSession {
   hour: number;
   day: string;
   weekOfYear: number;
+  autoSchedulingResultLineId?: number;
 }
 
 interface WeekCalendarViewProps {
   sessions: TrainingSession[];
   selectedMember: string | null;
-  onSelectMember: (memberId: string) => void;
+  selectedSession?: TrainingSession | null;
+  onSelectMember: (memberId: string | null) => void;
+  onSelectSession?: (session: TrainingSession | null) => void;
   currentWeek: number;
   onWeekChange: (week: number) => void;
 }
@@ -42,7 +45,9 @@ export interface WeekCalendarViewRef {
 const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(({
   sessions,
   selectedMember,
+  selectedSession,
   onSelectMember,
+  onSelectSession,
   currentWeek,
   onWeekChange
 }, ref) => {
@@ -283,8 +288,33 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
                         isTodayForWeek(day, weekNumber) && styles.dayCellToday,
                         isCurrent && isTodayForWeek(day, weekNumber) && styles.currentCell
                       ]}
-                      onPress={() => session && !isPast && onSelectMember(session.memberId)}
-                      disabled={!session || isPast}
+                      onPress={() => {
+                        // 빈 셀 클릭 시 선택 취소
+                        if (!session) {
+                          onSelectMember(null);
+                          onSelectSession?.(null);
+                          return;
+                        }
+
+                        // 과거 세션은 클릭 불가
+                        if (isPast) {
+                          return;
+                        }
+
+                        // 이미 선택된 셀을 다시 클릭한 경우 선택 취소
+                        if (selectedSession?.autoSchedulingResultLineId !== undefined &&
+                            session.autoSchedulingResultLineId !== undefined &&
+                            selectedSession.autoSchedulingResultLineId === session.autoSchedulingResultLineId) {
+                          onSelectMember(null);
+                          onSelectSession?.(null);
+                          return;
+                        }
+
+                        // 새로운 셀 선택
+                        onSelectMember(session.memberId);
+                        onSelectSession?.(session);
+                      }}
+                      disabled={isPast}
                       activeOpacity={0.8}
                     >
                       {session && (
