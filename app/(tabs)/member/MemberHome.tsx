@@ -9,6 +9,7 @@ import {useConfigStore} from '@/src/store/useConfigStore';
 import {getYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
+import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 
 
 export default function MemberHome() {
@@ -24,6 +25,7 @@ export default function MemberHome() {
     const trainerAccountId = member?.trainerAccountId;
 
     const appStateRef = useRef(AppState.currentState);
+    const {shouldRefresh} = useSchedulingEventStore();
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
     const [showMenuDropdown, setShowMenuDropdown] = useState(false);
@@ -75,8 +77,6 @@ export default function MemberHome() {
 
     // Load schedule data
     const loadScheduleData = useCallback(async () => {
-        if (!member || mockMode) return;
-
         try {
             const {targetYear, targetWeekOfYear} = getYearAndWeek();
             const nextWeekOfYear = targetWeekOfYear + 1;
@@ -99,7 +99,7 @@ export default function MemberHome() {
         } catch (error) {
             console.error('Error loading schedule data:', error);
         }
-    }, [member, mockMode]);
+    }, [member]);
 
     // Load initial data - can be called from buttons/events
     const loadInitialData = useCallback(async () => {
@@ -110,7 +110,15 @@ export default function MemberHome() {
     // Load all data on mount
     useEffect(() => {
         loadInitialData();
-    }, [loadInitialData]);
+    }, []);
+
+    // 자동 스케줄링 완료 시 데이터 새로고침
+    useEffect(() => {
+        if (shouldRefresh > 0) {
+            console.log('🎉 Scheduling completed, refreshing data...');
+            loadInitialData();
+        }
+    }, [shouldRefresh]);
 
     // Update data when app comes to foreground
     useEffect(() => {
