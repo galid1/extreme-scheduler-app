@@ -9,6 +9,7 @@ import {useAuthStore} from '@/src/store/useAuthStore';
 import {AccountType} from '@/src/types/enums';
 import {memberScheduleService, trainerScheduleService} from '@/src/services/api';
 import {getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
+import {useSchedulingEventStore} from "@/src/store/useSchedulingEventStore";
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const HORIZONTAL_PADDING = 32; // paddingHorizontal: 16 * 2
@@ -213,11 +214,13 @@ export default function FreeTimeScheduleDetailView({
                 const result = await memberScheduleService.registerSchedule(request);
                 Alert.alert('완료', '일정이 수정되었습니다.');
                 setIsEditMode(false);
+                useSchedulingEventStore.getState().triggerRefresh();
                 onClose();
             } else if (account?.accountType === AccountType.TRAINER) {
                 const result = await trainerScheduleService.registerSchedule(request);
                 Alert.alert('완료', '일정이 수정되었습니다.');
                 setIsEditMode(false);
+                useSchedulingEventStore.getState().triggerRefresh();
                 onClose();
             }
         } catch (error) {
