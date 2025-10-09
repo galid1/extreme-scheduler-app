@@ -106,19 +106,9 @@ export default function FreeTimeScheduleDetailView({
     const handleTimeSlotPress = (day: string, hour: number) => {
         if (!isEditMode) return;
 
-        console.log("#############")
-        console.log("#############")
-        console.log("befor: ", selectedTimes);
-
         setSelectedTimes((prev) => {
-            console.log("clicked : ", day, hour);
-
-
             const daySchedule = prev[day] || {};
             const currentState = daySchedule[hour] || 'none';
-
-            console.log("daySchedule: ", daySchedule);
-            console.log("currentState: ", currentState);
 
             const newDaySchedule = {...daySchedule};
 
@@ -135,10 +125,6 @@ export default function FreeTimeScheduleDetailView({
 
             return {...prev, [day]: newDaySchedule};
         });
-
-        console.log("#############")
-        console.log("#############")
-        console.log("after: ", selectedTimes);
     };
 
     // Handle edit button press
@@ -191,7 +177,12 @@ export default function FreeTimeScheduleDetailView({
                         const dayIndex = days.indexOf(day);
                         const date = new Date(startDate);
                         date.setDate(startDate.getDate() + dayIndex);
-                        const scheduleDate = date.toISOString().split('T')[0];
+
+                        // Format date to YYYY-MM-DD in local timezone (avoid UTC conversion)
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const dayOfMonth = String(date.getDate()).padStart(2, '0');
+                        const scheduleDate = `${year}-${month}-${dayOfMonth}`;
 
                         onetimeSchedules.push({
                             scheduleDate,
