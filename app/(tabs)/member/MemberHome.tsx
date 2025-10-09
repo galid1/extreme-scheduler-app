@@ -178,15 +178,12 @@ export default function MemberHome() {
             {/*<MockModeToggle/>*/}
             <View style={styles.topHeader}>
                 <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
-                {trainerAccountId && (
-                    <TouchableOpacity
-                        style={styles.trainerBadge}
-                        onPress={() => router.push('/trainer-profile')}
-                    >
-                        <Text style={styles.trainerBadgeText}>담당 트레이너</Text>
-                        <Ionicons name="chevron-forward" size={14} color="#999"/>
-                    </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                    style={styles.notificationButton}
+                    onPress={() => router.push('/notifications')}
+                >
+                    <Ionicons name="notifications-outline" size={24} color="#1F2937"/>
+                </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -464,6 +461,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 20,
         paddingBottom: 10,
+    },
+    notificationButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     trainerBadge: {
         flexDirection: 'row',
