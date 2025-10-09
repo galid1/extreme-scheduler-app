@@ -31,7 +31,6 @@ export default function MemberHome() {
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
     const [showScheduleRegistration, setShowScheduleRegistration] = useState(false);
-    const [showMenuDropdown, setShowMenuDropdown] = useState(false);
     const [scheduleData, setScheduleData] = useState<{
         periodicScheduleLines: PeriodicScheduleLine[],
         onetimeScheduleLines: OnetimeScheduleLine[]
@@ -45,6 +44,8 @@ export default function MemberHome() {
 
     // Helper function to check if auto scheduling is completed with results
     const hasAutoSchedulingResults = () => {
+        console.log("################")
+        console.log(JSON.stringify(fixedAutoSchedulingResults))
         return fixedAutoSchedulingResults !== null && fixedAutoSchedulingResults?.length > 0;
     };
 
@@ -90,7 +91,7 @@ export default function MemberHome() {
             ]);
 
             setWeeklyScheduleRegistration(registrationResponse);
-            setFixedAutoSchedulingResults(autoSchedulingResponse.data);
+            setFixedAutoSchedulingResults(autoSchedulingResponse);
             setScheduleData({
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
@@ -231,14 +232,6 @@ export default function MemberHome() {
                             onViewTrainingSchedule={hasAutoSchedulingResults() ? () => router.push('/training-schedule') : undefined}
                         />
                     </View>
-                )}
-
-                {/* Show scheduling completion card when scheduling is done */}
-                {trainerAccountId && hasAutoSchedulingResults() && (
-                    <SchedulingCompletedCard
-                        hasAutoSchedulingResults={hasAutoSchedulingResults()}
-                        onContactTrainer={() => router.push('/trainer-profile')}
-                    />
                 )}
             </ScrollView>
 

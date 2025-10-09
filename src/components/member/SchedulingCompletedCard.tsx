@@ -39,22 +39,7 @@ export default function SchedulingCompletedCard({
                         </Text>
                     </>
                 )}
-                <View style={styles.scheduledStateInfo}>
-                    <Ionicons name="calendar-outline" size={20} color="#6B7280"/>
-                    <Text style={styles.scheduledStateInfoText}>
-                        매주 일요일에 다음 주 일정이 확정됩니다
-                    </Text>
-                </View>
             </View>
-
-            {/* Button to contact trainer */}
-            <TouchableOpacity
-                style={styles.contactTrainerButton}
-                onPress={onContactTrainer}
-            >
-                <Ionicons name="chatbubbles-outline" size={20} color="#3B82F6"/>
-                <Text style={styles.contactTrainerButtonText}>담당 트레이너 연락처 확인</Text>
-            </TouchableOpacity>
         </View>
     );
 }

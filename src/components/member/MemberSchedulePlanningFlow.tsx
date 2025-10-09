@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import SchedulingCompletedCard from "@/src/components/member/SchedulingCompletedCard";
 
 // Icon sizes
 const ICON_SIZE_SMALL = 10;
@@ -118,13 +119,21 @@ export default function MemberSchedulePlanningFlow({
                             >
                                 <Text style={styles.textButtonPrimary}>확인</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.textButton}
-                                onPress={onEditSchedule}
-                            >
-                                <Text style={styles.textButtonPrimary}>수정</Text>
-                            </TouchableOpacity>
+                            <Ionicons
+                                name="chevron-forward"
+                                size={ICON_SIZE_MEDIUM}
+                                color={"#3B82F6"}
+                            />
+                            {!isTrainerScheduled && (
+                                <TouchableOpacity
+                                    style={styles.textButton}
+                                    onPress={onEditSchedule}
+                                >
+                                    <Text style={styles.textButtonPrimary}>수정</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
+                        {/*SchedulingCompletedCard*/}
                     </View>
                 </View>
             ) : (
