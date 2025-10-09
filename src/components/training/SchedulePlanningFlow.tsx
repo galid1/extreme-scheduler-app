@@ -204,7 +204,7 @@ export default function SchedulePlanningFlow({
                                 style={styles.textButton}
                                 onPress={onConfirmSchedule}
                             >
-                                <Text style={styles.textButtonPrimary}>확정</Text>
+                                <Text style={styles.textButtonPrimary}>스케줄 확인</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

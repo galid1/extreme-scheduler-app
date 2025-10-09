@@ -229,41 +229,11 @@ export default function TrainerHome() {
 
                             // 3단계: 일정 확정
                             isScheduleConfirmed={nextWeekAutoSchedulingResultFixed}
-                            onConfirmSchedule={async () => {
-                                const currentWeek = getCurrentWeek() + 1; // 다음 주
-                                Alert.alert(
-                                    `${currentWeek}주차 일정 확정`,
-                                    `${currentWeek}주차 트레이닝 일정을 확정하시겠습니까?\n\n✓ 확정된 일정은 회원들에게 알림이 전송됩니다.`,
-                                    [
-                                        {text: '취소', style: 'cancel'},
-                                        {
-                                            text: '확정',
-                                            onPress: async () => {
-                                                try {
-                                                    const today = new Date();
-                                                    const currentYear = today.getFullYear();
-
-                                                    const result = await trainerScheduleService.fixAutoScheduling(
-                                                        currentYear,
-                                                        currentWeek
-                                                    );
-
-                                                    if (result.success) {
-                                                        Alert.alert('완료', '일정이 확정되었습니다.');
-                                                        // 상태 갱신
-                                                        const {triggerRefresh} = useSchedulingEventStore.getState();
-                                                        triggerRefresh();
-                                                    } else {
-                                                        Alert.alert('오류', '일정 확정에 실패했습니다.');
-                                                    }
-                                                } catch (error) {
-                                                    console.error('일정 확정 오류:', error);
-                                                    Alert.alert('오류', '일정 확정 중 문제가 발생했습니다.');
-                                                }
-                                            }
-                                        }
-                                    ]
-                                );
+                            onConfirmSchedule={() => {
+                                // 확정 전 스케줄 확인을 위해 training-schedule로 이동
+                                const { setCurrentWeek } = useTrainingStore.getState();
+                                setCurrentWeek(getCurrentWeek() + 1); // 다음 주
+                                router.push('/training-schedule');
                             }}
                             onResetSchedule={async () => {
                                 const currentWeek = getCurrentWeek() + 1; // 다음 주

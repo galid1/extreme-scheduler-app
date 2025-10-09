@@ -19,6 +19,7 @@ import ScheduleResetButton from '@/src/components/training/ScheduleResetButton';
 import {getCurrentWeek} from '@/src/utils/dateUtils';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {AccountType} from '@/src/types/enums';
+import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 
 
 export default function TrainingScheduleScreen() {
@@ -410,8 +411,8 @@ export default function TrainingScheduleScreen() {
                 />
             </View>
 
-            {/* Bottom Action Buttons - Only show for future weeks */}
-            {!isCurrentWeek(currentWeek) && !isPastWeek(currentWeek) && (
+            {/* Bottom Action Buttons - Only show for trainers and future weeks */}
+            {account?.accountType === AccountType.TRAINER && !isCurrentWeek(currentWeek) && !isPastWeek(currentWeek) && (
                 <View style={styles.bottomButtonsContainer}>
                     <TouchableOpacity
                         style={[
@@ -429,12 +430,33 @@ export default function TrainingScheduleScreen() {
                                             text: '확정',
                                             onPress: async () => {
                                                 setIsFixingWeekSchedule(true);
-                                                // Simulate notification sending
-                                                await new Promise(resolve => setTimeout(resolve, 1500));
-                                                setWeekScheduleStatus(currentWeek, true);
-                                                setIsScheduleFixed(true);
-                                                setIsFixingWeekSchedule(false);
-                                                Alert.alert('일정 확정 및 알림 발송 완료', `${currentWeek}주차 일정이 확정되고, 알림이 발송되었습니다.`);
+                                                try {
+                                                    const today = new Date();
+                                                    const currentYear = today.getFullYear();
+
+                                                    const result = await trainerScheduleService.fixAutoScheduling(
+                                                        currentYear,
+                                                        currentWeek
+                                                    );
+
+                                                    if (result.success) {
+                                                        setWeekScheduleStatus(currentWeek, true);
+                                                        setIsScheduleFixed(true);
+
+                                                        // 상태 갱신 (TrainerHome 새로고침)
+                                                        const {triggerRefresh} = useSchedulingEventStore.getState();
+                                                        triggerRefresh();
+
+                                                        Alert.alert('완료', '일정이 확정되고, 알림이 발송되었습니다.');
+                                                    } else {
+                                                        Alert.alert('오류', '일정 확정에 실패했습니다.');
+                                                    }
+                                                } catch (error) {
+                                                    console.error('일정 확정 오류:', error);
+                                                    Alert.alert('오류', '일정 확정 중 문제가 발생했습니다.');
+                                                } finally {
+                                                    setIsFixingWeekSchedule(false);
+                                                }
                                             }
                                         }
                                     ]
@@ -453,7 +475,7 @@ export default function TrainingScheduleScreen() {
                                     color="white"
                                 />
                                 <Text style={styles.notificationButtonText}>
-                                    {weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? '일정 확정' : '일정 확정'}
+                                    {weekScheduleStatus[currentWeek] === AutoSchedulingResultStatus.FIXED ? '일정 확정됨' : '일정 확정'}
                                 </Text>
                             </>
                         )}
