@@ -12,6 +12,7 @@ import {
     GetAutoSchedulingResultApiResponse,
     AutoSchedulingResponse,
     CancelAutoSchedulingResultApiResponse,
+    RegisterMemberFreeTimeScheduleResponse,
 } from '../../types/api';
 
 class TrainerScheduleService {
@@ -25,8 +26,8 @@ class TrainerScheduleService {
   /**
    * 트레이너 스케줄 등록 (정기 + 일회성 통합)
    */
-  async registerSchedule(request: RegisterScheduleRequest): Promise<void> {
-    await apiClient.post('/api/v1/trainers/schedules', request);
+  async registerSchedule(request: RegisterScheduleRequest): Promise<RegisterMemberFreeTimeScheduleResponse> {
+    return apiClient.post<RegisterMemberFreeTimeScheduleResponse>('/api/v1/trainers/schedules', request);
   }
 
   /**

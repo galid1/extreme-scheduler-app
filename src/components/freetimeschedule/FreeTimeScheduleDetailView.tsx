@@ -218,7 +218,12 @@ export default function FreeTimeScheduleDetailView({
             // Call appropriate service based on account type
             if (account?.accountType === AccountType.MEMBER) {
                 const result = await memberScheduleService.registerSchedule(request);
-                Alert.alert('완료', '일정이 수정되었습니다.');
+
+                if(result.success) {
+                    Alert.alert('완료', '일정이 수정되었습니다.');
+                } else {
+                    Alert.alert('실패', result.message);
+                }
                 setIsEditMode(false);
                 useSchedulingEventStore.getState().triggerRefresh();
                 onClose();

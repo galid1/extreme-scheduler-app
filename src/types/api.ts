@@ -133,6 +133,11 @@ export interface UnRegisterMemberFreeTimeScheduleRequest {
     targetWeekOfYear: number;
 }
 
+export interface RegisterMemberFreeTimeScheduleResponse {
+    success: boolean;
+    message?: string;
+}
+
 export interface AutoSchedulingRequest {
     memberSessionCounts: Record<number, number>;
     targetYear: number;

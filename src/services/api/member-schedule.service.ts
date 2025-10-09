@@ -9,7 +9,8 @@ import {
   RegisterScheduleRequest,
   UnRegisterMemberFreeTimeScheduleRequest,
   GetFixedAutoSchedulingResultResponse,
-  WeeklyScheduleRegistrationStatusResponse
+  WeeklyScheduleRegistrationStatusResponse,
+  RegisterMemberFreeTimeScheduleResponse
 } from '../../types/api';
 
 class MemberScheduleService {
@@ -30,8 +31,8 @@ class MemberScheduleService {
   /**
    * 회원 스케줄 등록 (정기 + 일회성 통합)
    */
-  async registerSchedule(request: RegisterScheduleRequest): Promise<void> {
-    await apiClient.post('/api/v1/members/schedules/register', request);
+  async registerSchedule(request: RegisterScheduleRequest): Promise<RegisterMemberFreeTimeScheduleResponse> {
+    return apiClient.post<RegisterMemberFreeTimeScheduleResponse>('/api/v1/members/schedules/register', request);
   }
 
   /**
