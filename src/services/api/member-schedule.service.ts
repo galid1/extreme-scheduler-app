@@ -11,7 +11,8 @@ import {
   GetFixedAutoSchedulingResultResponse,
   WeeklyScheduleRegistrationStatusResponse,
   RegisterMemberFreeTimeScheduleResponse,
-  ScheduleModificationAvailabilityResponse
+  ScheduleModificationAvailabilityResponse,
+  CancelAutoSchedulingApiResponse
 } from '../../types/api';
 
 class MemberScheduleService {
@@ -81,6 +82,17 @@ class MemberScheduleService {
     });
     return apiClient.get<ScheduleModificationAvailabilityResponse>(
       `/api/v1/members/schedules/modification-availability?${queryParams}`
+    );
+  }
+
+  /**
+   * 자동 스케줄링 취소 요청
+   */
+  async requestCancelAutoScheduling(
+    autoSchedulingResultId: number
+  ): Promise<CancelAutoSchedulingApiResponse> {
+    return apiClient.delete<CancelAutoSchedulingApiResponse>(
+      `/api/v1/members/schedules/auto-scheduling/${autoSchedulingResultId}/requests`
     );
   }
 }

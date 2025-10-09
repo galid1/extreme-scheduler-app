@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TrainingSession } from '@/src/store/useTrainingStore';
+import {memberScheduleService} from "@/src/services/api";
 
 interface MemberScheduleActionsProps {
     selectedSession: TrainingSession | null;
@@ -12,10 +13,6 @@ export default function MemberScheduleActions({
     selectedSession,
     currentAccountId,
 }: MemberScheduleActionsProps) {
-    console.log("@@@@@@@@@@")
-    console.log(JSON.stringify(selectedSession))
-    console.log(currentAccountId)
-
     // 버튼 활성화 조건:
     // 1. selectedSession이 있어야 함
     // 2. selectedSession.memberId === currentAccountId (본인의 일정)
@@ -41,10 +38,15 @@ export default function MemberScheduleActions({
                     text: '예',
                     onPress: async () => {
                         try {
-                            // TODO: API 호출 구현
-                            // await memberScheduleService.cancelSchedule(selectedSession.autoSchedulingResultId);
-                            console.log('Canceling schedule with ID:', selectedSession.autoSchedulingResultId);
-                            Alert.alert('완료', '일정 취소 요청이 완료되었습니다.');
+                            const result = await memberScheduleService.requestCancelAutoScheduling(
+                                selectedSession.autoSchedulingResultLineId!
+                            );
+
+                            if (result.success) {
+                                Alert.alert('완료', result.message || '일정 취소 요청이 완료되었습니다.');
+                            } else {
+                                Alert.alert('알림', result.message || '일정 취소 요청에 실패했습니다.');
+                            }
                         } catch (error) {
                             console.error('일정 취소 오류:', error);
                             Alert.alert('오류', '일정 취소 중 문제가 발생했습니다.');
