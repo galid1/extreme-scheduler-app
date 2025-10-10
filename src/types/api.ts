@@ -346,3 +346,32 @@ export interface ProcessCancelRequestApiResponse {
     processedAt: string;
 }
 
+// Trainer Notice Types
+export interface TrainerNoticeResponse {
+    noticeId: number;
+    trainerAccountId: number;
+    title: string;
+    content: string;
+    fixed: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateTrainerNoticeApiRequest {
+    title: string;
+    content: string;
+    fixed: boolean;
+}
+
+export interface UpdateTrainerNoticeApiRequest {
+    title: string;
+    content: string;
+}
+
+export interface TrainerNoticeListResponse {
+    notices: TrainerNoticeResponse[];
+    totalElements: number;
+    currentPage: number;
+    pageSize: number;
+}
+
