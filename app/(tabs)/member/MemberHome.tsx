@@ -8,7 +8,9 @@ import {
     AutoSchedulingScheduleApiResponse,
     GetCancelRequestsResponse,
     memberScheduleService,
-    memberService
+    memberService,
+    memberTrainerNoticeService,
+    TrainerNoticeResponse
 } from '@/src/services/api';
 import type {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {useConfigStore} from '@/src/store/useConfigStore';
@@ -47,6 +49,7 @@ export default function MemberHome() {
     // Local state for auto scheduling results and registration status
     const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[] | null>(null);
     const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
+    const [fixedNotices, setFixedNotices] = useState<TrainerNoticeResponse[]>([]);
 
     const {mockMode} = useConfigStore();
 
@@ -90,11 +93,12 @@ export default function MemberHome() {
             const nextWeekOfYear = targetWeekOfYear + 1;
 
             // Load all APIs in parallel
-            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, cancelRequestResponse] = await Promise.all([
+            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, cancelRequestResponse, noticesResponse] = await Promise.all([
                 memberScheduleService.checkWeeklyScheduleRegistration(targetYear, nextWeekOfYear),
                 memberScheduleService.getFixedAutoSchedulingResult(targetYear, nextWeekOfYear),
                 memberScheduleService.getFreeSchedule(),
                 memberScheduleService.getCancelRequests(targetYear, nextWeekOfYear),
+                memberTrainerNoticeService.getTrainerNotices(true, 0, 10).catch(() => ({ notices: [], trainerAccountId: 0, totalElements: 0, currentPage: 0, pageSize: 0 })),
             ]);
 
             setWeeklyScheduleRegistration(registrationResponse);
@@ -104,6 +108,7 @@ export default function MemberHome() {
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
             });
             setCancelRequests(cancelRequestResponse);
+            setFixedNotices(noticesResponse.notices);
         } catch (error) {
             console.error('Error loading schedule data:', error);
         }
@@ -196,6 +201,56 @@ export default function MemberHome() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
+                {/* Trainer Notices Carousel */}
+                {trainerAccountId && fixedNotices.length > 0 && (
+                    <View style={styles.noticesSection}>
+                        <View style={styles.noticesSectionHeader}>
+                            <View style={styles.noticesTitleRow}>
+                                <Ionicons name="megaphone" size={20} color="#3B82F6" />
+                                <Text style={styles.noticesSectionTitle}>트레이너 공지</Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => router.push('/member-notices')}
+                                style={styles.viewAllButton}
+                            >
+                                <Text style={styles.viewAllText}>전체보기</Text>
+                                <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.noticesCarousel}
+                            style={styles.noticesCarouselContainer}
+                        >
+                            {fixedNotices.map((notice) => (
+                                <TouchableOpacity
+                                    key={notice.noticeId}
+                                    style={styles.noticeCarouselCard}
+                                    onPress={() => router.push('/member-notices')}
+                                    activeOpacity={0.8}
+                                >
+                                    <View style={styles.noticeCardHeader}>
+                                        <Ionicons name="pin" size={14} color="#3B82F6" />
+                                        <Text style={styles.noticeCardTitle} numberOfLines={1}>
+                                            {notice.title}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.noticeCardContent} numberOfLines={1}>
+                                        {notice.content}
+                                    </Text>
+                                    <Text style={styles.noticeCardDate}>
+                                        {new Date(notice.createdAt).toLocaleDateString('ko-KR', {
+                                            month: 'short',
+                                            day: 'numeric'
+                                        })}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
+
                 {/* Member Schedule Planning Flow */}
                 {trainerAccountId && (
                     <View style={styles.planningFlowContainer}>
@@ -1424,5 +1479,74 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.08,
         shadowRadius: 8,
         elevation: 3,
+    },
+    noticesSection: {
+        marginBottom: 16,
+    },
+    noticesSectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 12,
+    },
+    noticesTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    noticesSectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1F2937',
+    },
+    viewAllButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    viewAllText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#6B7280',
+    },
+    noticesCarouselContainer: {
+        paddingHorizontal: 20,
+    },
+    noticesCarousel: {
+        gap: 12,
+    },
+    noticeCarouselCard: {
+        backgroundColor: '#EFF6FF',
+        borderRadius: 12,
+        padding: 16,
+        width: 280,
+        borderWidth: 1,
+        borderColor: '#BFDBFE',
+        borderLeftWidth: 4,
+        borderLeftColor: '#3B82F6',
+    },
+    noticeCardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 8,
+    },
+    noticeCardTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#1E40AF',
+        flex: 1,
+    },
+    noticeCardContent: {
+        fontSize: 13,
+        color: '#475569',
+        lineHeight: 18,
+        marginBottom: 12,
+    },
+    noticeCardDate: {
+        fontSize: 11,
+        color: '#94A3B8',
+        fontWeight: '600',
     },
 });
