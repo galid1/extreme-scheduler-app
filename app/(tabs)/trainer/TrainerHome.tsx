@@ -13,7 +13,7 @@ import ErrorRetryView from '@/src/components/ErrorRetryView';
 import {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
-import {getCurrentWeek, getYearAndWeek} from '@/src/utils/dateUtils';
+import {getCurrentWeek, getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
 import WeekSelector from '@/src/components/training/WeekSelector';
 import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
 import WeekInfo from "@/src/components/WeekInfo";
@@ -45,13 +45,14 @@ export default function TrainerHome() {
 
         try {
             setHasError(false);
-            const {targetYear, targetWeekOfYear} = getYearAndWeek();
-            const nextWeekOfYear = targetWeekOfYear + 1;
+            const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
+
+            console.log(`다음 주: ${targetWeekOfYear}주차`);
 
             // Load both APIs in parallel
             const [registrationResponse, autoSchedulingResultResponse, freeTimeScheduleResponse] = await Promise.all([
-                trainerScheduleService.checkWeeklyScheduleRegistration(targetYear, nextWeekOfYear),
-                trainerScheduleService.getAutoSchedulingResult(targetYear, nextWeekOfYear),
+                trainerScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear),
+                trainerScheduleService.getAutoSchedulingResult(targetYear, targetWeekOfYear),
                 trainerScheduleService.getFreeSchedule()
             ]);
 

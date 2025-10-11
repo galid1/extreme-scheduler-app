@@ -139,12 +139,11 @@ export default function FreeTimeScheduleDetailView({
     const handleEditPress = async () => {
         if(account?.accountType === AccountType.MEMBER) {
                 try {
-                    const {targetYear, targetWeekOfYear} = getYearAndWeek();
-                    const nextWeekOfYear = targetWeekOfYear + 1;
+                    const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
 
                     const result = await memberScheduleService.checkScheduleModificationAvailability(
                         targetYear,
-                        nextWeekOfYear
+                        targetWeekOfYear
                     );
 
                     if (!result.canModify) {
@@ -192,7 +191,6 @@ export default function FreeTimeScheduleDetailView({
 
             const {startDate} = getNextWeekDateRange();
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
-            const nextWeek = targetWeekOfYear + 1;
 
             // Build periodic schedules
             const periodicSchedules: { dayOfWeek: DayOfWeek; startHour: number; endHour: number }[] = [];
@@ -232,7 +230,7 @@ export default function FreeTimeScheduleDetailView({
 
             const request: RegisterScheduleRequest = {
                 targetYear: targetYear,
-                targetWeekOfYear: nextWeek,
+                targetWeekOfYear: targetWeekOfYear,
                 periodicScheduleLines: periodicSchedules,
                 onetimeScheduleLines: onetimeSchedules,
             };

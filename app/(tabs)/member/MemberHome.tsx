@@ -14,7 +14,7 @@ import {
 } from '@/src/services/api';
 import type {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {useConfigStore} from '@/src/store/useConfigStore';
-import {getCurrentWeek, getYearAndWeek} from '@/src/utils/dateUtils';
+import {getCurrentWeek, getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
@@ -106,15 +106,14 @@ export default function MemberHome() {
     // Load schedule data
     const loadScheduleData = useCallback(async () => {
         try {
-            const {targetYear, targetWeekOfYear} = getYearAndWeek();
-            const nextWeekOfYear = targetWeekOfYear + 1;
+            const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
 
             // Load all APIs in parallel
             const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, cancelRequestResponse, noticesResponse] = await Promise.all([
-                memberScheduleService.checkWeeklyScheduleRegistration(targetYear, nextWeekOfYear),
-                memberScheduleService.getFixedAutoSchedulingResult(targetYear, nextWeekOfYear),
+                memberScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear),
+                memberScheduleService.getFixedAutoSchedulingResult(targetYear, targetWeekOfYear),
                 memberScheduleService.getFreeSchedule(),
-                memberScheduleService.getCancelRequests(targetYear, nextWeekOfYear),
+                memberScheduleService.getCancelRequests(targetYear, targetWeekOfYear),
                 memberTrainerNoticeService.getTrainerNotices(true, 0, 10).catch(() => ({ notices: [], trainerAccountId: 0, totalElements: 0, currentPage: 0, pageSize: 0 })),
             ]);
 
@@ -245,21 +244,25 @@ export default function MemberHome() {
                                     onPress={() => router.push('/member-notices')}
                                     activeOpacity={0.8}
                                 >
-                                    <View style={styles.noticeCardHeader}>
-                                        <Ionicons name="pin" size={14} color="#3B82F6" />
-                                        <Text style={styles.noticeCardTitle} numberOfLines={1}>
-                                            {notice.title}
+                                    <View style={styles.noticeCardContent}>
+                                        <View style={styles.noticeCardHeader}>
+                                            <Ionicons name="pin" size={14} color="#3B82F6" />
+                                            <Text style={styles.noticeCardTitle} numberOfLines={1}>
+                                                {notice.title}
+                                            </Text>
+                                        </View>
+                                        <Text style={styles.noticeCardText} numberOfLines={1}>
+                                            {notice.content}
                                         </Text>
                                     </View>
-                                    <Text style={styles.noticeCardContent} numberOfLines={2}>
-                                        {notice.content}
-                                    </Text>
-                                    <Text style={styles.noticeCardDate}>
-                                        {new Date(notice.createdAt).toLocaleDateString('ko-KR', {
-                                            month: 'short',
-                                            day: 'numeric'
-                                        })}
-                                    </Text>
+                                    <View style={styles.noticeCardFooter}>
+                                        <Text style={styles.noticeCardDate}>
+                                            {new Date(notice.createdAt).toLocaleDateString('ko-KR', {
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })}
+                                        </Text>
+                                    </View>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
@@ -1556,6 +1559,10 @@ const styles = StyleSheet.create({
         borderColor: '#BFDBFE',
         borderLeftWidth: 4,
         borderLeftColor: '#3B82F6',
+        justifyContent: 'space-between',
+    },
+    noticeCardContent: {
+        flex: 1,
     },
     noticeCardHeader: {
         flexDirection: 'row',
@@ -1569,11 +1576,16 @@ const styles = StyleSheet.create({
         color: '#1E40AF',
         flex: 1,
     },
-    noticeCardContent: {
+    noticeCardText: {
         fontSize: 12,
         color: '#475569',
         lineHeight: 16,
-        marginBottom: 8,
+        paddingLeft: 8,
+    },
+    noticeCardFooter: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: 4,
     },
     noticeCardDate: {
         fontSize: 10,
