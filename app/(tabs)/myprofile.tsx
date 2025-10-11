@@ -63,6 +63,10 @@ export default function ProfileScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <View style={styles.topHeader}>
+                <Text style={styles.topHeaderText}>내 프로필</Text>
+            </View>
+
             <ScrollView style={styles.scrollView}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -137,6 +141,19 @@ const styles = StyleSheet.create({
         paddingVertical: 32,
         borderBottomWidth: 1,
         borderBottomColor: '#E5E7EB',
+    },
+    topHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+    },
+    topHeaderText: {
+        fontSize: 22,
+        color: '#333',
+        fontWeight: '700',
+        marginBottom: 8,
     },
     avatarContainer: {
         marginBottom: 8,

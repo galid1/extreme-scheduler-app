@@ -47,8 +47,6 @@ export default function TrainerHome() {
             setHasError(false);
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
 
-            console.log(`다음 주: ${targetWeekOfYear}주차`);
-
             // Load both APIs in parallel
             const [registrationResponse, autoSchedulingResultResponse, freeTimeScheduleResponse] = await Promise.all([
                 trainerScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear),
@@ -313,7 +311,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     welcomeText: {
-        fontSize: 18,
+        fontSize: 22,
         color: '#333',
         fontWeight: '700',
         marginBottom: 8,

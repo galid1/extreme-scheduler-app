@@ -103,8 +103,8 @@ export default function MemberManagementScreen() {
                 </View>
             ) : (
                 <>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>회원관리</Text>
+                    <View style={styles.topHeader}>
+                        <Text style={styles.topHeaderText}>회원 관리</Text>
                     </View>
 
                     {/* 관리 섹션 */}
@@ -161,6 +161,11 @@ export default function MemberManagementScreen() {
                     </View>
 
                     <ScrollView contentContainerStyle={styles.scrollContent}>
+                        <View style={styles.header}>
+                            <Text style={styles.title}>담당중인 회원</Text>
+                        </View>
+
+
                         {members.length > 0 ? (
                             <View style={styles.memberListSection}>
                                 {members.map((member) => (
@@ -256,12 +261,25 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingVertical: 16,
+        paddingBottom: 8,
     },
     title: {
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: '600',
         color: '#1F2937',
+    },
+    topHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+    },
+    topHeaderText: {
+        fontSize: 22,
+        color: '#333',
+        fontWeight: '700',
+        marginBottom: 8,
     },
     notificationButton: {
         position: 'relative',
@@ -384,7 +402,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         paddingHorizontal: 20,
         gap: 12,
-        marginBottom: 20,
+        marginTop: 20,
     },
     managementButton: {
         flex: 1,

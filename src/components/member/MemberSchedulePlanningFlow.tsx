@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 import SchedulingCompletedCard from "@/src/components/member/SchedulingCompletedCard";
-import { memberScheduleService } from '@/src/services/api/member-schedule.service';
-import {getYearAndWeek} from "@/src/utils/dateUtils";
-import {CancelRequestDto, CancelRequestResponse} from '@/src/types/api';
 import WeekInfo from "@/src/components/WeekInfo";
 
 // Icon sizes
