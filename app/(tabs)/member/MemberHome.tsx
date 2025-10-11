@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Dimensions, NativeScrollEvent, NativeSyntheticEvent} from 'react-native';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
@@ -50,8 +50,25 @@ export default function MemberHome() {
     const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[] | null>(null);
     const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
     const [fixedNotices, setFixedNotices] = useState<TrainerNoticeResponse[]>([]);
+    const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0);
 
     const {mockMode} = useConfigStore();
+    const screenWidth = Dimensions.get('window').width;
+    const CARD_WIDTH = screenWidth - 80; // 다음 카드가 살짝 보이도록
+    const CARD_GAP = 16; // 카드 간격
+
+    // 공지사항 스크롤 이벤트 핸들러
+    const handleNoticeScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const offsetX = event.nativeEvent.contentOffset.x;
+        const CARD_WITH_GAP = CARD_WIDTH + CARD_GAP;
+        const index = Math.round(offsetX / CARD_WITH_GAP);
+        setCurrentNoticeIndex(index);
+    };
+
+    // Reset pagination index when notices change
+    useEffect(() => {
+        setCurrentNoticeIndex(0);
+    }, [fixedNotices]);
 
     // Helper function to check if auto scheduling is completed with results
     const hasAutoSchedulingResults = () => {
@@ -209,24 +226,22 @@ export default function MemberHome() {
                                 <Ionicons name="megaphone" size={20} color="#3B82F6" />
                                 <Text style={styles.noticesSectionTitle}>트레이너 공지</Text>
                             </View>
-                            <TouchableOpacity
-                                onPress={() => router.push('/member-notices')}
-                                style={styles.viewAllButton}
-                            >
-                                <Text style={styles.viewAllText}>전체보기</Text>
-                                <Ionicons name="chevron-forward" size={16} color="#6B7280" />
-                            </TouchableOpacity>
                         </View>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.noticesCarousel}
                             style={styles.noticesCarouselContainer}
+                            onScroll={handleNoticeScroll}
+                            scrollEventThrottle={16}
+                            snapToInterval={CARD_WIDTH + CARD_GAP}
+                            decelerationRate="fast"
+                            pagingEnabled={false}
                         >
                             {fixedNotices.map((notice) => (
                                 <TouchableOpacity
                                     key={notice.noticeId}
-                                    style={styles.noticeCarouselCard}
+                                    style={[styles.noticeCarouselCard, { width: CARD_WIDTH }]}
                                     onPress={() => router.push('/member-notices')}
                                     activeOpacity={0.8}
                                 >
@@ -236,7 +251,7 @@ export default function MemberHome() {
                                             {notice.title}
                                         </Text>
                                     </View>
-                                    <Text style={styles.noticeCardContent} numberOfLines={1}>
+                                    <Text style={styles.noticeCardContent} numberOfLines={2}>
                                         {notice.content}
                                     </Text>
                                     <Text style={styles.noticeCardDate}>
@@ -248,6 +263,21 @@ export default function MemberHome() {
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
+
+                        {/* Pagination Indicators */}
+                        {fixedNotices.length > 1 && (
+                            <View style={styles.paginationContainer}>
+                                {fixedNotices.map((_, index) => (
+                                    <View
+                                        key={index}
+                                        style={[
+                                            styles.paginationDot,
+                                            index === currentNoticeIndex && styles.paginationDotActive
+                                        ]}
+                                    />
+                                ))}
+                            </View>
+                        )}
                     </View>
                 )}
 
@@ -1482,8 +1512,7 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     noticesSection: {
-        marginBottom: 16,
-        maxHeight: 160,
+        maxHeight: 180,
     },
     noticesSectionHeader: {
         flexDirection: 'row',
@@ -1495,7 +1524,6 @@ const styles = StyleSheet.create({
     noticesTitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
     },
     noticesSectionTitle: {
         fontSize: 18,
@@ -1513,17 +1541,16 @@ const styles = StyleSheet.create({
         color: '#6B7280',
     },
     noticesCarouselContainer: {
-        paddingHorizontal: 20,
         maxHeight: 110,
     },
     noticesCarousel: {
-        gap: 12,
+        gap: 16,
+        paddingHorizontal: 20,
     },
     noticeCarouselCard: {
         backgroundColor: '#EFF6FF',
         borderRadius: 12,
         padding: 12,
-        width: 260,
         height: 100,
         borderWidth: 1,
         borderColor: '#BFDBFE',
@@ -1552,5 +1579,25 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: '#94A3B8',
         fontWeight: '600',
+    },
+    paginationContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 12,
+        paddingHorizontal: 20,
+        gap: 6,
+    },
+    paginationDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#BFDBFE',
+    },
+    paginationDotActive: {
+        width: 20,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#3B82F6',
     },
 });
