@@ -199,7 +199,7 @@ export default function TrainerHome() {
                 {/* Show trainer dashboard or schedule management */}
                 <>
                     {/* Schedule Planning Flow Card */}
-                    <View style={[styles.trainerDashboard, {marginTop: 20}]}>
+                    <View style={[styles.trainerDashboard]}>
                         <View style={styles.dashBoardTitleContainer}>
                             <Text style={styles.dashboardTitle}>일정 계획</Text>
                             <View style={styles.weekInfoInline}>
@@ -519,6 +519,7 @@ const styles = StyleSheet.create({
     trainerDashboard: {
         backgroundColor: 'white',
         borderRadius: 16,
+        marginTop: 20,
         padding: 20,
         paddingBottom: 5,
         marginHorizontal: 20,
@@ -539,7 +540,7 @@ const styles = StyleSheet.create({
        marginBottom: 8,
     },
     dashboardTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '600',
         color: '#1F2937',
     },

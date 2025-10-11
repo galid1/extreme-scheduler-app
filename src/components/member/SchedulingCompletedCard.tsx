@@ -45,7 +45,7 @@ export default function SchedulingCompletedCard({
 
 const styles = StyleSheet.create({
     scheduledStateContainer: {
-        gap: 16,
+        gap: 10,
     },
     scheduledStateContainerCompact: {
         padding: 0,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     scheduledStateCardCompact: {
         backgroundColor: '#F9FAFB',
         borderRadius: 10,
-        padding: 12,
+        padding: 8,
         shadowColor: 'transparent',
         shadowOffset: {width: 0, height: 0},
         shadowOpacity: 0,
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
         elevation: 0,
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        marginTop: 8,
+        marginBottom: 4,
     },
     scheduledStateHeader: {
         flexDirection: 'row',

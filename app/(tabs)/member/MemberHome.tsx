@@ -328,7 +328,7 @@ export default function MemberHome() {
                                 setCurrentWeek(getCurrentWeek() + 1);
                                 router.push('/training-schedule');
                             } : undefined}
-                            cancelRequests={cancelRequests}
+                            cancelRequestsCount={cancelRequests.length}
                         />
                     </View>
                 )}
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     dashboardTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '600',
         color: '#1F2937',
     },
