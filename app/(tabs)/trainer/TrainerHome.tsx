@@ -13,23 +13,10 @@ import ErrorRetryView from '@/src/components/ErrorRetryView';
 import {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
-import {getCurrentWeek} from '@/src/utils/dateUtils';
+import {getCurrentWeek, getYearAndWeek} from '@/src/utils/dateUtils';
 import WeekSelector from '@/src/components/training/WeekSelector';
 import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
 import WeekInfo from "@/src/components/WeekInfo";
-
-// Helper function to get current year and week
-function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const pastDaysOfYear = (now.getTime() - startOfYear.getTime()) / 86400000;
-    const weekOfYear = Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
-
-    return {
-        year: now.getFullYear(),
-        weekOfYear
-    };
-}
 
 export default function TrainerHome() {
     const router = useRouter();
@@ -58,13 +45,13 @@ export default function TrainerHome() {
 
         try {
             setHasError(false);
-            const {year, weekOfYear} = getCurrentYearAndWeek();
-            const nextWeekOfYear = weekOfYear + 1;
+            const {targetYear, targetWeekOfYear} = getYearAndWeek();
+            const nextWeekOfYear = targetWeekOfYear + 1;
 
             // Load both APIs in parallel
             const [registrationResponse, autoSchedulingResultResponse, freeTimeScheduleResponse] = await Promise.all([
-                trainerScheduleService.checkWeeklyScheduleRegistration(year, nextWeekOfYear),
-                trainerScheduleService.getAutoSchedulingResult(year, nextWeekOfYear),
+                trainerScheduleService.checkWeeklyScheduleRegistration(targetYear, nextWeekOfYear),
+                trainerScheduleService.getAutoSchedulingResult(targetYear, nextWeekOfYear),
                 trainerScheduleService.getFreeSchedule()
             ]);
 
