@@ -16,6 +16,7 @@ import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import {getCurrentWeek} from '@/src/utils/dateUtils';
 import WeekSelector from '@/src/components/training/WeekSelector';
 import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
+import WeekInfo from "@/src/components/WeekInfo";
 
 // Helper function to get current year and week
 function getCurrentYearAndWeek(): { year: number; weekOfYear: number } {
@@ -211,7 +212,13 @@ export default function TrainerHome() {
                 <>
                     {/* Schedule Planning Flow Card */}
                     <View style={[styles.trainerDashboard, {marginTop: 20}]}>
-                        <Text style={styles.dashboardTitle}>일정 계획</Text>
+                        <View style={styles.dashBoardTitleContainer}>
+                            <Text style={styles.dashboardTitle}>일정 계획</Text>
+                            <View style={styles.weekInfoInline}>
+                                <WeekInfo nextWeek={true}/>
+                            </View>
+                        </View>
+
                         <SchedulePlanningFlow
                             // 1단계: 운영 일정
                             isOperationScheduleRegistered={isRegisteredOperationSchedule === true}
@@ -222,7 +229,7 @@ export default function TrainerHome() {
                             hasAutoSchedulingResult={hasNextWeekScheduling}
                             onStartAutoScheduling={() => router.push('/auto-scheduling')}
                             onViewSchedulingResult={() => {
-                                const { setCurrentWeek } = useTrainingStore.getState();
+                                const {setCurrentWeek} = useTrainingStore.getState();
                                 setCurrentWeek(getCurrentWeek() + 1); // 다음 주
                                 router.push('/training-schedule');
                             }}
@@ -231,7 +238,7 @@ export default function TrainerHome() {
                             isScheduleConfirmed={nextWeekAutoSchedulingResultFixed}
                             onConfirmSchedule={() => {
                                 // 확정 전 스케줄 확인을 위해 training-schedule로 이동
-                                const { setCurrentWeek } = useTrainingStore.getState();
+                                const {setCurrentWeek} = useTrainingStore.getState();
                                 setCurrentWeek(getCurrentWeek() + 1); // 다음 주
                                 router.push('/training-schedule');
                             }}
@@ -290,7 +297,7 @@ export default function TrainerHome() {
                         <Text style={styles.dashboardTitle}>트레이닝 일정</Text>
                         <WeekSelector
                             onViewSchedule={(weekNumber) => {
-                                const { setCurrentWeek } = useTrainingStore.getState();
+                                const {setCurrentWeek} = useTrainingStore.getState();
                                 setCurrentWeek(weekNumber);
                                 router.push('/training-schedule');
                             }}
@@ -538,11 +545,18 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 3,
     },
+    dashBoardTitleContainer: {
+       flexDirection: "row",
+       alignItems: 'center',
+       marginBottom: 8,
+    },
     dashboardTitle: {
         fontSize: 20,
         fontWeight: '600',
         color: '#1F2937',
-        marginBottom: 8,
+    },
+    weekInfoInline: {
+        marginLeft: 10,
     },
     weekInfoText: {
         fontSize: 14,

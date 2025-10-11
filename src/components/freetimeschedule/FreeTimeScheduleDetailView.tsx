@@ -192,6 +192,7 @@ export default function FreeTimeScheduleDetailView({
 
             const {startDate} = getNextWeekDateRange();
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
+            const nextWeek = targetWeekOfYear + 1;
 
             // Build periodic schedules
             const periodicSchedules: { dayOfWeek: DayOfWeek; startHour: number; endHour: number }[] = [];
@@ -231,7 +232,7 @@ export default function FreeTimeScheduleDetailView({
 
             const request: RegisterScheduleRequest = {
                 targetYear: targetYear,
-                targetWeekOfYear: targetWeekOfYear,
+                targetWeekOfYear: nextWeek,
                 periodicScheduleLines: periodicSchedules,
                 onetimeScheduleLines: onetimeSchedules,
             };
