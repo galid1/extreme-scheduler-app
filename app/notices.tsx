@@ -71,7 +71,6 @@ export default function NoticesScreen() {
                     onPress: async () => {
                         try {
                             await trainerNoticeService.deleteNotice(noticeId);
-                            Alert.alert('완료', '공지사항이 삭제되었습니다.');
                             fetchNotices();
                             setSelectedNoticeId(null);
                         } catch (error) {

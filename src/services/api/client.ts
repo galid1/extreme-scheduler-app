@@ -68,7 +68,19 @@ class ApiClient {
         );
       }
 
-      const data = await response.json();
+      // 204 No Content 또는 Content-Length가 0인 경우 (DELETE 요청 등)
+      if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+        return undefined as T;
+      }
+
+      // 응답 body가 있는지 확인
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        return undefined as T;
+      }
+
+      // JSON 파싱
+      const data = JSON.parse(text);
       return data.data as T;
     } catch (error) {
       if (error instanceof Error && !error.message.includes(endpoint)) {
