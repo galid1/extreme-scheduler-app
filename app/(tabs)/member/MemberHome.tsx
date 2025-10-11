@@ -1461,6 +1461,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 4,
         elevation: 2,
+        maxHeight: 300,
     },
     weekSelectorContainer: {
         backgroundColor: 'white',
@@ -1482,6 +1483,7 @@ const styles = StyleSheet.create({
     },
     noticesSection: {
         marginBottom: 16,
+        maxHeight: 160,
     },
     noticesSectionHeader: {
         flexDirection: 'row',
@@ -1512,6 +1514,7 @@ const styles = StyleSheet.create({
     },
     noticesCarouselContainer: {
         paddingHorizontal: 20,
+        maxHeight: 110,
     },
     noticesCarousel: {
         gap: 12,
@@ -1519,8 +1522,9 @@ const styles = StyleSheet.create({
     noticeCarouselCard: {
         backgroundColor: '#EFF6FF',
         borderRadius: 12,
-        padding: 16,
-        width: 280,
+        padding: 12,
+        width: 260,
+        height: 100,
         borderWidth: 1,
         borderColor: '#BFDBFE',
         borderLeftWidth: 4,
@@ -1530,22 +1534,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        marginBottom: 8,
+        marginBottom: 6,
     },
     noticeCardTitle: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '700',
         color: '#1E40AF',
         flex: 1,
     },
     noticeCardContent: {
-        fontSize: 13,
+        fontSize: 12,
         color: '#475569',
-        lineHeight: 18,
-        marginBottom: 12,
+        lineHeight: 16,
+        marginBottom: 8,
     },
     noticeCardDate: {
-        fontSize: 11,
+        fontSize: 10,
         color: '#94A3B8',
         fontWeight: '600',
     },
