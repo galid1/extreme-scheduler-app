@@ -10,6 +10,7 @@ export { default as memberScheduleService } from './member-schedule.service';
 export { default as trainerService } from './trainer.service';
 export { default as trainerScheduleService } from './trainer-schedule.service';
 export { trainerNoticeService } from './trainer-notice.service';
+export { memberTrainerNoticeService } from './member-trainer-notice.service';
 
 // Re-export types
 export * from '../../types/api';

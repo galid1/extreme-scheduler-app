@@ -375,3 +375,11 @@ export interface TrainerNoticeListResponse {
     pageSize: number;
 }
 
+export interface MemberTrainerNoticeListResponse {
+    trainerAccountId: number;
+    notices: TrainerNoticeResponse[];
+    totalElements: number;
+    currentPage: number;
+    pageSize: number;
+}
+
