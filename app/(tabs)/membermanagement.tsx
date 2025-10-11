@@ -105,16 +105,58 @@ export default function MemberManagementScreen() {
                 <>
                     <View style={styles.header}>
                         <Text style={styles.title}>회원관리</Text>
+                    </View>
+
+                    {/* 관리 섹션 */}
+                    <View style={styles.managementSection}>
+                        {/* 담당자 요청 관리 버튼 */}
                         <TouchableOpacity
-                            style={styles.notificationButton}
+                            style={[
+                                styles.managementButton,
+                                pendingRequestsCount > 0 && styles.managementButtonActive
+                            ]}
                             onPress={() => router.push('/assignment-requests')}
+                            activeOpacity={0.7}
                         >
-                            <Ionicons name="archive-outline" size={28} color="#3B82F6" />
-                            {pendingRequestsCount > 0 && (
-                                <View style={styles.badge}>
-                                    <Text style={styles.badgeText}>{pendingRequestsCount}</Text>
-                                </View>
-                            )}
+                            <View style={[
+                                styles.managementIconContainer,
+                                pendingRequestsCount > 0 && styles.managementIconActive
+                            ]}>
+                                <Ionicons
+                                    name="person-add"
+                                    size={24}
+                                    color={pendingRequestsCount > 0 ? "#F59E0B" : "#6B7280"}
+                                />
+                                {pendingRequestsCount > 0 && (
+                                    <View style={styles.managementIconBadge}>
+                                        <Text style={styles.managementIconBadgeText}>{pendingRequestsCount}</Text>
+                                    </View>
+                                )}
+                            </View>
+                            <Text style={[
+                                styles.managementButtonText,
+                                pendingRequestsCount > 0 && styles.managementButtonTextActive
+                            ]}>
+                                담당자 요청
+                            </Text>
+                        </TouchableOpacity>
+
+                        {/* 공지사항 관리 버튼 */}
+                        <TouchableOpacity
+                            style={styles.managementButton}
+                            onPress={() => router.push('/notices')}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.managementIconContainer}>
+                                <Ionicons
+                                    name="megaphone-outline"
+                                    size={24}
+                                    color="#6B7280"
+                                />
+                            </View>
+                            <Text style={styles.managementButtonText}>
+                                공지사항
+                            </Text>
                         </TouchableOpacity>
                     </View>
 
@@ -337,5 +379,69 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#9CA3AF',
         marginTop: 16,
+    },
+    managementSection: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        gap: 12,
+        marginBottom: 20,
+    },
+    managementButton: {
+        flex: 1,
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        gap: 8,
+    },
+    managementButtonActive: {
+        backgroundColor: '#FEF3C7',
+        borderColor: '#FDE68A',
+    },
+    managementIconContainer: {
+        position: 'relative',
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: '#F3F4F6',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+    },
+    managementIconActive: {
+        backgroundColor: '#FEF3C7',
+        borderColor: '#FDE68A',
+    },
+    managementIconBadge: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: '#F59E0B',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+        borderWidth: 2,
+        borderColor: 'white',
+    },
+    managementIconBadgeText: {
+        color: 'white',
+        fontSize: 11,
+        fontWeight: '700',
+    },
+    managementButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1F2937',
+        textAlign: 'center',
+    },
+    managementButtonTextActive: {
+        color: '#92400E',
     },
 });

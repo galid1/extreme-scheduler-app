@@ -1,7 +1,7 @@
 import {
     CreateTrainerNoticeApiRequest,
-    TrainerNoticeResponse,
     TrainerNoticeListResponse,
+    TrainerNoticeResponse,
     UpdateTrainerNoticeApiRequest,
 } from '@/src/types/api';
 import apiClient from './client';
@@ -13,11 +13,10 @@ class TrainerNoticeService {
     async createNotice(
         request: CreateTrainerNoticeApiRequest
     ): Promise<TrainerNoticeResponse> {
-        const response = await apiClient.post<{ data: TrainerNoticeResponse }>(
+        return apiClient.post<TrainerNoticeResponse>(
             '/api/v1/trainers/notices',
             request
         );
-        return response.data;
     }
 
     /**
@@ -37,20 +36,18 @@ class TrainerNoticeService {
             queryParams.append('fixed', fixed.toString());
         }
 
-        const response = await apiClient.get<{ data: TrainerNoticeListResponse }>(
+        return apiClient.get<TrainerNoticeListResponse>(
             `/api/v1/trainers/notices?${queryParams}`
         );
-        return response.data;
     }
 
     /**
      * 공지사항 상세 조회
      */
     async getNoticeDetail(noticeId: number): Promise<TrainerNoticeResponse> {
-        const response = await apiClient.get<{ data: TrainerNoticeResponse }>(
+        return apiClient.get<TrainerNoticeResponse>(
             `/api/v1/trainers/notices/${noticeId}`
         );
-        return response.data;
     }
 
     /**
@@ -60,11 +57,10 @@ class TrainerNoticeService {
         noticeId: number,
         request: UpdateTrainerNoticeApiRequest
     ): Promise<TrainerNoticeResponse> {
-        const response = await apiClient.put<{ data: TrainerNoticeResponse }>(
+        return apiClient.put<TrainerNoticeResponse>(
             `/api/v1/trainers/notices/${noticeId}`,
             request
         );
-        return response.data;
     }
 
     /**
@@ -78,17 +74,16 @@ class TrainerNoticeService {
             fixed: fixed.toString()
         });
 
-        const response = await apiClient.patch<{ data: TrainerNoticeResponse }>(
+        return apiClient.patch<TrainerNoticeResponse>(
             `/api/v1/trainers/notices/${noticeId}/fixed?${queryParams}`
         );
-        return response.data;
     }
 
     /**
      * 공지사항 삭제
      */
     async deleteNotice(noticeId: number): Promise<void> {
-        await apiClient.delete(`/api/v1/trainers/notices/${noticeId}`);
+        return apiClient.delete(`/api/v1/trainers/notices/${noticeId}`);
     }
 }
 

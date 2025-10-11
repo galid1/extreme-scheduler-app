@@ -35,8 +35,8 @@ export const forceSetToken = async () => {
     });
 
     // 3. 새 토큰만 설정
-    // store.setToken("c31a080a-b7a9-47d9-9c5a-8b4125816ac2"); // trainer
-    store.setToken("76a0af7c-8702-4d00-b50a-f3a5507a12ad"); // member
+    store.setToken("c31a080a-b7a9-47d9-9c5a-8b4125816ac2"); // trainer
+    // store.setToken("76a0af7c-8702-4d00-b50a-f3a5507a12ad"); // member
 
     // 4. Store 상태 확인
     const newState = useAuthStore.getState();
