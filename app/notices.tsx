@@ -10,7 +10,7 @@ import {
     ActivityIndicator,
     SafeAreaView,
 } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { trainerNoticeService } from '@/src/services/api';
 import { TrainerNoticeResponse } from '@/src/types/api';
@@ -21,17 +21,29 @@ export default function NoticesScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedNoticeId, setSelectedNoticeId] = useState<number | null>(null);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+    // 초기 로드
     useEffect(() => {
-        fetchNotices();
+        fetchNotices(true);
+        setIsInitialLoad(false);
     }, []);
 
-    const fetchNotices = async () => {
-        setIsLoading(true);
+    // 화면 포커스될 때마다 백그라운드 새로고침
+    useFocusEffect(
+        React.useCallback(() => {
+            if (!isInitialLoad) {
+                fetchNotices(false);  // 백그라운드 새로고침
+            }
+        }, [isInitialLoad])
+    );
+
+    const fetchNotices = async (showLoading = false) => {
+        if (showLoading) {
+            setIsLoading(true);
+        }
         try {
-            const response = await trainerNoticeService.getNotices(true, 0, 50);
-            console.log("###############")
-            console.log(JSON.stringify(response))
+            const response = await trainerNoticeService.getNotices(undefined, 0, 50);
             setNotices(response.notices);
         } catch (error) {
             console.error('Error fetching notices:', error);
@@ -120,8 +132,8 @@ export default function NoticesScreen() {
                     {fixedNotices.length > 0 && (
                         <View style={styles.section}>
                             <View style={styles.sectionHeader}>
-                                <Ionicons name="pin" size={16} color="#3B82F6" />
-                                <Text style={styles.sectionTitle}>고정 공지</Text>
+                                <Ionicons name="pin" size={20} color="#3B82F6" />
+                                <Text style={styles.sectionTitle}>상단 고정 공지</Text>
                             </View>
                             {fixedNotices.map((notice) => (
                                 <TouchableOpacity
@@ -136,19 +148,57 @@ export default function NoticesScreen() {
                                     )}
                                     activeOpacity={0.7}
                                 >
-                                    <View style={styles.noticeHeader}>
-                                        <View style={styles.noticeTitleRow}>
-                                            <Ionicons name="pin" size={14} color="#3B82F6" />
-                                            <Text style={styles.noticeTitle}>{notice.title}</Text>
-                                        </View>
-                                        <Text style={styles.noticeDate}>{formatDate(notice.createdAt)}</Text>
+                                    <View style={styles.noticeTitleRow}>
+                                        <Ionicons name="pin" size={14} color="#3B82F6" />
+                                        <Text
+                                            style={styles.noticeTitle}
+                                            numberOfLines={selectedNoticeId === notice.noticeId ? undefined : 1}
+                                        >
+                                            {notice.title}
+                                        </Text>
                                     </View>
-                                    <Text style={styles.noticeContent} numberOfLines={2}>
+                                    <Text
+                                        style={styles.noticeContent}
+                                        numberOfLines={selectedNoticeId === notice.noticeId ? undefined : 1}
+                                    >
                                         {notice.content}
                                     </Text>
+                                    <View style={styles.noticeFooter}>
+                                        <Text style={styles.noticeDate}>{formatDate(notice.createdAt)}</Text>
+                                    </View>
 
                                     {selectedNoticeId === notice.noticeId && (
                                         <View style={styles.noticeActions}>
+                                            <TouchableOpacity
+                                                style={styles.editButton}
+                                                onPress={() => router.push({
+                                                    pathname: '/notice-edit',
+                                                    params: {
+                                                        noticeId: notice.noticeId,
+                                                        title: notice.title,
+                                                        content: notice.content,
+                                                    }
+                                                })}
+                                            >
+                                                <Ionicons name="create-outline" size={16} color="white" />
+                                                <Text style={styles.editButtonText}>수정</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.toggleFixButton}
+                                                onPress={async () => {
+                                                    try {
+                                                        await trainerNoticeService.toggleNoticeFixed(notice.noticeId, !notice.fixed);
+                                                        fetchNotices();
+                                                    } catch (error) {
+                                                        Alert.alert('오류', '고정 변경에 실패했습니다.');
+                                                    }
+                                                }}
+                                            >
+                                                <Ionicons name={notice.fixed ? "pin" : "pin-outline"} size={16} color="white" />
+                                                <Text style={styles.toggleFixButtonText}>
+                                                    {notice.fixed ? '고정 해제' : '고정'}
+                                                </Text>
+                                            </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={styles.deleteButton}
                                                 onPress={() => handleDeleteNotice(notice.noticeId, notice.title)}
@@ -182,16 +232,54 @@ export default function NoticesScreen() {
                                     )}
                                     activeOpacity={0.7}
                                 >
-                                    <View style={styles.noticeHeader}>
-                                        <Text style={styles.noticeTitle}>{notice.title}</Text>
-                                        <Text style={styles.noticeDate}>{formatDate(notice.createdAt)}</Text>
-                                    </View>
-                                    <Text style={styles.noticeContent} numberOfLines={2}>
+                                    <Text
+                                        style={styles.noticeTitle}
+                                        numberOfLines={selectedNoticeId === notice.noticeId ? undefined : 1}
+                                    >
+                                        {notice.title}
+                                    </Text>
+                                    <Text
+                                        style={styles.noticeContent}
+                                        numberOfLines={selectedNoticeId === notice.noticeId ? undefined : 1}
+                                    >
                                         {notice.content}
                                     </Text>
+                                    <View style={styles.noticeFooter}>
+                                        <Text style={styles.noticeDate}>{formatDate(notice.createdAt)}</Text>
+                                    </View>
 
                                     {selectedNoticeId === notice.noticeId && (
                                         <View style={styles.noticeActions}>
+                                            <TouchableOpacity
+                                                style={styles.editButton}
+                                                onPress={() => router.push({
+                                                    pathname: '/notice-edit',
+                                                    params: {
+                                                        noticeId: notice.noticeId,
+                                                        title: notice.title,
+                                                        content: notice.content,
+                                                    }
+                                                })}
+                                            >
+                                                <Ionicons name="create-outline" size={16} color="white" />
+                                                <Text style={styles.editButtonText}>수정</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.toggleFixButton}
+                                                onPress={async () => {
+                                                    try {
+                                                        await trainerNoticeService.toggleNoticeFixed(notice.noticeId, !notice.fixed);
+                                                        fetchNotices();
+                                                    } catch (error) {
+                                                        Alert.alert('오류', '고정 변경에 실패했습니다.');
+                                                    }
+                                                }}
+                                            >
+                                                <Ionicons name={notice.fixed ? "pin" : "pin-outline"} size={16} color="white" />
+                                                <Text style={styles.toggleFixButtonText}>
+                                                    {notice.fixed ? '고정 해제' : '고정'}
+                                                </Text>
+                                            </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={styles.deleteButton}
                                                 onPress={() => handleDeleteNotice(notice.noticeId, notice.title)}
@@ -218,10 +306,7 @@ export default function NoticesScreen() {
             {/* Create Button */}
             <TouchableOpacity
                 style={styles.createButton}
-                onPress={() => {
-                    // TODO: Navigate to create notice screen
-                    Alert.alert('준비중', '공지사항 작성 기능은 준비중입니다.');
-                }}
+                onPress={() => router.push('/notice-edit')}
             >
                 <Ionicons name="add" size={24} color="white" />
             </TouchableOpacity>
@@ -280,18 +365,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        marginBottom: 12,
+        marginBottom: 10,
     },
     sectionTitle: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#6B7280',
+        fontSize: 16,
+        fontWeight: '800',
+        color: 'black',
+        paddingVertical: 8,
     },
     noticeCard: {
         backgroundColor: 'white',
         borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
+        padding: 14,
+        marginBottom: 8,
         borderWidth: 1,
         borderColor: '#E5E7EB',
     },
@@ -303,33 +389,33 @@ const styles = StyleSheet.create({
         borderColor: '#3B82F6',
         borderWidth: 2,
     },
-    noticeHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 8,
-    },
     noticeTitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        flex: 1,
+        marginBottom: 8,
     },
     noticeTitle: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '700',
         color: '#1F2937',
         flex: 1,
-    },
-    noticeDate: {
-        fontSize: 12,
-        color: '#9CA3AF',
-        marginLeft: 8,
+        marginBottom: 8,
     },
     noticeContent: {
-        fontSize: 14,
+        fontSize: 12,
         color: '#6B7280',
         lineHeight: 20,
+        marginBottom: 4,
+    },
+    noticeFooter: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+    },
+    noticeDate: {
+        fontSize: 11,
+        color: '#9CA3AF',
     },
     noticeActions: {
         flexDirection: 'row',
@@ -339,14 +425,44 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#E5E7EB',
     },
+    editButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#10B981',
+        borderRadius: 8,
+        paddingVertical: 10,
+        gap: 6,
+    },
+    editButtonText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    toggleFixButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#3B82F6',
+        borderRadius: 8,
+        paddingVertical: 10,
+        gap: 6,
+    },
+    toggleFixButtonText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '600',
+    },
     deleteButton: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#EF4444',
         borderRadius: 8,
-        paddingVertical: 8,
-        paddingHorizontal: 16,
+        paddingVertical: 10,
         gap: 6,
     },
     deleteButtonText: {
