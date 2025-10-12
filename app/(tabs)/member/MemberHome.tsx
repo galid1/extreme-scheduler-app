@@ -21,6 +21,7 @@ import MemberSchedulePlanningFlow from '@/src/components/member/MemberSchedulePl
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekSelector from '@/src/components/training/WeekSelector';
 import {useNotificationStore} from '@/src/store/useNotificationStore';
+import apiClient from '@/src/services/api/client';
 
 
 export default function MemberHome() {
@@ -31,6 +32,7 @@ export default function MemberHome() {
         setTrainerAccountId,
         setAccountData,
         setAssignedTrainer,
+        authToken,
     } = useAuthStore();
     const name = account?.privacyInfo?.name;
     const trainerAccountId = member?.trainerAccountId;
@@ -64,6 +66,14 @@ export default function MemberHome() {
         const index = Math.round(offsetX / CARD_WITH_GAP);
         setCurrentNoticeIndex(index);
     };
+
+    // Initialize apiClient token on mount
+    useEffect(() => {
+        if (authToken) {
+            console.log('[MemberHome] Setting auth token in API client');
+            apiClient.setAuthToken(authToken);
+        }
+    }, [authToken]);
 
     // Reset pagination index when notices change
     useEffect(() => {

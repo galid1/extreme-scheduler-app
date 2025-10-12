@@ -1,11 +1,10 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
 import {authService, AutoSchedulingResultStatus} from '@/src/services/api';
 import {TrainerStatus} from '@/src/types/enums';
-import {useConfigStore} from '@/src/store/useConfigStore';
 import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 import trainerScheduleService from '@/src/services/api/trainer-schedule.service';
@@ -18,10 +17,11 @@ import WeekSelector from '@/src/components/training/WeekSelector';
 import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
 import WeekInfo from "@/src/components/WeekInfo";
 import {useNotificationStore} from '@/src/store/useNotificationStore';
+import apiClient from '@/src/services/api/client';
 
 export default function TrainerHome() {
     const router = useRouter();
-    const {account, trainer, setAccountData} = useAuthStore();
+    const {account, trainer, setAccountData, authToken} = useAuthStore();
     const name = account?.privacyInfo?.name;
     const status = trainer?.status
     const appStateRef = useRef(AppState.currentState);
@@ -40,8 +40,20 @@ export default function TrainerHome() {
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
     const {resetWeek} = useTrainingStore();
 
+    // Initialize apiClient token on mount (in case it was restored from AsyncStorage)
+    useEffect(() => {
+        if (authToken) {
+            console.log('[TrainerHome] Setting auth token in API client');
+            apiClient.setAuthToken(authToken);
+        }
+    }, [authToken]);
+
     // Function to load initial data
     const loadInitialData = async () => {
+        if (status === TrainerStatus.PENDING) {
+            return;
+        }
+
         try {
             setHasError(false);
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
@@ -73,24 +85,34 @@ export default function TrainerHome() {
         loadInitialData();
         // Fetch unread notification count on mount
         fetchUnreadCount();
-    }, []);
+    }, [status]);
 
     // Fetch unread notification count periodically (every 30 seconds when component is visible)
     useEffect(() => {
+        // Skip periodic fetch if trainer is PENDING
+        if (status === TrainerStatus.PENDING) {
+            return;
+        }
+
         const interval = setInterval(() => {
             fetchUnreadCount();
         }, 30000); // 30 seconds
 
         return () => clearInterval(interval);
-    }, []);
+    }, [status]);
 
     // 자동 스케줄링 완료 시 데이터 새로고침
     useEffect(() => {
+        // Skip refresh if trainer is PENDING
+        if (status === TrainerStatus.PENDING) {
+            return;
+        }
+
         if (shouldRefresh > 0) {
             console.log('🎉 Scheduling completed, refreshing data...');
             loadInitialData();
         }
-    }, [shouldRefresh]);
+    }, [shouldRefresh, status]);
 
     // Retry function
     const handleRetry = async () => {
@@ -99,24 +121,30 @@ export default function TrainerHome() {
         setIsRetrying(false);
     };
 
+    const fetchLatestUserData = async () => {
+        try {
+            const {authToken} = useAuthStore.getState();
+            if (!authToken) {
+                console.log('[TrainerHome] No auth token available');
+                return;
+            }
+
+            const userResponse = await authService.getCurrentUser(authToken);
+            if (userResponse.trainer) {
+                setAccountData({
+                    account: userResponse.account,
+                    member: userResponse.member,
+                    trainer: userResponse.trainer
+                });
+            }
+            // Fetch unread notification count after user data is updated
+            await fetchUnreadCount();
+        } catch (error) {
+            console.error('Error fetching latest user data:', error);
+        }
+    };
     // Update trainer status when app comes to foreground
     useEffect(() => {
-        const fetchLatestUserData = async () => {
-                try {
-                    const userResponse = await authService.getCurrentUser();
-                    if (userResponse.trainer) {
-                        setAccountData({
-                            account: userResponse.account,
-                            member: userResponse.member,
-                            trainer: userResponse.trainer
-                        });
-                    }
-                    // Fetch unread notification count when app comes to foreground
-                    fetchUnreadCount();
-                } catch (error) {
-                    console.error('Error fetching latest user data:', error);
-                }
-        };
 
         // Listen for app state changes
         const subscription = AppState.addEventListener('change', (nextAppState) => {
@@ -138,17 +166,9 @@ export default function TrainerHome() {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            const userResponse = await authService.getCurrentUser();
-            if (userResponse.trainer) {
-                setAccountData({
-                    account: userResponse.account,
-                    member: userResponse.member,
-                    trainer: userResponse.trainer
-                });
-            }
+            await fetchLatestUserData();
         } catch (error) {
             console.error('Error refreshing user data:', error);
-            Alert.alert('오류', '상태 업데이트에 실패했습니다.');
         } finally {
             setIsRefreshing(false);
         }
@@ -569,9 +589,9 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     dashBoardTitleContainer: {
-       flexDirection: "row",
-       alignItems: 'center',
-       marginBottom: 8,
+        flexDirection: "row",
+        alignItems: 'center',
+        marginBottom: 8,
     },
     dashboardTitle: {
         fontSize: 18,
