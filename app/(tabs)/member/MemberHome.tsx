@@ -21,6 +21,7 @@ import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import MemberSchedulePlanningFlow from '@/src/components/member/MemberSchedulePlanningFlow';
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekSelector from '@/src/components/training/WeekSelector';
+import {useNotificationStore} from '@/src/store/useNotificationStore';
 
 
 export default function MemberHome() {
@@ -37,6 +38,7 @@ export default function MemberHome() {
 
     const appStateRef = useRef(AppState.currentState);
     const {shouldRefresh} = useSchedulingEventStore();
+    const {unreadCount, fetchUnreadCount} = useNotificationStore();
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
     const [showScheduleRegistration, setShowScheduleRegistration] = useState(false);
@@ -139,6 +141,19 @@ export default function MemberHome() {
     // Load all data on mount
     useEffect(() => {
         loadInitialData();
+        // Fetch unread notification count
+        console.log('[MemberHome] 🎯 Component mounted, fetching unread count...');
+        fetchUnreadCount();
+    }, []);
+
+    // Fetch unread notification count periodically (every 30 seconds when component is visible)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            console.log('[MemberHome] ⏰ Periodic fetch triggered');
+            fetchUnreadCount();
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(interval);
     }, []);
 
     // 자동 스케줄링 완료 시 데이터 새로고침
@@ -213,6 +228,13 @@ export default function MemberHome() {
                     onPress={() => router.push('/notifications')}
                 >
                     <Ionicons name="notifications-outline" size={24} color="#1F2937"/>
+                    {unreadCount > 0 && (
+                        <View style={styles.notificationBadge}>
+                            <Text style={styles.notificationBadgeText}>
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </Text>
+                        </View>
+                    )}
                 </TouchableOpacity>
             </View>
 
@@ -566,6 +588,26 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
+        position: 'relative',
+    },
+    notificationBadge: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        backgroundColor: '#EF4444',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 5,
+        borderWidth: 2,
+        borderColor: '#F8FAFC',
+    },
+    notificationBadgeText: {
+        color: 'white',
+        fontSize: 11,
+        fontWeight: '700',
     },
     trainerBadge: {
         flexDirection: 'row',

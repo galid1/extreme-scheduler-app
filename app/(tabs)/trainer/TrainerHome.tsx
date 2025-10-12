@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
@@ -17,6 +17,7 @@ import {getCurrentWeek, getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
 import WeekSelector from '@/src/components/training/WeekSelector';
 import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
 import WeekInfo from "@/src/components/WeekInfo";
+import {useNotificationStore} from '@/src/store/useNotificationStore';
 
 export default function TrainerHome() {
     const router = useRouter();
@@ -25,6 +26,7 @@ export default function TrainerHome() {
     const status = trainer?.status
     const appStateRef = useRef(AppState.currentState);
     const {shouldRefresh, hasNextWeekScheduling, setHasNextWeekScheduling} = useSchedulingEventStore();
+    const {unreadCount, fetchUnreadCount} = useNotificationStore();
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -72,6 +74,19 @@ export default function TrainerHome() {
     // Check registration status and scheduling results on mount
     useEffect(() => {
         loadInitialData();
+        // Fetch unread notification count on mount
+        console.log('[TrainerHome] 🎯 Component mounted, fetching unread count...');
+        fetchUnreadCount();
+    }, []);
+
+    // Fetch unread notification count periodically (every 30 seconds when component is visible)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            console.log('[TrainerHome] ⏰ Periodic fetch triggered');
+            fetchUnreadCount();
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(interval);
     }, []);
 
     // 자동 스케줄링 완료 시 데이터 새로고침
@@ -102,6 +117,8 @@ export default function TrainerHome() {
                             trainer: userResponse.trainer
                         });
                     }
+                    // Fetch unread notification count when app comes to foreground
+                    fetchUnreadCount();
                 } catch (error) {
                     console.error('Error fetching latest user data:', error);
                 }
@@ -190,6 +207,13 @@ export default function TrainerHome() {
                     onPress={() => router.push('/notifications')}
                 >
                     <Ionicons name="notifications-outline" size={24} color="#1F2937"/>
+                    {unreadCount > 0 && (
+                        <View style={styles.notificationBadge}>
+                            <Text style={styles.notificationBadgeText}>
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </Text>
+                        </View>
+                    )}
                 </TouchableOpacity>
             </View>
 
@@ -510,6 +534,26 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
+        position: 'relative',
+    },
+    notificationBadge: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        backgroundColor: '#EF4444',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 5,
+        borderWidth: 2,
+        borderColor: '#F8FAFC',
+    },
+    notificationBadgeText: {
+        color: 'white',
+        fontSize: 11,
+        fontWeight: '700',
     },
     trainerScheduleContainer: {
         padding: 20,
