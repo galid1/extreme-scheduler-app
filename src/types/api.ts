@@ -190,6 +190,7 @@ export interface MemberWithSchedulesResponse {
     birthDate: string;
     gender: Gender;
     phoneNumber: string;
+    weeklyFreeTimeScheduleRegistrationStatus: boolean;
     periodicSchedules: PeriodicScheduleLine[];
     onetimeSchedules: OnetimeScheduleLine[];
 }

@@ -301,16 +301,16 @@ export default function AutoSchedulingScreen() {
                 ) : (
                     <>
                         {/* READY 회원 섹션 */}
-                        {members.filter(m => m.periodicSchedules.length > 0 || m.onetimeSchedules.length > 0).length > 0 && (
+                        {members.filter(m => m.weeklyFreeTimeScheduleRegistrationStatus).length > 0 && (
                             <View style={styles.sectionContainer}>
                                 <View style={styles.sectionHeader}>
                                     <Ionicons name="checkmark-circle" size={20} color="#10B981"/>
                                     <Text style={styles.sectionTitle}>일정 등록 완료</Text>
                                     <Text style={styles.sectionCount}>
-                                        {members.filter(m => m.periodicSchedules.length > 0 || m.onetimeSchedules.length > 0).length}명
+                                        {members.filter(m => m.weeklyFreeTimeScheduleRegistrationStatus).length}명
                                     </Text>
                                 </View>
-                                {members.filter(m => m.periodicSchedules.length > 0 || m.onetimeSchedules.length > 0).map((member) => {
+                                {members.filter(m => m.weeklyFreeTimeScheduleRegistrationStatus).map((member) => {
                                     const selectedMember = selectedMembers.find(m => m.memberId === member.accountId);
                                     const isSelected = !!selectedMember;
                                     const totalSchedules = member.periodicSchedules.length + member.onetimeSchedules.length;
@@ -414,16 +414,16 @@ export default function AutoSchedulingScreen() {
                         )}
 
                         {/* NOT READY 회원 섹션 */}
-                        {members.filter(m => m.periodicSchedules.length === 0 && m.onetimeSchedules.length === 0).length > 0 && (
+                        {members.filter(m => !m.weeklyFreeTimeScheduleRegistrationStatus).length > 0 && (
                             <View style={styles.sectionContainer}>
                                 <View style={styles.sectionHeader}>
                                     <Ionicons name="alert-circle-outline" size={20} color="#9CA3AF"/>
                                     <Text style={[styles.sectionTitle, styles.sectionTitleNotReady]}>일정 미등록</Text>
                                     <Text style={styles.sectionCount}>
-                                        {members.filter(m => m.periodicSchedules.length === 0 && m.onetimeSchedules.length === 0).length}명
+                                        {members.filter(m => !m.weeklyFreeTimeScheduleRegistrationStatus).length}명
                                     </Text>
                                 </View>
-                                {members.filter(m => m.periodicSchedules.length === 0 && m.onetimeSchedules.length === 0).map((member) => {
+                                {members.filter(m => !m.weeklyFreeTimeScheduleRegistrationStatus).map((member) => {
                                     return (
                                         <View key={member.accountId}>
                                             <TouchableOpacity
