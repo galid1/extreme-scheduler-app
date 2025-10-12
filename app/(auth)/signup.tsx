@@ -157,7 +157,8 @@ export default function SignupScreen() {
       const day = birthDate.substring(4, 6);
       const formattedBirthDate = `${fullYear}-${month}-${day}`;
 
-      const formattedPhone = phoneNumber ? `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3, 7)}-${phoneNumber.slice(7)}` : '';
+      // Remove all non-digit characters from phone number
+      const cleanedPhone = phoneNumber ? phoneNumber.replace(/\D/g, '') : '';
 
       if(!tempTokenForSignUp) {
         Alert.alert('오류', '임시 토큰이 없습니다. 다시 시도해주세요.');
@@ -170,7 +171,7 @@ export default function SignupScreen() {
         name,
         birthDate: formattedBirthDate,
         gender: getGenderFromDigit(genderDigit),
-        phoneNumber: formattedPhone,
+        phoneNumber: cleanedPhone,
         accountType,
         pushTokenInfo: pushTokenInfo || undefined, // 스토어에서 가져온 푸시 토큰 사용
       };
