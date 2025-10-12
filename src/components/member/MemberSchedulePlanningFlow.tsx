@@ -318,11 +318,11 @@ export default function MemberSchedulePlanningFlow({
 const styles = StyleSheet.create({
     container: {
         gap: 0,
+        marginVertical: 20,
     },
     dashBoardTitleContainer: {
         flexDirection: "row",
         alignItems: 'center',
-        marginTop: 20,
     },
     dashboardTitle: {
         fontSize: 18,
