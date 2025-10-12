@@ -69,9 +69,8 @@ export default function PhoneAuthScreen() {
     setIsLoading(true);
     try {
       const deviceId = Device.modelId || 'unknown-device';
-      const formattedPhone = `${localPhoneNumber.slice(0, 3)}-${localPhoneNumber.slice(3, 7)}-${localPhoneNumber.slice(7)}`;
-
-      await authService.sendSmsCode(formattedPhone, deviceId);
+      // Send phone number without hyphens
+      await authService.sendSmsCode(localPhoneNumber, deviceId);
       setIsPhoneSubmitted(true);
       setRemainingTime(180);
     } catch (error) {
@@ -85,9 +84,8 @@ export default function PhoneAuthScreen() {
   const handleVerifyCode = async () => {
     setIsLoading(true);
     try {
-      const formattedPhone = `${localPhoneNumber.slice(0, 3)}-${localPhoneNumber.slice(3, 7)}-${localPhoneNumber.slice(7)}`;
-
-      const response = await authService.signIn(formattedPhone, verificationCode);
+      // Send phone number without hyphens
+      const response = await authService.signIn(localPhoneNumber, verificationCode);
 
       if (response.accessToken) {
         // Login successful - save token
