@@ -87,8 +87,13 @@ export default function MemberHome() {
 
     // Fetch user data and assigned trainer
     const fetchUserData = useCallback(async () => {
+        if (!authToken) {
+            console.log('[MemberHome] No auth token available');
+            return;
+        }
+
         try {
-            const userResponse = await authService.getCurrentUser();
+            const userResponse = await authService.getCurrentUser(authToken);
             if (userResponse.member) {
                 setAccountData({
                     account: userResponse.account,
@@ -109,19 +114,36 @@ export default function MemberHome() {
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
-    }, [account]);
+    }, [authToken]);
 
     // Load schedule data
     const loadScheduleData = useCallback(async () => {
+        // Skip if no trainer assigned
+        if (!trainerAccountId) {
+            return;
+        }
+
         try {
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
 
-            // Load all APIs in parallel
+            // Load all APIs in parallel with individual error handling
             const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, cancelRequestResponse, noticesResponse] = await Promise.all([
-                memberScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear),
-                memberScheduleService.getFixedAutoSchedulingResult(targetYear, targetWeekOfYear),
-                memberScheduleService.getFreeSchedule(),
-                memberScheduleService.getCancelRequests(targetYear, targetWeekOfYear),
+                memberScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear).catch(err => {
+                    console.error('Error fetching weekly schedule registration:', err);
+                    return { registered: false };
+                }),
+                memberScheduleService.getFixedAutoSchedulingResult(targetYear, targetWeekOfYear).catch(err => {
+                    console.error('Error fetching auto scheduling result:', err);
+                    return null;
+                }),
+                memberScheduleService.getFreeSchedule().catch(err => {
+                    console.error('Error fetching free schedule:', err);
+                    return { periodicScheduleLines: [], onetimeScheduleLines: [] };
+                }),
+                memberScheduleService.getCancelRequests(targetYear, targetWeekOfYear).catch(err => {
+                    console.error('Error fetching cancel requests:', err);
+                    return [];
+                }),
                 memberTrainerNoticeService.getTrainerNotices(true, 0, 10).catch(() => ({ notices: [], trainerAccountId: 0, totalElements: 0, currentPage: 0, pageSize: 0 })),
             ]);
 
@@ -136,7 +158,7 @@ export default function MemberHome() {
         } catch (error) {
             console.error('Error loading schedule data:', error);
         }
-    }, [member]);
+    }, [trainerAccountId]);
 
     // Load initial data - can be called from buttons/events
     const loadInitialData = useCallback(async () => {
@@ -144,12 +166,14 @@ export default function MemberHome() {
         await loadScheduleData();
     }, [fetchUserData, loadScheduleData]);
 
-    // Load all data on mount
+    // Load all data when authToken is available
     useEffect(() => {
-        loadInitialData();
-        // Fetch unread notification count
-        fetchUnreadCount();
-    }, []);
+        if (authToken) {
+            loadInitialData();
+            // Fetch unread notification count
+            fetchUnreadCount();
+        }
+    }, [authToken]);
 
     // Fetch unread notification count periodically (every 30 seconds when component is visible)
     useEffect(() => {

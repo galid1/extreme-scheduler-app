@@ -13,7 +13,7 @@ import { forceSetToken } from '@/src/utils/forceSetToken';
 export async function initializeAuth(): Promise<void> {
   try {
     // 테스트용: 로그인/회원가입을 건너뛰고 싶은 경우 사용
-    await forceSetToken();
+    // await forceSetToken();
     console.log('[Auth] Initialization completed');
   } catch (error) {
     console.error('[Auth] Initialization failed:', error);
