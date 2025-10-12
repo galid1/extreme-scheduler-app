@@ -17,7 +17,6 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const { setAccountData, token, account } = useAuthStore();
-  const { mockMode } = useConfigStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Initialize auth on app start
@@ -61,9 +60,6 @@ export default function RootLayout() {
         // Load user data if token exists but account data is not loaded
         if (!authStore.account && authStore.token) {
           // Skip API call if in mock mode or has mock token
-          if (mockMode || authStore.token.includes('mock-')) {
-            console.log('Mock mode detected, skipping API call');
-          } else {
             try {
               // Set token in API client
               await apiClient.setAuthToken(authStore.token);
@@ -80,10 +76,9 @@ export default function RootLayout() {
               // If failed to load user data, might be invalid token
               // You may want to clear the token and redirect to login
             }
-          }
         }
         // 인증 처리가 되었고, 인증 화면에 있는 경우 탭 화면으로 리다이렉트
-        if (!mockMode && inAuthGroup) {
+        if (inAuthGroup) {
           // Redirect to tabs if authenticated and in auth group
           setTimeout(() => router.replace('/(tabs)'), 0);
         }
@@ -91,7 +86,7 @@ export default function RootLayout() {
     };
 
     loadUserData();
-  }, [isHydrated, mockMode]);
+  }, [isHydrated]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

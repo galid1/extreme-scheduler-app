@@ -20,7 +20,6 @@ import { RequestStatus } from '@/src/types/enums';
 export default function AssignmentRequestsScreen() {
   const router = useRouter();
   const { assignmentRequests, setAssignmentRequests, isLoadingRequests, setIsLoadingRequests, updateRequestStatus } = useAssignmentStore();
-  const { mockMode } = useConfigStore();
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -30,13 +29,8 @@ export default function AssignmentRequestsScreen() {
   const fetchRequests = async () => {
     setIsLoadingRequests(true);
     try {
-      if (mockMode) {
-        // Mock data is already loaded by MockDataManager
-        // No need to fetch anything in mock mode
-      } else {
         const response = await trainerService.getAssignmentRequests();
         setAssignmentRequests(response.content);
-      }
     } catch (error) {
       console.error('Error fetching requests:', error);
       Alert.alert('오류', '요청 목록을 불러오는데 실패했습니다.');
@@ -49,17 +43,6 @@ export default function AssignmentRequestsScreen() {
     setProcessingIds(prev => new Set([...prev, requestId]));
 
     try {
-      if (mockMode) {
-        // Update mock data directly
-        if (action === 'approve') {
-          updateRequestStatus(requestId, RequestStatus.ACCEPTED);
-          Alert.alert('성공', '회원 배정 요청을 수락했습니다.');
-        } else {
-          const rejectReason = '트레이너 일정이 가득 참';
-          updateRequestStatus(requestId, RequestStatus.REJECTED, rejectReason);
-          Alert.alert('완료', '회원 배정 요청을 거절했습니다.');
-        }
-      } else {
         // Call actual API
         if (action === 'approve') {
           await trainerService.acceptAssignmentRequest(requestId);
@@ -71,7 +54,6 @@ export default function AssignmentRequestsScreen() {
         }
         // Refresh the list after action
         await fetchRequests();
-      }
     } catch (error) {
       console.error(`Error ${action}ing request:`, error);
       Alert.alert('오류', '요청 처리 중 오류가 발생했습니다.');

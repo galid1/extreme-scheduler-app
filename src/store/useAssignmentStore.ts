@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AssignmentRequestDto } from '@/src/types/api';
-import { useConfigStore } from './useConfigStore';
-import { mockAssignmentRequests } from '@/src/mock/mockData';
 
 interface AssignmentState {
   assignmentRequests: AssignmentRequestDto[];
@@ -15,7 +13,6 @@ interface AssignmentState {
   setIsLoadingRequests: (loading: boolean) => void;
   updateRequestStatus: (requestId: number, status: 'ACCEPTED' | 'REJECTED', rejectReason?: string) => void;
   clearAssignmentRequests: () => void;
-  loadMockData: () => void;
 }
 
 export const useAssignmentStore = create<AssignmentState>()(
@@ -54,13 +51,6 @@ export const useAssignmentStore = create<AssignmentState>()(
         set({
           assignmentRequests: [],
           lastFetchTime: null
-        });
-      },
-
-      loadMockData: () => {
-        set({
-          assignmentRequests: mockAssignmentRequests,
-          lastFetchTime: new Date(),
         });
       },
     }),

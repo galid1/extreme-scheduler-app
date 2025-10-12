@@ -1,25 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  Dimensions,
-  Keyboard,
-  ScrollView,
-  Animated,
+    ActivityIndicator,
+    Alert,
+    Animated,
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useAuthStore } from '@/src/store/useAuthStore';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useLocalSearchParams, useRouter} from 'expo-router';
+import {useAuthStore} from '@/src/store/useAuthStore';
 import authService from '@/src/services/api/auth.service';
-import { useConfigStore } from '@/src/store/useConfigStore';
-import { MockDataManager } from '@/src/mock/mockDataManager';
 
 const { height } = Dimensions.get('window');
 
@@ -42,7 +38,6 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 export default function SignupScreen() {
   const router = useRouter();
   const { phoneNumber, setToken, setUserInfo, setAccountData, pushTokenInfo } = useAuthStore();
-  const { mockMode, skipStates, setSkipState } = useConfigStore();
   const params = useLocalSearchParams<{ tempToken?: string }>();
 
   const [completedSteps, setCompletedSteps] = useState<SignupStep[]>([]);
@@ -175,18 +170,7 @@ export default function SignupScreen() {
         pushTokenInfo: pushTokenInfo || undefined, // 스토어에서 가져온 푸시 토큰 사용
       };
 
-      let response;
-
-      if (mockMode) {
-        // In mock mode, initialize mock data directly
-        const role = accountType === 'TRAINER' ? 'trainer' : 'member';
-        await MockDataManager.initializeAllStores(role);
-        Alert.alert('성공', '회원가입이 완료되었습니다 (Mock Mode)');
-        router.replace('/(tabs)');
-        return;
-      } else {
-        response = await authService.signUp(signupData);
-      }
+      const response = await authService.signUp(signupData);
 
       if (response && response.accessToken) {
         // Save token and user info
@@ -218,36 +202,6 @@ export default function SignupScreen() {
       setIsLoading(false);
     }
   };
-
-  const handleSkip = async () => {
-    setSkipState('signup', true);
-    // In mock mode, choose a role and initialize
-    Alert.alert(
-      'Mock 모드',
-      '계정 유형을 선택하세요',
-      [
-        {
-          text: '트레이너',
-          onPress: async () => {
-            await MockDataManager.initializeAllStores('trainer');
-            router.replace('/(tabs)');
-          }
-        },
-        {
-          text: '회원',
-          onPress: async () => {
-            await MockDataManager.initializeAllStores('member');
-            router.replace('/(tabs)');
-          }
-        },
-        {
-          text: '취소',
-          style: 'cancel'
-        }
-      ]
-    );
-  };
-
 
   return (
     <KeyboardAvoidingView
@@ -504,26 +458,6 @@ export default function SignupScreen() {
             borderTopWidth: 1,
             borderTopColor: '#F3F4F6'
           }}>
-            {mockMode && (
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#F59E0B',
-                  borderRadius: 12,
-                  paddingVertical: 10,
-                  marginBottom: 10,
-                }}
-                onPress={handleSkip}
-              >
-                <Text style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  fontSize: 14,
-                  fontWeight: '700',
-                }}>
-                  Skip (Mock Mode)
-                </Text>
-              </TouchableOpacity>
-            )}
             {/* Name Step Button */}
             {!completedSteps.includes('name') && (
               <TouchableOpacity

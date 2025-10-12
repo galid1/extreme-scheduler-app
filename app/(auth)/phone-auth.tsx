@@ -18,14 +18,12 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 import { useConfigStore } from '@/src/store/useConfigStore';
 import authService from '@/src/services/api/auth.service';
 import * as Device from 'expo-device';
-import MockModeToggle from "@/src/components/MockModeToggle";
 
 const { height } = Dimensions.get('window');
 
 export default function PhoneAuthScreen() {
   const router = useRouter();
   const { setToken, setPhoneNumber, setAccountData } = useAuthStore();
-  const { mockMode, skipStates, setSkipState } = useConfigStore();
 
   const [localPhoneNumber, setLocalPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -126,12 +124,6 @@ export default function PhoneAuthScreen() {
     }
   };
 
-  const handleSkip = () => {
-    setSkipState('phoneAuth', true);
-    // Navigate to signup in mock mode
-    router.replace('/(auth)/signup');
-  };
-
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: 'white' }}
@@ -140,7 +132,6 @@ export default function PhoneAuthScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView style={{ flex: 1 }}>
-            <MockModeToggle/>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{ flex: 1 }}>
               {/* Title at the top */}
@@ -255,26 +246,6 @@ export default function PhoneAuthScreen() {
             right: 0,
             backgroundColor: 'white',
           }}>
-            {mockMode && (
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#F59E0B',
-                  paddingVertical: 12,
-                  borderBottomWidth: 1,
-                  borderBottomColor: '#E5E7EB',
-                }}
-                onPress={handleSkip}
-              >
-                <Text style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  fontSize: 14,
-                  fontWeight: '700',
-                }}>
-                  Skip (Mock Mode)
-                </Text>
-              </TouchableOpacity>
-            )}
             <TouchableOpacity
               style={{
                 backgroundColor: (!isPhoneSubmitted && isValidPhone) || (isPhoneSubmitted && verificationCode.length === 6)

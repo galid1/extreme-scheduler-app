@@ -20,12 +20,10 @@ import {memberService} from '@/src/services/api';
 import type {TrainerSearchResponse} from '@/src/types/api';
 
 interface TrainerSearchComponentProps {
-    mockMode: boolean;
     onAssignmentSuccess: (trainerAccountId: number) => void;
 }
 
 export default function TrainerSearchComponent({
-                                                   mockMode,
                                                    onAssignmentSuccess,
                                                }: TrainerSearchComponentProps) {
     const [trainerPhone, setTrainerPhone] = useState('');
@@ -63,15 +61,6 @@ export default function TrainerSearchComponent({
         setIsSearching(true);
         setSearchError(null);
         try {
-            if (mockMode) {
-                setTrainerProfile({
-                    exists: true,
-                    trainerAccountId: 1,
-                    name: '김트레이너',
-                    phoneNumber: trainerPhone,
-                    profileImageUrl: 'https://via.placeholder.com/150',
-                });
-            } else {
                 const response = await memberService.searchTrainer(trainerPhone);
                 if (response.exists) {
                     setTrainerProfile(response);
@@ -79,7 +68,6 @@ export default function TrainerSearchComponent({
                     setTrainerProfile(null);
                     setSearchError('해당 전화번호의 트레이너를 찾을 수 없습니다.');
                 }
-            }
         } catch (error: any) {
             console.error('Error searching trainer:', error);
             setTrainerProfile(null);
@@ -98,9 +86,7 @@ export default function TrainerSearchComponent({
 
         setIsAssigning(true);
         try {
-            if (!mockMode) {
-                await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
-            }
+            await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
 
             Alert.alert(
                 '요청 완료',

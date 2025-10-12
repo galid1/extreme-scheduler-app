@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { useConfigStore } from './useConfigStore';
-import { mockSettings } from '@/src/mock/mockData';
 
 interface SettingsStore {
   theme: 'light' | 'dark' | 'system';
@@ -14,7 +12,6 @@ interface SettingsStore {
   toggleNotifications: () => void;
   setDefaultReminder: (minutes: number) => void;
   setWeekStartsOn: (day: 0 | 1 | 6) => void;
-  loadMockData: () => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -33,7 +30,6 @@ export const useSettingsStore = create<SettingsStore>()(
           set((state) => ({ notificationsEnabled: !state.notificationsEnabled })),
         setDefaultReminder: (minutes) => set({ defaultReminderMinutes: minutes }),
         setWeekStartsOn: (day) => set({ weekStartsOn: day }),
-        loadMockData: () => set(mockSettings),
       }),
       {
         name: 'settings-storage',

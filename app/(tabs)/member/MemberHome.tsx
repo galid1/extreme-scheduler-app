@@ -13,7 +13,6 @@ import {
     TrainerNoticeResponse
 } from '@/src/services/api';
 import type {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
-import {useConfigStore} from '@/src/store/useConfigStore';
 import {getCurrentWeek, getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
@@ -54,7 +53,6 @@ export default function MemberHome() {
     const [fixedNotices, setFixedNotices] = useState<TrainerNoticeResponse[]>([]);
     const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0);
 
-    const {mockMode} = useConfigStore();
     const screenWidth = Dimensions.get('window').width;
     const CARD_WIDTH = screenWidth - 80; // 다음 카드가 살짝 보이도록
     const CARD_GAP = 16; // 카드 간격
@@ -79,8 +77,6 @@ export default function MemberHome() {
 
     // Fetch user data and assigned trainer
     const fetchUserData = useCallback(async () => {
-        if (!account || mockMode) return;
-
         try {
             const userResponse = await authService.getCurrentUser();
             if (userResponse.member) {
@@ -103,7 +99,7 @@ export default function MemberHome() {
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
-    }, [account, mockMode]);
+    }, [account]);
 
     // Load schedule data
     const loadScheduleData = useCallback(async () => {
@@ -187,7 +183,6 @@ export default function MemberHome() {
     if (!trainerAccountId) {
         return (
             <TrainerSearchComponent
-                mockMode={mockMode}
                 onAssignmentSuccess={setTrainerAccountId}
             />
         );
@@ -218,7 +213,6 @@ export default function MemberHome() {
     // Default home screen for trainers or members with assigned trainer
     return (
         <SafeAreaView style={styles.container}>
-            {/*<MockModeToggle/>*/}
             <View style={styles.topHeader}>
                 <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
                 <TouchableOpacity
@@ -316,11 +310,6 @@ export default function MemberHome() {
                             onEditSchedule={async () => {
                                 try {
                                     // Skip API call in mock mode
-                                    if (mockMode) {
-                                        setShowScheduleEditFromDetail(true);
-                                        return;
-                                    }
-
                                     // Reload data to check latest status
                                     await loadInitialData();
 

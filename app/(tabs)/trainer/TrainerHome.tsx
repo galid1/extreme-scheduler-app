@@ -38,13 +38,10 @@ export default function TrainerHome() {
         periodicScheduleLines: PeriodicScheduleLine[],
         onetimeScheduleLines: OnetimeScheduleLine[]
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
-    const {mockMode} = useConfigStore();
     const {resetWeek} = useTrainingStore();
 
     // Function to load initial data
     const loadInitialData = async () => {
-        if (mockMode) return;
-
         try {
             setHasError(false);
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
@@ -105,7 +102,6 @@ export default function TrainerHome() {
     // Update trainer status when app comes to foreground
     useEffect(() => {
         const fetchLatestUserData = async () => {
-            if (account && !mockMode) {
                 try {
                     const userResponse = await authService.getCurrentUser();
                     if (userResponse.trainer) {
@@ -120,7 +116,6 @@ export default function TrainerHome() {
                 } catch (error) {
                     console.error('Error fetching latest user data:', error);
                 }
-            }
         };
 
         // Listen for app state changes
@@ -197,7 +192,6 @@ export default function TrainerHome() {
     // Default home screen for trainers or members with assigned trainer
     return (
         <SafeAreaView style={styles.container}>
-            {/*<MockModeToggle />*/}
             <View style={styles.topHeader}>
                 <Text style={styles.welcomeText}>안녕하세요, {name}님!</Text>
                 <TouchableOpacity
