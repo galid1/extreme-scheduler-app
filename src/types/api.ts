@@ -383,3 +383,36 @@ export interface MemberTrainerNoticeListResponse {
     pageSize: number;
 }
 
+// Notification Types
+export interface NotificationDto {
+    notificationId: number;
+    title: string;
+    body: string;
+    data: Record<string, any>;
+    isRead: boolean;
+    createdAt: string;
+    readAt?: string;
+}
+
+export interface UnreadNotificationCountResponse {
+    unreadCount: number;
+    hasUnread: boolean;
+}
+
+export interface UnreadNotificationListResponse {
+    notifications: NotificationDto[];
+    hasNext: boolean;
+    lastNotificationId: number | null;
+}
+
+export interface ReadNotificationListResponse {
+    notifications: NotificationDto[];
+    hasNext: boolean;
+    lastNotificationId: number | null;
+}
+
+export interface ReadNotificationResponse {
+    notificationId: number;
+    success: boolean;
+}
+

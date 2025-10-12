@@ -1,8 +1,6 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import {create} from 'zustand';
+import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useConfigStore } from './useConfigStore';
-import { mockTrainingSessions } from '@/src/mock/mockData';
 import {AutoSchedulingResultStatus, WeekScheduleStatus} from "@/src/types/enums";
 
 export interface TrainingSession {
@@ -46,7 +44,6 @@ interface TrainingState {
   isNextWeek: (week: number) => boolean;
   resetWeek: (week: number) => void;
   resetTraining: () => void;
-  loadMockData: () => void;
 }
 
 export const useTrainingStore = create<TrainingState>()(
@@ -131,15 +128,6 @@ export const useTrainingStore = create<TrainingState>()(
           currentWeek: 0,
           selectedMember: null,
           weekScheduleStatus: {},
-        });
-      },
-
-      loadMockData: () => {
-        set({
-          trainingSessions: mockTrainingSessions,
-          currentWeek: 3,
-          totalWeeks: 12,
-          weekScheduleStatus: { 1: true, 2: true },
         });
       },
     }),
