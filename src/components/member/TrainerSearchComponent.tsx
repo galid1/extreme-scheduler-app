@@ -20,7 +20,7 @@ import {memberService} from '@/src/services/api';
 import type {TrainerSearchResponse} from '@/src/types/api';
 
 interface TrainerSearchComponentProps {
-    onAssignmentSuccess: (trainerAccountId: number) => void;
+    onAssignmentSuccess: () => void;
 }
 
 export default function TrainerSearchComponent({
@@ -31,6 +31,7 @@ export default function TrainerSearchComponent({
     const [isSearching, setIsSearching] = useState(false);
     const [isAssigning, setIsAssigning] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
+    const [isCheckingRequest, setIsCheckingRequest] = useState(true);
 
     const formatPhoneNumber = (text: string) => {
         const cleaned = text.replace(/\D/g, '');
@@ -49,6 +50,35 @@ export default function TrainerSearchComponent({
             }
         }
     };
+
+    // Check if there's an existing assignment request on mount
+    useEffect(() => {
+        const checkExistingRequest = async () => {
+            console.log('[TrainerSearchComponent] Checking for existing request...');
+            try {
+                const requests = await memberService.getMyTrainerAssignmentRequests();
+                console.log('[TrainerSearchComponent] Request response:', JSON.stringify(requests));
+
+                // Check if there are any requests (non-empty array)
+                if (requests && requests.length > 0) {
+                    console.log('[TrainerSearchComponent] Requests exist, calling onAssignmentSuccess');
+                    // Request exists, trigger refresh to show MemberPendingAssignmentScreen
+                    onAssignmentSuccess();
+                } else {
+                    console.log('[TrainerSearchComponent] No requests found (empty array)');
+                }
+            } catch (error: any) {
+                console.log('[TrainerSearchComponent] Error or no request:', error);
+                console.log('[TrainerSearchComponent] Error status:', error?.response?.status);
+                console.log('[TrainerSearchComponent] Error message:', error?.message);
+            } finally {
+                console.log('[TrainerSearchComponent] Check complete, setting isCheckingRequest to false');
+                setIsCheckingRequest(false);
+            }
+        };
+
+        checkExistingRequest();
+    }, []);
 
     // Auto search when 11 digits are entered
     useEffect(() => {
@@ -88,6 +118,11 @@ export default function TrainerSearchComponent({
         try {
             await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
 
+            // Clear the form first
+            setTrainerPhone('');
+            setTrainerProfile(null);
+            setSearchError(null);
+
             Alert.alert(
                 '요청 완료',
                 '담당 트레이너 지정 요청이 전송되었습니다. 트레이너가 승인하면 일정 등록이 가능합니다.',
@@ -95,16 +130,11 @@ export default function TrainerSearchComponent({
                     {
                         text: '확인',
                         onPress: () => {
-                            onAssignmentSuccess(trainerProfile.trainerAccountId);
+                            onAssignmentSuccess();
                         },
                     },
                 ]
             );
-
-            // Clear the form
-            setTrainerPhone('');
-            setTrainerProfile(null);
-            setSearchError(null);
         } catch (error: any) {
             console.error('Error assigning trainer:', error);
             Alert.alert(
@@ -117,30 +147,51 @@ export default function TrainerSearchComponent({
         }
     };
 
+    // Show loading while checking for existing requests
+    if (isCheckingRequest) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#3B82F6" />
+                    <Text style={styles.loadingText}>확인 중...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <KeyboardAvoidingView
-            style={{flex: 1, backgroundColor: '#F8FAFC'}}
+            style={{flex: 1, backgroundColor: 'white'}}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <SafeAreaView style={styles.container}>
-                    <ScrollView contentContainerStyle={styles.scrollContent}>
-                        <View style={styles.header}>
-                            <Text style={styles.title}>담당 트레이너를 지정해주세요</Text>
-                        </View>
+                    {/* Title at the top */}
+                    <View style={styles.header}>
+                        <Text style={styles.title}>담당 트레이너를 지정해주세요</Text>
+                        <Text style={styles.subtitle}>트레이너 전화번호로 검색하세요</Text>
+                    </View>
 
+                    {/* Scrollable content area */}
+                    <ScrollView
+                        style={styles.scrollView}
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
                         <View style={styles.inputSection}>
-                            <Text style={styles.inputLabel}>트레이너 전화번호로 검색하세요</Text>
+                            <Text style={styles.inputLabel}>전화번호</Text>
 
                             <View style={styles.phoneInputContainer}>
                                 <TextInput
                                     style={styles.phoneInput}
                                     placeholder="010-0000-0000"
-                                    placeholderTextColor="#9CA3AF"
+                                    placeholderTextColor="#999"
                                     value={formatPhoneNumber(trainerPhone)}
                                     onChangeText={handlePhoneChange}
                                     keyboardType="phone-pad"
                                     maxLength={13}
+                                    autoFocus
                                 />
                                 {isSearching && (
                                     <ActivityIndicator size="small" color="#3B82F6" style={styles.searchingIndicator}/>
@@ -164,7 +215,7 @@ export default function TrainerSearchComponent({
                                                     style={styles.profileImage}
                                                 />
                                             ) : (
-                                                <Ionicons name="person-circle" size={50} color="#3B82F6"/>
+                                                <Ionicons name="person-circle" size={60} color="#3B82F6"/>
                                             )}
                                         </View>
                                         <View style={styles.profileInfo}>
@@ -174,25 +225,27 @@ export default function TrainerSearchComponent({
                                             </Text>
                                         </View>
                                     </View>
-
-                                    <TouchableOpacity
-                                        style={[styles.assignButton, isAssigning && styles.assignButtonDisabled]}
-                                        onPress={handleAssignTrainer}
-                                        disabled={isAssigning || !trainerProfile}
-                                    >
-                                        {isAssigning ? (
-                                            <ActivityIndicator color="white"/>
-                                        ) : (
-                                            <>
-                                                <Ionicons name="person-add" size={20} color="white"/>
-                                                <Text style={styles.assignButtonText}>담당 트레이너 지정 요청</Text>
-                                            </>
-                                        )}
-                                    </TouchableOpacity>
                                 </View>
                             )}
                         </View>
                     </ScrollView>
+
+                    {/* Fixed bottom button area */}
+                    {trainerProfile && (
+                        <View style={styles.bottomButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.assignButton, isAssigning && styles.assignButtonDisabled]}
+                                onPress={handleAssignTrainer}
+                                disabled={isAssigning || !trainerProfile}
+                            >
+                                {isAssigning ? (
+                                    <ActivityIndicator color="white"/>
+                                ) : (
+                                    <Text style={styles.assignButtonText}>담당 트레이너 지정 요청</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </SafeAreaView>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
@@ -202,114 +255,74 @@ export default function TrainerSearchComponent({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: 'white',
     },
-    scrollContent: {
-        flexGrow: 1,
-        padding: 20,
-        paddingTop: 10,
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 16,
+    },
+    loadingText: {
+        fontSize: 16,
+        color: '#666',
+        fontWeight: '600',
     },
     header: {
+        marginTop: 40,
+        paddingHorizontal: 24,
         marginBottom: 20,
-        marginTop: 10,
     },
     title: {
-        fontSize: 22,
+        fontSize: 26,
         fontWeight: '700',
-        color: '#1F2937',
+        color: '#3B82F6',
+        textAlign: 'center',
         marginBottom: 8,
     },
+    subtitle: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingHorizontal: 24,
+        paddingBottom: 20,
+    },
     inputSection: {
-        marginTop: 8,
+        marginBottom: 20,
     },
     inputLabel: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#1F2937',
+        color: '#333',
         marginBottom: 12,
+        fontWeight: '600',
     },
     phoneInputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        position: 'relative',
+    },
+    phoneInput: {
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#3B82F6',
         backgroundColor: 'white',
         borderRadius: 12,
         paddingHorizontal: 16,
-        paddingVertical: 4,
-        marginTop: 8,
-    },
-    phoneInput: {
-        flex: 1,
-        fontSize: 16,
-        color: '#1F2937',
-        paddingVertical: 12,
+        paddingVertical: 16,
+        fontSize: 18,
+        color: '#333',
+        textAlign: 'center',
     },
     searchingIndicator: {
-        marginLeft: 12,
-    },
-    profileCard: {
-        backgroundColor: 'white',
-        borderRadius: 12,
-        padding: 16,
-        marginTop: 16,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    profileHeader: {
-        flexDirection: 'row',
-        marginBottom: 16,
-    },
-    profileIcon: {
-        marginRight: 12,
-    },
-    profileImage: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-    },
-    profileInfo: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    profileName: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1F2937',
-        marginBottom: 4,
-    },
-    profilePhone: {
-        fontSize: 14,
-        color: '#6B7280',
-    },
-    assignButton: {
-        backgroundColor: '#3B82F6',
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 8,
-        marginTop: 12,
-    },
-    assignButtonDisabled: {
-        backgroundColor: '#9CA3AF',
-    },
-    assignButtonText: {
-        color: 'white',
-        fontSize: 15,
-        fontWeight: '700',
+        position: 'absolute',
+        right: 16,
+        top: 16,
     },
     errorCard: {
         flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#FEF2F2',
         borderRadius: 12,
         padding: 12,
@@ -319,8 +332,66 @@ const styles = StyleSheet.create({
         borderColor: '#FECACA',
     },
     errorText: {
-        color: '#DC2626',
+        color: '#EF4444',
         fontSize: 14,
         flex: 1,
+        fontWeight: '600',
+    },
+    profileCard: {
+        backgroundColor: '#F3F4F6',
+        borderRadius: 12,
+        padding: 20,
+        marginTop: 20,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    profileHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    profileIcon: {
+        marginRight: 16,
+    },
+    profileImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+    },
+    profileInfo: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    profileName: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#333',
+        marginBottom: 4,
+    },
+    profilePhone: {
+        fontSize: 14,
+        color: '#666',
+    },
+    bottomButtonContainer: {
+        paddingHorizontal: 24,
+        paddingBottom: 20,
+        paddingTop: 10,
+        backgroundColor: 'white',
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6',
+    },
+    assignButton: {
+        backgroundColor: '#3B82F6',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    assignButtonDisabled: {
+        backgroundColor: '#E0E0E0',
+    },
+    assignButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: '700',
     },
 });

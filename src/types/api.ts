@@ -101,6 +101,25 @@ export interface RejectAssignmentRequest {
     rejectReason: string;
 }
 
+// Member의 트레이너 배정 요청 타입
+export interface MemberTrainerAssignmentRequestDto {
+    requestId: number;
+    trainerAccountId: number;
+    trainerName: string;
+    status: RequestStatus;
+    requestedAt: string;
+    processedAt?: string;
+    rejectReason?: string;
+}
+
+// 트레이너 배정 요청 취소 응답
+export interface CancelTrainerAssignmentApiResponse {
+    requestId: number;
+    memberAccountId: number;
+    trainerAccountId: number;
+    cancelledAt: string;
+}
+
 // Schedule Types
 export interface PeriodicScheduleLine {
     id?: number | null;

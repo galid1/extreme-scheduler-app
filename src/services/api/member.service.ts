@@ -4,10 +4,14 @@
  */
 
 import apiClient from './client';
+import { config } from '../../config/environment';
+import { useAuthStore } from '../../store/useAuthStore';
 import {
     AssignedTrainerResponse,
     CreateAssignmentRequest,
     TrainerSearchResponse,
+    MemberTrainerAssignmentRequestDto,
+    CancelTrainerAssignmentApiResponse,
 } from '../../types/api';
 
 class MemberService {
@@ -21,6 +25,9 @@ class MemberService {
     );
   }
 
+  /**
+   * 배정된 트레이너 정보 조회
+   */
   async getAssignedTrainer(): Promise<AssignedTrainerResponse | null> {
     return apiClient.get<AssignedTrainerResponse | null>(
       `/api/v1/members/assigned-trainer`
@@ -38,6 +45,42 @@ class MemberService {
     return apiClient.post<void>(
       '/api/v1/members/trainer-assignment-requests',
       request
+    );
+  }
+
+  /**
+   * 내 트레이너 배정 요청 목록 조회
+   * 서버가 List를 직접 반환 (Response로 감싸지 않음)
+   */
+  async getMyTrainerAssignmentRequests(): Promise<MemberTrainerAssignmentRequestDto[]> {
+    const authToken = useAuthStore.getState().authToken;
+    const url = `${config.API_URL}/api/v1/members/trainer-assignment-requests`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const errorMessage = errorData?.message || `${response.status} ${response.statusText}`;
+      throw new Error(`트레이너 배정 요청 목록 조회 실패: ${errorMessage}`);
+    }
+
+    // 서버가 List를 직접 반환
+    return await response.json();
+  }
+
+  /**
+   * 트레이너 배정 요청 취소
+   * @param requestId 요청 ID
+   */
+  async cancelTrainerAssignmentRequest(requestId: number): Promise<CancelTrainerAssignmentApiResponse> {
+    return apiClient.delete<CancelTrainerAssignmentApiResponse>(
+      `/api/v1/members/trainer-assignment-requests/${requestId}`
     );
   }
 }

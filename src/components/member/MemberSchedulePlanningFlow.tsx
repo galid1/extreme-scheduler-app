@@ -205,7 +205,7 @@ export default function MemberSchedulePlanningFlow({
 
             {/* 3단계: 트레이너 스케줄링 대기 */}
                 {!isScheduleRegistered ? (
-                    <>
+                    <View style={styles.stepContainer}>
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
                                 <View style={[
@@ -232,7 +232,7 @@ export default function MemberSchedulePlanningFlow({
                             <Ionicons name="lock-closed-outline" size={ICON_SIZE_SMALL} color="#9CA3AF" />
                             <Text style={styles.waitingText}>희망 일정을 먼저 등록해주세요</Text>
                         </View>
-                    </>
+                    </View>
                 ) : !isTrainerScheduled ? (
                     <View style={styles.stepContainer}>
                         <View style={styles.stepHeader}>

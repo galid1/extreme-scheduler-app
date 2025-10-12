@@ -10,11 +10,14 @@ import {
     memberScheduleService,
     memberService,
     memberTrainerNoticeService,
-    TrainerNoticeResponse
+    TrainerNoticeResponse,
+    MemberTrainerAssignmentRequestDto
 } from '@/src/services/api';
-import type {OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
+import type {OnetimeScheduleLine, PeriodicScheduleLine, AssignedTrainerResponse} from '@/src/types/api';
+import {RequestStatus} from '@/src/types/enums';
 import {getCurrentWeek, getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
+import MemberPendingAssignmentScreen from '@/src/components/member/MemberPendingAssignmentScreen';
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import MemberSchedulePlanningFlow from '@/src/components/member/MemberSchedulePlanningFlow';
@@ -23,13 +26,11 @@ import WeekSelector from '@/src/components/training/WeekSelector';
 import {useNotificationStore} from '@/src/store/useNotificationStore';
 import apiClient from '@/src/services/api/client';
 
-
 export default function MemberHome() {
     const router = useRouter();
     const {
         account,
         member,
-        setTrainerAccountId,
         setAccountData,
         setAssignedTrainer,
         authToken,
@@ -54,6 +55,9 @@ export default function MemberHome() {
     const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
     const [fixedNotices, setFixedNotices] = useState<TrainerNoticeResponse[]>([]);
     const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0);
+    const [assignmentRequests, setAssignmentRequests] = useState<MemberTrainerAssignmentRequestDto[] | null>(null);
+    const [assignedTrainerInfo, setAssignedTrainerInfo] = useState<AssignedTrainerResponse | null>(null);
+    const [isRefreshingAssignment, setIsRefreshingAssignment] = useState(false);
 
     const screenWidth = Dimensions.get('window').width;
     const CARD_WIDTH = screenWidth - 80; // 다음 카드가 살짝 보이도록
@@ -106,15 +110,31 @@ export default function MemberHome() {
                     try {
                         const assignedTrainerResponse = await memberService.getAssignedTrainer();
                         setAssignedTrainer(assignedTrainerResponse);
+                        setAssignedTrainerInfo(assignedTrainerResponse);
                     } catch (error) {
                         console.error('Error fetching assigned trainer:', error);
                     }
                 }
             }
+
+            // Always fetch assignment requests to check pending status
+            try {
+                const request = await memberService.getMyTrainerAssignmentRequests();
+                setAssignmentRequests(request);
+            } catch (error) {
+                console.error('Error fetching assignment requests:', error);
+            }
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
     }, [authToken]);
+
+    // Refresh assignment status
+    const handleRefreshAssignment = async () => {
+        setIsRefreshingAssignment(true);
+        await fetchUserData();
+        setIsRefreshingAssignment(false);
+    };
 
     // Load schedule data
     const loadScheduleData = useCallback(async () => {
@@ -213,11 +233,22 @@ export default function MemberHome() {
         };
     }, [fetchUserData, loadScheduleData]);
 
-    // Show trainer assignment UI if no trainer assigned
-    if (!trainerAccountId) {
+    // Show trainer search UI if no trainer assigned and no pending requests (or empty array)
+    if (!trainerAccountId && (!assignmentRequests || assignmentRequests.length === 0)) {
         return (
             <TrainerSearchComponent
-                onAssignmentSuccess={setTrainerAccountId}
+                onAssignmentSuccess={handleRefreshAssignment}
+            />
+        );
+    }
+
+    // Show pending assignment screen if there are pending requests but no trainer yet
+    if (!trainerAccountId && assignmentRequests && assignmentRequests.length > 0) {
+        return (
+            <MemberPendingAssignmentScreen
+                requests={assignmentRequests}
+                onRefresh={handleRefreshAssignment}
+                isRefreshing={isRefreshingAssignment}
             />
         );
     }
@@ -265,68 +296,81 @@ export default function MemberHome() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* Trainer Notices Carousel */}
-                {trainerAccountId && fixedNotices.length > 0 && (
-                    <View style={styles.noticesSection}>
+                {/* Trainer Notices Section */}
+                {trainerAccountId && (
+                    <View>
                         <View style={styles.noticesSectionHeader}>
                             <View style={styles.noticesTitleRow}>
                                 <Ionicons name="megaphone" size={20} color="#3B82F6" />
                                 <Text style={styles.noticesSectionTitle}>트레이너 공지</Text>
                             </View>
                         </View>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.noticesCarousel}
-                            style={styles.noticesCarouselContainer}
-                            onScroll={handleNoticeScroll}
-                            scrollEventThrottle={16}
-                            snapToInterval={CARD_WIDTH + CARD_GAP}
-                            decelerationRate="fast"
-                            pagingEnabled={false}
-                        >
-                            {fixedNotices.map((notice) => (
-                                <TouchableOpacity
-                                    key={notice.noticeId}
-                                    style={[styles.noticeCarouselCard, { width: CARD_WIDTH }]}
-                                    onPress={() => router.push('/member-notices')}
-                                    activeOpacity={0.8}
-                                >
-                                    <View style={styles.noticeCardContent}>
-                                        <View style={styles.noticeCardHeader}>
-                                            <Ionicons name="pin" size={14} color="#3B82F6" />
-                                            <Text style={styles.noticeCardTitle} numberOfLines={1}>
-                                                {notice.title}
-                                            </Text>
-                                        </View>
-                                        <Text style={styles.noticeCardText} numberOfLines={1}>
-                                            {notice.content}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.noticeCardFooter}>
-                                        <Text style={styles.noticeCardDate}>
-                                            {new Date(notice.createdAt).toLocaleDateString('ko-KR', {
-                                                month: 'short',
-                                                day: 'numeric'
-                                            })}
-                                        </Text>
-                                    </View>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
 
-                        {/* Pagination Indicators */}
-                        {fixedNotices.length > 1 && (
-                            <View style={styles.paginationContainer}>
-                                {fixedNotices.map((_, index) => (
-                                    <View
-                                        key={index}
-                                        style={[
-                                            styles.paginationDot,
-                                            index === currentNoticeIndex && styles.paginationDotActive
-                                        ]}
-                                    />
-                                ))}
+                        {fixedNotices.length > 0 ? (
+                            <View style={styles.noticesContentWrapper}>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.noticesCarousel}
+                                    style={styles.noticesCarouselContainer}
+                                    onScroll={handleNoticeScroll}
+                                    scrollEventThrottle={16}
+                                    snapToInterval={CARD_WIDTH + CARD_GAP}
+                                    decelerationRate="fast"
+                                    pagingEnabled={false}
+                                >
+                                    {fixedNotices.map((notice) => (
+                                        <TouchableOpacity
+                                            key={notice.noticeId}
+                                            style={[styles.noticeCarouselCard, { width: CARD_WIDTH }]}
+                                            onPress={() => router.push('/member-notices')}
+                                            activeOpacity={0.8}
+                                        >
+                                            <View style={styles.noticeCardContent}>
+                                                <View style={styles.noticeCardHeader}>
+                                                    <Ionicons name="pin" size={14} color="#3B82F6" />
+                                                    <Text style={styles.noticeCardTitle} numberOfLines={1}>
+                                                        {notice.title}
+                                                    </Text>
+                                                </View>
+                                                <Text style={styles.noticeCardText} numberOfLines={1}>
+                                                    {notice.content}
+                                                </Text>
+                                            </View>
+                                            <View style={styles.noticeCardFooter}>
+                                                <Text style={styles.noticeCardDate}>
+                                                    {new Date(notice.createdAt).toLocaleDateString('ko-KR', {
+                                                        month: 'short',
+                                                        day: 'numeric'
+                                                    })}
+                                                </Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+
+                                {/* Pagination Indicators */}
+                                {fixedNotices.length > 1 && (
+                                    <View style={styles.paginationContainer}>
+                                        {fixedNotices.map((_, index) => (
+                                            <View
+                                                key={index}
+                                                style={[
+                                                    styles.paginationDot,
+                                                    index === currentNoticeIndex && styles.paginationDotActive
+                                                ]}
+                                            />
+                                        ))}
+                                    </View>
+                                )}
+                            </View>
+                        ) : (
+                            <View style={styles.emptyNoticeContainer}>
+                                <Ionicons name="notifications-off-outline" size={20} color="#9CA3AF" />
+                                <Text style={styles.emptyNoticeText}>등록된 공지사항이 없습니다</Text>
+                                <Text style={styles.emptyNoticeSubtext}>
+                                    트레이너가 공지사항을 등록하면 여기에 표시됩니다
+                                </Text>
                             </View>
                         )}
                     </View>
@@ -409,7 +453,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     welcomeText: {
-        fontSize: 18,
+        fontSize: 22,
         color: '#333',
         fontWeight: '700',
         marginBottom: 8,
@@ -1577,9 +1621,6 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 3,
     },
-    noticesSection: {
-        maxHeight: 180,
-    },
     noticesSectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -1590,11 +1631,15 @@ const styles = StyleSheet.create({
     noticesTitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 8,
     },
     noticesSectionTitle: {
         fontSize: 18,
         fontWeight: '700',
         color: '#1F2937',
+    },
+    noticesContentWrapper: {
+        marginBottom: 12,
     },
     viewAllButton: {
         flexDirection: 'row',
@@ -1674,5 +1719,28 @@ const styles = StyleSheet.create({
         height: 6,
         borderRadius: 3,
         backgroundColor: '#3B82F6',
+    },
+    emptyNoticeContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        backgroundColor: "#EFF6FF",
+        borderRadius: 12,
+        borderColor: '#BFDBFE',
+    },
+    emptyNoticeText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#6B7280',
+        marginTop: 12,
+        textAlign: 'center',
+    },
+    emptyNoticeSubtext: {
+        fontSize: 12,
+        color: '#9CA3AF',
+        marginTop: 8,
+        textAlign: 'center',
+        lineHeight: 18,
     },
 });

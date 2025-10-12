@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
+    ActivityIndicator,
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { trainerService } from '@/src/services/api';
-import { useAssignmentStore } from '@/src/store/useAssignmentStore';
-import type { AssignmentRequestDto } from '@/src/types/api';
-import { useConfigStore } from '@/src/store/useConfigStore';
-import { RequestStatus } from '@/src/types/enums';
+import {Ionicons} from '@expo/vector-icons';
+import {useRouter} from 'expo-router';
+import {trainerService} from '@/src/services/api';
+import {useAssignmentStore} from '@/src/store/useAssignmentStore';
 
 export default function AssignmentRequestsScreen() {
   const router = useRouter();
