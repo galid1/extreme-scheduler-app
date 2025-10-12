@@ -15,7 +15,9 @@
       "Bash(wc:*)",
       "Bash(npx react-native-logs:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(npx expo install:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

@@ -18,8 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import authService from '@/src/services/api/auth.service';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { useConfigStore } from '@/src/store/useConfigStore';
 import { MockDataManager } from '@/src/mock/mockDataManager';
 
@@ -43,7 +41,7 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { phoneNumber, setToken, setUserInfo, setAccountData } = useAuthStore();
+  const { phoneNumber, setToken, setUserInfo, setAccountData, pushTokenInfo } = useAuthStore();
   const { mockMode, skipStates, setSkipState } = useConfigStore();
   const params = useLocalSearchParams<{ tempToken?: string }>();
 
@@ -165,22 +163,6 @@ export default function SignupScreen() {
       const day = birthDate.substring(4, 6);
       const formattedBirthDate = `${fullYear}-${month}-${day}`;
 
-      // Get push token if permission granted
-      let pushTokenData = undefined;
-      try {
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status === 'granted') {
-          const token = await Notifications.getExpoPushTokenAsync();
-          pushTokenData = {
-            token: token.data,
-            deviceId: Device.modelId || 'unknown-device',
-            platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID' as any,
-          };
-        }
-      } catch (error) {
-        console.log('Failed to get push token:', error);
-      }
-
       const formattedPhone = phoneNumber ? `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3, 7)}-${phoneNumber.slice(7)}` : '';
 
       const signupData = {
@@ -190,7 +172,7 @@ export default function SignupScreen() {
         gender: getGenderFromDigit(genderDigit),
         phoneNumber: formattedPhone,
         accountType,
-        pushTokenInfo: pushTokenData,
+        pushTokenInfo: pushTokenInfo || undefined, // 스토어에서 가져온 푸시 토큰 사용
       };
 
       let response;
