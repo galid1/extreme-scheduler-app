@@ -108,7 +108,7 @@ export default function NotificationsPage() {
             {isUnread && <View style={styles.unreadDot} />}
           </View>
           <Text style={styles.notificationBody} numberOfLines={2}>
-            {item.body}
+            {item.message}
           </Text>
           <Text style={styles.notificationTime}>{timeText}</Text>
         </View>

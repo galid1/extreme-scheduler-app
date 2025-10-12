@@ -40,10 +40,18 @@ class NotificationService {
     }
     params.append('size', size.toString());
 
-    const response = await apiClient.get<UnreadNotificationListResponse>(
+    const response = await apiClient.get<any>(
       `/api/v1/notifications/unread?${params.toString()}`
     );
-    return response;
+
+    // Add isRead: false to all unread notifications
+    return {
+      ...response,
+      notifications: response.notifications.map((notification: any) => ({
+        ...notification,
+        isRead: false,
+      })),
+    };
   }
 
   /**
@@ -63,10 +71,18 @@ class NotificationService {
     }
     params.append('size', size.toString());
 
-    const response = await apiClient.get<ReadNotificationListResponse>(
+    const response = await apiClient.get<any>(
       `/api/v1/notifications/read?${params.toString()}`
     );
-    return response;
+
+    // Add isRead: true to all read notifications
+    return {
+      ...response,
+      notifications: response.notifications.map((notification: any) => ({
+        ...notification,
+        isRead: true,
+      })),
+    };
   }
 
   /**

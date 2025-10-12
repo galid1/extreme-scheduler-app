@@ -385,15 +385,40 @@ export interface MemberTrainerNoticeListResponse {
 }
 
 // Notification Types
-export interface NotificationDto {
-    notificationId: number;
-    title: string;
-    body: string;
-    data: Record<string, any>;
-    isRead: boolean;
-    createdAt: string;
-    readAt?: string;
+export enum NotificationType {
+    TRAINING_SCHEDULE_ASSIGNED = 'TRAINING_SCHEDULE_ASSIGNED',
+    TRAINING_SCHEDULE_CANCELLED = 'TRAINING_SCHEDULE_CANCELLED',
+    CANCEL_REQUEST_APPROVED = 'CANCEL_REQUEST_APPROVED',
+    CANCEL_REQUEST_REJECTED = 'CANCEL_REQUEST_REJECTED',
+    TRAINER_NOTICE_CREATED = 'TRAINER_NOTICE_CREATED',
+    GENERAL = 'GENERAL',
 }
+
+export interface UnreadNotificationDto {
+    notificationId: number;
+    notificationRequestId: number;
+    senderAccountId: number;
+    title: string;
+    message: string;
+    notificationType: NotificationType;
+    createdAt: string;
+    isRead: false; // Always false for unread notifications
+}
+
+export interface ReadNotificationDto {
+    notificationId: number;
+    notificationRequestId: number;
+    senderAccountId: number;
+    title: string;
+    message: string;
+    notificationType: NotificationType;
+    createdAt: string;
+    readAt: string;
+    isRead: true; // Always true for read notifications
+}
+
+// Union type for both read and unread notifications
+export type NotificationDto = UnreadNotificationDto | ReadNotificationDto;
 
 export interface UnreadNotificationCountResponse {
     unreadCount: number;

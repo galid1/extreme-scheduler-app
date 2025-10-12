@@ -142,14 +142,12 @@ export default function MemberHome() {
     useEffect(() => {
         loadInitialData();
         // Fetch unread notification count
-        console.log('[MemberHome] 🎯 Component mounted, fetching unread count...');
         fetchUnreadCount();
     }, []);
 
     // Fetch unread notification count periodically (every 30 seconds when component is visible)
     useEffect(() => {
         const interval = setInterval(() => {
-            console.log('[MemberHome] ⏰ Periodic fetch triggered');
             fetchUnreadCount();
         }, 30000); // 30 seconds
 

@@ -58,7 +58,6 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     try {
       const response = await notificationService.getUnreadCount();
       set({ unreadCount: response.unreadCount });
-      console.log('[Notification] Unread count updated:', response.unreadCount);
     } catch (error) {
       console.error('[Notification] Failed to fetch unread count:', error);
     }

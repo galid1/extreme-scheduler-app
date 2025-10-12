@@ -75,14 +75,12 @@ export default function TrainerHome() {
     useEffect(() => {
         loadInitialData();
         // Fetch unread notification count on mount
-        console.log('[TrainerHome] 🎯 Component mounted, fetching unread count...');
         fetchUnreadCount();
     }, []);
 
     // Fetch unread notification count periodically (every 30 seconds when component is visible)
     useEffect(() => {
         const interval = setInterval(() => {
-            console.log('[TrainerHome] ⏰ Periodic fetch triggered');
             fetchUnreadCount();
         }, 30000); // 30 seconds
 
