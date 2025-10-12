@@ -2,11 +2,14 @@ import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useRouter} from 'expo-router';
 import {Ionicons} from '@expo/vector-icons';
-import {trainerService} from "@/src/services/api";
+import {authService, trainerService} from "@/src/services/api";
 import {useAssignmentStore} from "@/src/store/useAssignmentStore";
 import {useAssignedMembersStore} from "@/src/store/useAssignedMembersStore";
 import {getYearAndWeek} from "@/src/utils/dateUtils";
 import FreeTimeScheduleDetailView from '@/src/components/freetimeschedule/FreeTimeScheduleDetailView';
+import {useAuthStore} from '@/src/store/useAuthStore';
+import {TrainerStatus} from '@/src/types/enums';
+import TrainerPendingApprovalScreen from '@/src/components/trainer/TrainerPendingApprovalScreen';
 
 export default function MemberManagementScreen() {
     const {assignmentRequests, setAssignmentRequests, setIsLoadingRequests} = useAssignmentStore();
@@ -15,6 +18,9 @@ export default function MemberManagementScreen() {
     const {members, setMembers, shouldRefetch} = useAssignedMembersStore();
     const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
     const [showScheduleView, setShowScheduleView] = useState(false);
+    const {trainer, setAccountData, authToken} = useAuthStore();
+    const status = trainer?.status;
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Store 데이터를 MemberInfo 형식으로 변환
     useEffect(() => {
@@ -72,6 +78,35 @@ export default function MemberManagementScreen() {
     };
 
     const pendingRequestsCount = assignmentRequests.filter(req => req.status === 'PENDING').length;
+
+    // Refresh handler for PENDING status
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            if (!authToken) {
+                console.log('[MemberManagement] No auth token available');
+                return;
+            }
+
+            const userResponse = await authService.getCurrentUser(authToken);
+            if (userResponse.trainer) {
+                setAccountData({
+                    account: userResponse.account,
+                    member: userResponse.member,
+                    trainer: userResponse.trainer
+                });
+            }
+        } catch (error) {
+            console.error('Error refreshing user data:', error);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    // Show pending approval screen for PENDING status
+    if (status === TrainerStatus.PENDING) {
+        return <TrainerPendingApprovalScreen onRefresh={handleRefresh} isRefreshing={isRefreshing}/>;
+    }
 
     // 스케줄 상세 뷰 표시
     if (showScheduleView) {
