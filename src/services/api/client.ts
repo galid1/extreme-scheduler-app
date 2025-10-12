@@ -4,7 +4,6 @@
  */
 
 import { config } from '../../config/environment';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class ApiClient {
   private baseURL: string;
@@ -12,28 +11,10 @@ class ApiClient {
 
   constructor() {
     this.baseURL = config.API_URL;
-    this.loadToken();
   }
 
-  private async loadToken() {
-    try {
-      this.authToken = await AsyncStorage.getItem('accessToken');
-    } catch (error) {
-      console.error('Failed to load auth token:', error);
-    }
-  }
-
-  public async setAuthToken(token: string | null) {
+  public setAuthToken(token: string | null) {
     this.authToken = token;
-    if (token) {
-      await AsyncStorage.setItem('accessToken', token);
-    } else {
-      await AsyncStorage.removeItem('accessToken');
-    }
-  }
-
-  public getAuthToken(): string | null {
-    return this.authToken;
   }
 
   private async request<T>(

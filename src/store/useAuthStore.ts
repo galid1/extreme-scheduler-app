@@ -2,11 +2,12 @@ import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Account, MemberResponse, TrainerResponse, WeeklyScheduleRegistrationStatusResponse, PushTokenInfo} from '@/src/types/api';
+import apiClient from '@/src/services/api/client';
 
 interface AuthState {
-  token: string | null;
+  authToken: string | null;
   phoneNumber: string | null;
-  tempToken: string | null;
+  tempTokenForSignUp: string | null;
 
   // Full account data from API
   account: Account | null;
@@ -23,9 +24,9 @@ interface AuthState {
   pushTokenInfo: PushTokenInfo | null;
 
   // Actions
-  setToken: (token: string) => void;
+  setAuthToken: (token: string) => void;
   setPhoneNumber: (phoneNumber: string) => void;
-  setTempToken: (tempToken: string) => void;
+  setTempTokenForSignUp: (tempToken: string) => void;
   setAccountData: (data: {
     account: Account;
     trainer?: TrainerResponse;
@@ -42,9 +43,9 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       // 초기값은 null로 설정 - AsyncStorage에서 로드됨
-      token: null,
+      authToken: null,
       phoneNumber: null,
-      tempToken: null,
+      tempTokenForSignUp: null,
       account: null,
       trainer: null,
       member: null,
@@ -52,16 +53,18 @@ export const useAuthStore = create<AuthState>()(
       weeklyScheduleRegistration: null,
       pushTokenInfo: null,
 
-      setToken: (token) => {
-        set({ token });
+      setAuthToken: (token) => {
+        set({ authToken: token });
+        // Also update API client token for HTTP requests
+        apiClient.setAuthToken(token);
       },
 
       setPhoneNumber: (phoneNumber) => {
         set({ phoneNumber });
       },
 
-      setTempToken: (tempToken) => {
-        set({ tempToken });
+      setTempTokenForSignUp: (tempToken) => {
+        set({ tempTokenForSignUp: tempToken });
       },
 
       setAccountData: (data) => {
@@ -101,9 +104,9 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         // Store 상태 초기화
         set({
-          token: null,
+          authToken: null,
           phoneNumber: null,
-          tempToken: null,
+          tempTokenForSignUp: null,
           account: null,
           trainer: null,
           member: null,
@@ -111,6 +114,9 @@ export const useAuthStore = create<AuthState>()(
           weeklyScheduleRegistration: null,
           pushTokenInfo: null,
         });
+
+        // API client token 제거
+        apiClient.setAuthToken(null);
 
         // AsyncStorage에서도 제거
         try {

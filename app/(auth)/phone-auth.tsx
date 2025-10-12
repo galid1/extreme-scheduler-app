@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  Dimensions,
-  Keyboard,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/src/store/useAuthStore';
-import { useConfigStore } from '@/src/store/useConfigStore';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useRouter} from 'expo-router';
+import {useAuthStore} from '@/src/store/useAuthStore';
 import authService from '@/src/services/api/auth.service';
 import * as Device from 'expo-device';
 
@@ -23,14 +22,13 @@ const { height } = Dimensions.get('window');
 
 export default function PhoneAuthScreen() {
   const router = useRouter();
-  const { setToken, setPhoneNumber, setAccountData } = useAuthStore();
+  const { setAuthToken, setTempTokenForSignUp, setPhoneNumber, setAccountData } = useAuthStore();
 
   const [localPhoneNumber, setLocalPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isPhoneSubmitted, setIsPhoneSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [remainingTime, setRemainingTime] = useState(180); // 3 minutes
-  const [tempToken, setTempToken] = useState<string>('');
 
   // Phone number validation
   const isValidPhone = localPhoneNumber.match(/^010\d{8}$/);
@@ -87,13 +85,13 @@ export default function PhoneAuthScreen() {
       // Send phone number without hyphens
       const response = await authService.signIn(localPhoneNumber, verificationCode);
 
-      if (response.accessToken) {
-        // Login successful - save token
-        setToken(response.accessToken);
+      if (response.authToken) {
+        // Login successful - save token (also updates API client automatically)
+        setAuthToken(response.authToken);
 
         // Get current user data
         try {
-          const userResponse = await authService.getCurrentUser(response.accessToken);
+          const userResponse = await authService.getCurrentUser(response.authToken);
           setAccountData({
             account: userResponse.account,
             trainer: userResponse.trainer,
@@ -105,18 +103,17 @@ export default function PhoneAuthScreen() {
 
         // Navigate to home
         router.replace('/(tabs)');
-      }
-    } catch (error: any) {
-      if (error.response?.status === 404 || error.response?.data?.code === 'USER_NOT_FOUND') {
-        // User not found - save phone number and temp token for signup
+      } else if (response.tempTokenForSignUp) {
+        // User not found - need to sign up
         setPhoneNumber(localPhoneNumber);
-        if (error.response?.data?.tempTokenForSignUp) {
-          setTempToken(error.response.data.tempTokenForSignUp);
-        }
+        setTempTokenForSignUp(response.tempTokenForSignUp);
         router.replace('/(auth)/signup');
       } else {
-        Alert.alert('오류', '인증에 실패했습니다.');
+        Alert.alert('오류', '예상치 못한 응답입니다.');
       }
+    } catch (error: any) {
+      console.error('Verification error:', error);
+      Alert.alert('오류', '인증에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }

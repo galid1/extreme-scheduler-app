@@ -35,11 +35,8 @@ export interface SignInRequest {
 }
 
 export interface SignInResponse {
-    accessToken: string;
-    refreshToken: string;
-    accountType: AccountType;
-    accountId: number;
-    name: string;
+    authToken?: string;  // Present when user exists and login is successful
+    tempTokenForSignUp?: string;  // Present when user doesn't exist (needs signup)
 }
 
 export interface PushTokenInfo {
@@ -60,11 +57,9 @@ export interface SignUpRequest {
 }
 
 export interface SignUpResponse {
-    accessToken: string;
-    refreshToken: string;
+    authToken: string;
     accountId: number;
     accountType: AccountType;
-    name: string;
 }
 
 export interface TrainerSearchResponse {

@@ -37,8 +37,7 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { phoneNumber, setToken, setUserInfo, setAccountData, pushTokenInfo } = useAuthStore();
-  const params = useLocalSearchParams<{ tempToken?: string }>();
+  const { phoneNumber, setAuthToken, setAccountData, pushTokenInfo, tempTokenForSignUp } = useAuthStore();
 
   const [completedSteps, setCompletedSteps] = useState<SignupStep[]>([]);
   const [name, setName] = useState('');
@@ -160,8 +159,14 @@ export default function SignupScreen() {
 
       const formattedPhone = phoneNumber ? `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3, 7)}-${phoneNumber.slice(7)}` : '';
 
-      const signupData = {
-        tempTokenForSignUp: params.tempToken || 'temp-token-' + Date.now(),
+      if(!tempTokenForSignUp) {
+        Alert.alert('오류', '임시 토큰이 없습니다. 다시 시도해주세요.');
+        router.replace("/(auth)/phone-auth");
+        return;
+      }
+
+      const signUpData = {
+        tempTokenForSignUp: tempTokenForSignUp,
         name,
         birthDate: formattedBirthDate,
         gender: getGenderFromDigit(genderDigit),
@@ -170,19 +175,15 @@ export default function SignupScreen() {
         pushTokenInfo: pushTokenInfo || undefined, // 스토어에서 가져온 푸시 토큰 사용
       };
 
-      const response = await authService.signUp(signupData);
+      const response = await authService.signUp(signUpData);
 
-      if (response && response.accessToken) {
-        // Save token and user info
-        setToken(response.accessToken);
-        setUserInfo({
-          name: response.name,
-          accountType: response.accountType,
-        });
+      if (response && response.authToken) {
+        // Save token (also updates API client automatically)
+        setAuthToken(response.authToken);
 
         // Get full account data
         try {
-          const userResponse = await authService.getCurrentUser(response.accessToken);
+          const userResponse = await authService.getCurrentUser(response.authToken);
           setAccountData({
             account: userResponse.account,
             trainer: userResponse.trainer,
