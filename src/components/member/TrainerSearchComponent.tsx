@@ -118,23 +118,13 @@ export default function TrainerSearchComponent({
         try {
             await memberService.requestTrainerAssignment(trainerProfile.trainerAccountId);
 
-            // Clear the form first
+            // Clear the form
             setTrainerPhone('');
             setTrainerProfile(null);
             setSearchError(null);
 
-            Alert.alert(
-                '요청 완료',
-                '담당 트레이너 지정 요청이 전송되었습니다. 트레이너가 승인하면 일정 등록이 가능합니다.',
-                [
-                    {
-                        text: '확인',
-                        onPress: () => {
-                            onAssignmentSuccess();
-                        },
-                    },
-                ]
-            );
+            // Immediately navigate without showing alert to prevent flickering
+            onAssignmentSuccess();
         } catch (error: any) {
             console.error('Error assigning trainer:', error);
             Alert.alert(
@@ -142,7 +132,6 @@ export default function TrainerSearchComponent({
                 error.message || '담당 트레이너 지정 요청에 실패했습니다.',
                 [{text: '확인'}]
             );
-        } finally {
             setIsAssigning(false);
         }
     };
@@ -184,7 +173,10 @@ export default function TrainerSearchComponent({
 
                             <View style={styles.phoneInputContainer}>
                                 <TextInput
-                                    style={styles.phoneInput}
+                                    style={[
+                                        styles.phoneInput,
+                                        isAssigning && styles.phoneInputDisabled
+                                    ]}
                                     placeholder="010-0000-0000"
                                     placeholderTextColor="#999"
                                     value={formatPhoneNumber(trainerPhone)}
@@ -192,6 +184,7 @@ export default function TrainerSearchComponent({
                                     keyboardType="phone-pad"
                                     maxLength={13}
                                     autoFocus
+                                    editable={!isAssigning}
                                 />
                                 {isSearching && (
                                     <ActivityIndicator size="small" color="#3B82F6" style={styles.searchingIndicator}/>
@@ -314,6 +307,11 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#333',
         textAlign: 'center',
+    },
+    phoneInputDisabled: {
+        backgroundColor: '#F3F4F6',
+        borderColor: '#E0E0E0',
+        color: '#9CA3AF',
     },
     searchingIndicator: {
         position: 'absolute',
