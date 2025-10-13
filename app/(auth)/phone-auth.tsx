@@ -84,7 +84,6 @@ export default function PhoneAuthScreen() {
     try {
       // Send phone number without hyphens
       const response = await authService.signIn(localPhoneNumber, verificationCode);
-
       if (response.authToken) {
         // Login successful - save token (also updates API client automatically)
         setAuthToken(response.authToken);
@@ -155,26 +154,39 @@ export default function PhoneAuthScreen() {
                 marginTop: 40,
                 paddingHorizontal: 24,
               }}>
-                <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: '#3B82F6',
-                backgroundColor: 'white',
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 16,
-                fontSize: 18,
-                color: '#333',
-                textAlign: 'center',
-              }}
-              placeholder="010-0000-0000"
-              placeholderTextColor="#999"
-              keyboardType="number-pad"
-              value={formatPhoneNumber(localPhoneNumber)}
-              onChangeText={handlePhoneChange}
-              editable={!isPhoneSubmitted}
-              maxLength={13}
-            />
+                <TouchableOpacity
+                  onPress={() => {
+                    if (isPhoneSubmitted) {
+                      setIsPhoneSubmitted(false);
+                      setVerificationCode('');
+                      setRemainingTime(180);
+                    }
+                  }}
+                  disabled={!isPhoneSubmitted}
+                  activeOpacity={isPhoneSubmitted ? 0.7 : 1}
+                >
+                  <TextInput
+                    style={{
+                      borderWidth: 1,
+                      borderColor: isPhoneSubmitted ? '#E0E0E0' : '#3B82F6',
+                      backgroundColor: isPhoneSubmitted ? '#F3F4F6' : 'white',
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 16,
+                      fontSize: 18,
+                      color: '#333',
+                      textAlign: 'center',
+                    }}
+                    placeholder="010-0000-0000"
+                    placeholderTextColor="#999"
+                    keyboardType="number-pad"
+                    value={formatPhoneNumber(localPhoneNumber)}
+                    onChangeText={handlePhoneChange}
+                    editable={!isPhoneSubmitted}
+                    maxLength={13}
+                    pointerEvents={isPhoneSubmitted ? 'none' : 'auto'}
+                  />
+                </TouchableOpacity>
 
             {isPhoneSubmitted && (
               <View style={{ marginTop: 16 }}>

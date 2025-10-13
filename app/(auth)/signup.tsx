@@ -261,7 +261,16 @@ export default function SignupScreen() {
               }}>
                 이름을 입력해주세요
               </Text>
-              <View style={{ position: 'relative' }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (completedSteps.includes('name')) {
+                    setCompletedSteps([]);
+                    setTimeout(() => nameInputRef.current?.focus(), 100);
+                  }
+                }}
+                disabled={!completedSteps.includes('name')}
+                activeOpacity={completedSteps.includes('name') ? 0.7 : 1}
+              >
                 <TextInput
                   ref={nameInputRef}
                   style={{
@@ -281,8 +290,9 @@ export default function SignupScreen() {
                   onChangeText={setName}
                   editable={!completedSteps.includes('name')}
                   autoFocus
+                  pointerEvents={completedSteps.includes('name') ? 'none' : 'auto'}
                 />
-              </View>
+              </TouchableOpacity>
             </Animated.View>
 
             {/* Birth Date Step */}
@@ -312,65 +322,77 @@ export default function SignupScreen() {
                 }}>
                   생년월일을 입력해주세요
                 </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <TextInput
-                    style={{
-                      flex: 1,
-                      borderWidth: 1,
-                      borderColor: completedSteps.includes('birthDate') ? '#E0E0E0' : '#3B82F6',
-                      backgroundColor: completedSteps.includes('birthDate') ? '#F3F4F6' : 'white',
-                      borderRadius: 12,
-                      paddingHorizontal: 16,
-                      paddingVertical: 16,
-                      fontSize: 18,
-                      color: '#333',
-                      textAlign: 'center',
-                      marginRight: 8,
-                    }}
-                    placeholder="990101"
-                    placeholderTextColor="#999"
-                    keyboardType="number-pad"
-                    value={formatBirthDate(birthDate)}
-                    onChangeText={(text) => {
-                      const cleaned = text.replace(/\D/g, '');
-                      if (cleaned.length <= 6) {
-                        setBirthDate(cleaned);
-                        if (cleaned.length === 6) {
-                          genderInputRef.current?.focus();
+                <TouchableOpacity
+                  onPress={() => {
+                    if (completedSteps.includes('birthDate')) {
+                      setCompletedSteps(['name']);
+                    }
+                  }}
+                  disabled={!completedSteps.includes('birthDate')}
+                  activeOpacity={completedSteps.includes('birthDate') ? 0.7 : 1}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        borderWidth: 1,
+                        borderColor: completedSteps.includes('birthDate') ? '#E0E0E0' : '#3B82F6',
+                        backgroundColor: completedSteps.includes('birthDate') ? '#F3F4F6' : 'white',
+                        borderRadius: 12,
+                        paddingHorizontal: 16,
+                        paddingVertical: 16,
+                        fontSize: 18,
+                        color: '#333',
+                        textAlign: 'center',
+                        marginRight: 8,
+                      }}
+                      placeholder="990101"
+                      placeholderTextColor="#999"
+                      keyboardType="number-pad"
+                      value={formatBirthDate(birthDate)}
+                      onChangeText={(text) => {
+                        const cleaned = text.replace(/\D/g, '');
+                        if (cleaned.length <= 6) {
+                          setBirthDate(cleaned);
+                          if (cleaned.length === 6) {
+                            genderInputRef.current?.focus();
+                          }
                         }
-                      }
-                    }}
-                    maxLength={6}
-                    editable={!completedSteps.includes('birthDate')}
-                    autoFocus={!completedSteps.includes('birthDate')}
-                  />
-                  <Text style={{ color: '#333', fontSize: 18, marginHorizontal: 8 }}>-</Text>
-                  <TextInput
-                    ref={genderInputRef}
-                    style={{
-                      width: 50,
-                      borderWidth: 1,
-                      borderColor: completedSteps.includes('birthDate') ? '#E0E0E0' : '#3B82F6',
-                      backgroundColor: completedSteps.includes('birthDate') ? '#F3F4F6' : 'white',
-                      borderRadius: 12,
-                      paddingHorizontal: 16,
-                      paddingVertical: 16,
-                      fontSize: 18,
-                      color: '#333',
-                      textAlign: 'center',
-                    }}
-                    placeholder="1"
-                    placeholderTextColor="#999"
-                    keyboardType="number-pad"
-                    value={genderDigit}
-                    onChangeText={(text) => {
-                      if (text.match(/^[1-4]?$/)) setGenderDigit(text);
-                    }}
-                    maxLength={1}
-                    editable={!completedSteps.includes('birthDate')}
-                  />
-                  <Text style={{ color: '#999', fontSize: 18, marginLeft: 8 }}>******</Text>
-                </View>
+                      }}
+                      maxLength={6}
+                      editable={!completedSteps.includes('birthDate')}
+                      autoFocus={!completedSteps.includes('birthDate')}
+                      pointerEvents={completedSteps.includes('birthDate') ? 'none' : 'auto'}
+                    />
+                    <Text style={{ color: '#333', fontSize: 18, marginHorizontal: 8 }}>-</Text>
+                    <TextInput
+                      ref={genderInputRef}
+                      style={{
+                        width: 50,
+                        borderWidth: 1,
+                        borderColor: completedSteps.includes('birthDate') ? '#E0E0E0' : '#3B82F6',
+                        backgroundColor: completedSteps.includes('birthDate') ? '#F3F4F6' : 'white',
+                        borderRadius: 12,
+                        paddingHorizontal: 16,
+                        paddingVertical: 16,
+                        fontSize: 18,
+                        color: '#333',
+                        textAlign: 'center',
+                      }}
+                      placeholder="1"
+                      placeholderTextColor="#999"
+                      keyboardType="number-pad"
+                      value={genderDigit}
+                      onChangeText={(text) => {
+                        if (text.match(/^[1-4]?$/)) setGenderDigit(text);
+                      }}
+                      maxLength={1}
+                      editable={!completedSteps.includes('birthDate')}
+                      pointerEvents={completedSteps.includes('birthDate') ? 'none' : 'auto'}
+                    />
+                    <Text style={{ color: '#999', fontSize: 18, marginLeft: 8 }}>******</Text>
+                  </View>
+                </TouchableOpacity>
                 <Text style={{
                   color: '#666',
                   fontSize: 12,
