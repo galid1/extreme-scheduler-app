@@ -113,7 +113,7 @@ export default function PhoneAuthScreen() {
       }
     } catch (error: any) {
       console.error('Verification error:', error);
-      Alert.alert('오류', '인증에 실패했습니다.');
+      Alert.alert('인증 실패', '인증번호가 올바르지 않습니다. 다시 확인해주세요.');
     } finally {
       setIsLoading(false);
     }
@@ -218,17 +218,29 @@ export default function PhoneAuthScreen() {
                     </Text>
                   </View>
                 </View>
-                {remainingTime === 0 && (
-                  <TouchableOpacity
-                    onPress={() => {
-                      setRemainingTime(180);
-                      handleSendCode();
-                    }}
-                    style={{ marginTop: 8, alignSelf: 'center' }}
-                  >
-                    <Text style={{ color: '#3B82F6', fontSize: 14 }}>재전송</Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                  onPress={() => {
+                    setVerificationCode('');
+                    setRemainingTime(180);
+                    handleSendCode();
+                  }}
+                  style={{
+                    marginTop: 12,
+                    alignSelf: 'center',
+                    paddingVertical: 8,
+                    paddingHorizontal: 16,
+                  }}
+                  disabled={isLoading}
+                >
+                  <Text style={{
+                    color: isLoading ? '#9CA3AF' : '#3B82F6',
+                    fontSize: 14,
+                    fontWeight: '600',
+                    textDecorationLine: 'underline',
+                  }}>
+                    인증번호 재전송
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
