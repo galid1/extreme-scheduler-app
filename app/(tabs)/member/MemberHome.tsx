@@ -54,6 +54,7 @@ export default function MemberHome() {
     const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[] | null>(null);
     const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
     const [fixedNotices, setFixedNotices] = useState<TrainerNoticeResponse[]>([]);
+    const [notFixedNotices, setNotFixedNotices] = useState<TrainerNoticeResponse[]>([]);
     const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0);
     const [assignmentRequests, setAssignmentRequests] = useState<MemberTrainerAssignmentRequestDto[] | null>(null);
     const [assignedTrainerInfo, setAssignedTrainerInfo] = useState<AssignedTrainerResponse | null>(null);
@@ -82,7 +83,7 @@ export default function MemberHome() {
     // Reset pagination index when notices change
     useEffect(() => {
         setCurrentNoticeIndex(0);
-    }, [fixedNotices]);
+    }, [fixedNotices, notFixedNotices]);
 
     // Helper function to check if auto scheduling is completed with results
     const hasAutoSchedulingResults = () => {
@@ -147,7 +148,7 @@ export default function MemberHome() {
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
 
             // Load all APIs in parallel with individual error handling
-            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, cancelRequestResponse, noticesResponse] = await Promise.all([
+            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, cancelRequestResponse, fixedNoticesResponse, notFixedNoticesResponse] = await Promise.all([
                 memberScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear).catch(err => {
                     console.error('Error fetching weekly schedule registration:', err);
                     return { registered: false };
@@ -165,6 +166,7 @@ export default function MemberHome() {
                     return [];
                 }),
                 memberTrainerNoticeService.getTrainerNotices(true, 0, 10).catch(() => ({ notices: [], trainerAccountId: 0, totalElements: 0, currentPage: 0, pageSize: 0 })),
+                memberTrainerNoticeService.getTrainerNotices(false, 0, 10).catch(() => ({ notices: [], trainerAccountId: 0, totalElements: 0, currentPage: 0, pageSize: 0 })),
             ]);
 
             setWeeklyScheduleRegistration(registrationResponse);
@@ -174,7 +176,8 @@ export default function MemberHome() {
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
             });
             setCancelRequests(cancelRequestResponse);
-            setFixedNotices(noticesResponse.notices);
+            setFixedNotices(fixedNoticesResponse.notices);
+            setNotFixedNotices(notFixedNoticesResponse.notices);
         } catch (error) {
             console.error('Error loading schedule data:', error);
         }
@@ -299,70 +302,22 @@ export default function MemberHome() {
                 {/* Trainer Notices Section */}
                 {trainerAccountId && (
                     <View>
-                        <View style={styles.noticesSectionHeader}>
-                            <View style={styles.noticesTitleRow}>
-                                <Ionicons name="megaphone" size={20} color="#3B82F6" />
-                                <Text style={styles.noticesSectionTitle}>트레이너 공지</Text>
-                            </View>
-                        </View>
-
-                        {fixedNotices.length > 0 ? (
+                        {(fixedNotices.length > 0 || notFixedNotices.length > 0) ? (
                             <View style={styles.noticesContentWrapper}>
-                                <ScrollView
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                    contentContainerStyle={styles.noticesCarousel}
-                                    style={styles.noticesCarouselContainer}
-                                    onScroll={handleNoticeScroll}
-                                    scrollEventThrottle={16}
-                                    snapToInterval={CARD_WIDTH + CARD_GAP}
-                                    decelerationRate="fast"
-                                    pagingEnabled={false}
-                                >
-                                    {fixedNotices.map((notice) => (
-                                        <TouchableOpacity
-                                            key={notice.noticeId}
-                                            style={[styles.noticeCarouselCard, { width: CARD_WIDTH }]}
-                                            onPress={() => router.push('/member-notices')}
-                                            activeOpacity={0.8}
-                                        >
-                                            <View style={styles.noticeCardContent}>
-                                                <View style={styles.noticeCardHeader}>
-                                                    <Ionicons name="pin" size={14} color="#3B82F6" />
-                                                    <Text style={styles.noticeCardTitle} numberOfLines={1}>
-                                                        {notice.title}
-                                                    </Text>
-                                                </View>
-                                                <Text style={styles.noticeCardText} numberOfLines={1}>
-                                                    {notice.content}
-                                                </Text>
-                                            </View>
-                                            <View style={styles.noticeCardFooter}>
-                                                <Text style={styles.noticeCardDate}>
-                                                    {new Date(notice.createdAt).toLocaleDateString('ko-KR', {
-                                                        month: 'short',
-                                                        day: 'numeric'
-                                                    })}
-                                                </Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-
-                                {/* Pagination Indicators */}
-                                {fixedNotices.length > 1 && (
-                                    <View style={styles.paginationContainer}>
-                                        {fixedNotices.map((_, index) => (
-                                            <View
-                                                key={index}
-                                                style={[
-                                                    styles.paginationDot,
-                                                    index === currentNoticeIndex && styles.paginationDotActive
-                                                ]}
-                                            />
-                                        ))}
-                                    </View>
-                                )}
+                                {(fixedNotices.length > 0 ? fixedNotices : notFixedNotices).map((notice) => (
+                                    <TouchableOpacity
+                                        key={notice.noticeId}
+                                        style={styles.noticeRow}
+                                        onPress={() => router.push('/member-notices')}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons name="megaphone" size={16} color="#3B82F6" />
+                                        <Text style={styles.noticeRowTitle} numberOfLines={1}>
+                                           [공지사항] {notice.title}
+                                        </Text>
+                                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                                    </TouchableOpacity>
+                                ))}
                             </View>
                         ) : (
                             <View style={styles.emptyNoticeContainer}>
@@ -1640,85 +1595,33 @@ const styles = StyleSheet.create({
     },
     noticesContentWrapper: {
         marginBottom: 12,
+        paddingHorizontal: 20,
+        gap: 8,
     },
-    viewAllButton: {
+    noticeRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-    },
-    viewAllText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#6B7280',
-    },
-    noticesCarouselContainer: {
-        maxHeight: 110,
-    },
-    noticesCarousel: {
-        gap: 16,
-        paddingHorizontal: 20,
-    },
-    noticeCarouselCard: {
-        backgroundColor: '#EFF6FF',
+        backgroundColor: 'white',
         borderRadius: 12,
-        padding: 12,
-        height: 100,
-        borderWidth: 1,
-        borderColor: '#BFDBFE',
-        borderLeftWidth: 4,
-        borderLeftColor: '#3B82F6',
-        justifyContent: 'space-between',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        gap: 12,
+        borderWidth: 2,
+        borderColor: '#3B82F6',
+        shadowColor: '#3B82F6',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    noticeCardContent: {
+    noticeRowTitle: {
         flex: 1,
-    },
-    noticeCardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        marginBottom: 6,
-    },
-    noticeCardTitle: {
         fontSize: 14,
-        fontWeight: '700',
-        color: '#1E40AF',
-        flex: 1,
-    },
-    noticeCardText: {
-        fontSize: 12,
-        color: '#475569',
-        lineHeight: 16,
-        paddingLeft: 8,
-    },
-    noticeCardFooter: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginTop: 4,
-    },
-    noticeCardDate: {
-        fontSize: 10,
-        color: '#94A3B8',
-        fontWeight: '600',
-    },
-    paginationContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingTop: 12,
-        paddingHorizontal: 20,
-        gap: 6,
-    },
-    paginationDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: '#BFDBFE',
-    },
-    paginationDotActive: {
-        width: 20,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: '#3B82F6',
+        fontWeight: '500',
+        color: '#1F2937',
     },
     emptyNoticeContainer: {
         alignItems: 'center',
