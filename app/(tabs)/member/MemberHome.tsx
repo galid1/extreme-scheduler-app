@@ -24,6 +24,7 @@ import MemberSchedulePlanningFlow from '@/src/components/member/MemberSchedulePl
 import {useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekSelector from '@/src/components/training/WeekSelector';
 import {useNotificationStore} from '@/src/store/useNotificationStore';
+import {useRefreshStore} from '@/src/store/useRefreshStore';
 import apiClient from '@/src/services/api/client';
 
 export default function MemberHome() {
@@ -41,6 +42,7 @@ export default function MemberHome() {
     const appStateRef = useRef(AppState.currentState);
     const {shouldRefresh} = useSchedulingEventStore();
     const {unreadCount, fetchUnreadCount} = useNotificationStore();
+    const {refreshKey} = useRefreshStore();
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
     const [showScheduleRegistration, setShowScheduleRegistration] = useState(false);
@@ -214,6 +216,14 @@ export default function MemberHome() {
             loadInitialData();
         }
     }, [shouldRefresh]);
+
+    // 409 에러 등으로 인한 전역 새로고침
+    useEffect(() => {
+        if (refreshKey > 0) {
+            console.log('🔄 Global refresh triggered, reloading data...');
+            loadInitialData();
+        }
+    }, [refreshKey]);
 
     // Update data when app comes to foreground
     useEffect(() => {

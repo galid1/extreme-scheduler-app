@@ -50,8 +50,12 @@ export default function MemberPendingAssignmentScreen({
           onPress: async () => {
             setCancellingRequestId(request.requestId);
             try {
-              await memberService.cancelTrainerAssignmentRequest(request.requestId);
-              Alert.alert('완료', '배정 요청이 취소되었습니다.');
+              const result = await memberService.cancelTrainerAssignmentRequest(request.requestId);
+              // undefined가 반환되면 409 에러로 API 클라이언트에서 처리된 것
+              // 이 경우 alert을 띄우지 않음 (API 클라이언트에서 이미 표시함)
+              if (result !== undefined) {
+                Alert.alert('완료', '배정 요청이 취소되었습니다.');
+              }
               onRefresh();
             } catch (error) {
               console.error('Error cancelling request:', error);

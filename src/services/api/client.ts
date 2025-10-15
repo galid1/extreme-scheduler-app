@@ -6,6 +6,8 @@
 import { config } from '../../config/environment';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useRefreshStore } from '../../store/useRefreshStore';
+import { Alert } from 'react-native';
 
 // Custom timeout error class
 export class TimeoutError extends Error {
@@ -78,6 +80,38 @@ class ApiClient {
         router.replace('/(auth)/phone-auth');
 
         throw new Error(`[${endpoint}] 인증이 만료되었습니다. 다시 로그인해주세요.`);
+      }
+
+      // Handle 409 Conflict - data already processed
+      if (response.status === 409) {
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.message || '이미 처리된 요청입니다.';
+
+        console.error(`[409 Conflict] ${endpoint}: ${errorMessage}`);
+
+        // Trigger global refresh
+        const { triggerRefresh } = useRefreshStore.getState();
+
+        // Show alert to user (only this one, no error throw to prevent duplicate alerts)
+        Alert.alert(
+          '이미 처리된 요청',
+          '해당 요청은 이미 처리되었습니다. 최신 정보를 확인하기 위해 새로고침합니다.',
+          [
+            {
+              text: '확인',
+              onPress: () => {
+                // Trigger refresh
+                triggerRefresh();
+
+                // Navigate to home if not already there
+                router.push('/(tabs)');
+              }
+            }
+          ]
+        );
+
+        // Return empty response without throwing error (prevents duplicate alerts)
+        return undefined as T;
       }
 
       if (!response.ok) {

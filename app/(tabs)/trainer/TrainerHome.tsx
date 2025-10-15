@@ -17,6 +17,7 @@ import WeekSelector from '@/src/components/training/WeekSelector';
 import SchedulePlanningFlow from '@/src/components/training/SchedulePlanningFlow';
 import WeekInfo from "@/src/components/WeekInfo";
 import {useNotificationStore} from '@/src/store/useNotificationStore';
+import {useRefreshStore} from '@/src/store/useRefreshStore';
 import apiClient from '@/src/services/api/client';
 
 export default function TrainerHome() {
@@ -27,6 +28,7 @@ export default function TrainerHome() {
     const appStateRef = useRef(AppState.currentState);
     const {shouldRefresh, hasNextWeekScheduling, setHasNextWeekScheduling} = useSchedulingEventStore();
     const {unreadCount, fetchUnreadCount} = useNotificationStore();
+    const {refreshKey} = useRefreshStore();
     const [showScheduleDetail, setShowScheduleDetail] = useState(false);
     const [showScheduleEditFromDetail, setShowScheduleEditFromDetail] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -113,6 +115,19 @@ export default function TrainerHome() {
             loadInitialData();
         }
     }, [shouldRefresh, status]);
+
+    // 409 에러 등으로 인한 전역 새로고침
+    useEffect(() => {
+        // Skip refresh if trainer is PENDING
+        if (status === TrainerStatus.PENDING) {
+            return;
+        }
+
+        if (refreshKey > 0) {
+            console.log('🔄 Global refresh triggered, reloading data...');
+            loadInitialData();
+        }
+    }, [refreshKey, status]);
 
     // Retry function
     const handleRetry = async () => {
