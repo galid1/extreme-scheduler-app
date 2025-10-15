@@ -98,6 +98,7 @@ export default function RootLayout() {
         <Stack.Screen name="auto-scheduling" options={{ headerShown: false }} />
         <Stack.Screen name="training-schedule" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="timeout-error" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />

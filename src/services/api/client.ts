@@ -4,10 +4,20 @@
  */
 
 import { config } from '../../config/environment';
+import { router } from 'expo-router';
+
+// Custom timeout error class
+export class TimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
 
 class ApiClient {
   private baseURL: string;
   private authToken: string | null = null;
+  private defaultTimeout: number = 30000; // 30초 기본 타임아웃
 
   constructor() {
     this.baseURL = config.API_URL;
@@ -17,9 +27,18 @@ class ApiClient {
     this.authToken = token;
   }
 
+  private createTimeoutPromise(timeout: number): Promise<never> {
+    return new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new TimeoutError(`Request timeout after ${timeout}ms`));
+      }, timeout);
+    });
+  }
+
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    timeout: number = this.defaultTimeout
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     const headers: HeadersInit = {
@@ -38,7 +57,11 @@ class ApiClient {
     };
 
     try {
-      const response = await fetch(url, defaultOptions);
+      // Race between fetch and timeout
+      const response = await Promise.race([
+        fetch(url, defaultOptions),
+        this.createTimeoutPromise(timeout)
+      ]);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -63,6 +86,14 @@ class ApiClient {
       const data = JSON.parse(text);
       return data.data as T;
     } catch (error) {
+      // Handle timeout error
+      if (error instanceof TimeoutError) {
+        console.error(`[Timeout Error] ${endpoint}:`, error.message);
+        // Navigate to timeout error page
+        router.push('/timeout-error');
+        throw error;
+      }
+
       if (error instanceof Error && !error.message.includes(endpoint)) {
         throw new Error(`[ ${endpoint}] ${error.message}`);
       }
@@ -70,33 +101,33 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+  async get<T>(endpoint: string, timeout?: number): Promise<T> {
+    return this.request<T>(endpoint, { method: 'GET' }, timeout);
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any, timeout?: number): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
-    });
+    }, timeout);
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: any, timeout?: number): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
-    });
+    }, timeout);
   }
 
-  async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+  async delete<T>(endpoint: string, timeout?: number): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE' }, timeout);
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<T> {
+  async patch<T>(endpoint: string, data?: any, timeout?: number): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
-    });
+    }, timeout);
   }
 }
 

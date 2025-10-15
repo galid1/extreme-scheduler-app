@@ -21,10 +21,9 @@ class TrainerService {
   async getAssignmentRequests(
     status?: RequestStatus
   ): Promise<TrainerAssignmentRequestListResponse> {
-    const params = status ? { status } : {};
+    const queryParams = status ? `?status=${status}` : '';
     return apiClient.get<TrainerAssignmentRequestListResponse>(
-      `/api/v1/trainers/assignment-requests`,
-      { params }
+      `/api/v1/trainers/assignment-requests${queryParams}`
     );
   }
 
