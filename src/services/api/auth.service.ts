@@ -5,6 +5,8 @@
 
 import apiClient from './client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { useAuthStore } from '../../store/useAuthStore';
 import {
     SendSmsRequest,
     SignInRequest,
@@ -87,6 +89,15 @@ class AuthService {
         const authToken = token ;
 
         if (!authToken) {
+            console.error('[getCurrentUser] No auth token available - logging out');
+
+            // Logout user
+            const { logout } = useAuthStore.getState();
+            await logout();
+
+            // Navigate to auth screen
+            router.replace('/(auth)/phone-auth');
+
             throw new Error('No auth token available');
         }
 
