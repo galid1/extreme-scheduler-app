@@ -48,17 +48,13 @@ export default function ProfileScreen() {
         console.log(`Account after logout: ${JSON.stringify(authStore.account)}`)
         console.log(`Token after logout: ${JSON.stringify(authStore.token)}`)
 
-        router.replace('/(auth)/phone-auth');
+        // 전역 인증 체크가 자동으로 처리하므로 명시적 리다이렉트 불필요
+        // router.replace('/(auth)/phone-auth');
     };
 
+    // account가 없을 경우는 app/_layout.tsx의 전역 인증 체크에서 처리됨
     if (!account) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.centered}>
-                    <Text style={styles.noAccountText}>로그인 정보가 없습니다</Text>
-                </View>
-            </SafeAreaView>
-        );
+        return null; // 전역 리다이렉트가 처리 중
     }
 
     return (

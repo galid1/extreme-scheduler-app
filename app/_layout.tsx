@@ -16,7 +16,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const segments = useSegments();
-  const { setAccountData, token, account } = useAuthStore();
+  const { setAccountData, authToken, account } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Initialize auth on app start
@@ -53,16 +53,16 @@ export default function RootLayout() {
       const authStore = useAuthStore.getState();
 
       // 토큰과 계정 정보가 없고, 인증 화면에 있지 않은 경우
-      if (!authStore.token && !authStore.account && !inAuthGroup) {
+      if (!authStore.authToken && !authStore.account && !inAuthGroup) {
         // Redirect to auth if not authenticated
         setTimeout(() => router.replace('/(auth)/phone-auth'), 0);
-      } else if (authStore.token) { // 인증을 통해, token이 존재하는 경우
+      } else if (authStore.authToken) { // 인증을 통해, token이 존재하는 경우
         // Load user data if token exists but account data is not loaded
-        if (!authStore.account && authStore.token) {
+        if (!authStore.account && authStore.authToken) {
           // Skip API call if in mock mode or has mock token
             try {
               // Set token in API client
-              await apiClient.setAuthToken(authStore.token);
+              await apiClient.setAuthToken(authStore.authToken);
 
               // Get current user data
               const userResponse = await authService.getCurrentUser();
@@ -87,6 +87,22 @@ export default function RootLayout() {
 
     loadUserData();
   }, [isHydrated]);
+
+  // 전역 인증 체크: account가 없어지면 로그인 화면으로 리다이렉트
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    // 이미 인증 화면에 있으면 리다이렉트하지 않음
+    if (inAuthGroup) return;
+
+    // account가 없으면 로그인 화면으로
+    if (!account && !authToken) {
+      console.log('[Global Auth Check] No account/token, redirecting to auth...');
+      setTimeout(() => router.replace('/(auth)/phone-auth'), 0);
+    }
+  }, [account, authToken, isHydrated, segments]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
