@@ -5,7 +5,8 @@ export enum AccountType {
 
 // 자동 스케줄링 결과 상태
 export enum AutoSchedulingResultStatus {
-    NOT_FIXED = 'NOT_FIXED',
+    PLACEHOLDER = 'PLACEHOLDER',
+    SCHEDULED = 'SCHEDULED',
     FIXED = 'FIXED',
 }
 
