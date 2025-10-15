@@ -26,6 +26,9 @@ interface MemberSchedulePlanningFlowProps {
 
     // 취소 요청 개수 (뱃지 표시용)
     cancelRequestsCount?: number;
+
+    // 트레이너가 이미 자동 스케줄링을 완료했는지 여부
+    trainerFixedAutoScheduling?: boolean;
 }
 
 export default function MemberSchedulePlanningFlow({
@@ -39,31 +42,9 @@ export default function MemberSchedulePlanningFlow({
     hasSchedulingResults,
     onViewTrainingSchedule,
     cancelRequestsCount = 0,
+    trainerFixedAutoScheduling = false,
 }: MemberSchedulePlanningFlowProps) {
 
-    // 요일을 한글로 변환하는 헬퍼 함수
-    const getDayOfWeekText = (dayOfWeek: string) => {
-        const days: Record<string, string> = {
-            'MONDAY': '월요일',
-            'TUESDAY': '화요일',
-            'WEDNESDAY': '수요일',
-            'THURSDAY': '목요일',
-            'FRIDAY': '금요일',
-            'SATURDAY': '토요일',
-            'SUNDAY': '일요일',
-        };
-        return days[dayOfWeek] || dayOfWeek;
-    };
-
-    // 상태 뱃지 텍스트
-    const getStatusText = (status: string) => {
-        const statusTexts: Record<string, string> = {
-            'PENDING': '대기중',
-            'APPROVED': '승인됨',
-            'REJECTED': '거절됨',
-        };
-        return statusTexts[status] || status;
-    };
     return (
         <View style={styles.container}>
             <View style={styles.dashBoardTitleContainer}>
@@ -173,6 +154,27 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                     </View>
                 </View>
+            ) : trainerFixedAutoScheduling ? (
+                // 트레이너가 이미 스케줄링을 완료한 경우
+                <View style={styles.stepContainer}>
+                    <View style={styles.stepHeader}>
+                        <View style={styles.stepTitleRow}>
+                            <View style={[
+                                styles.stepNumber,
+                                styles.stepNumberWarning
+                            ]}>
+                                <Ionicons name="alert-circle" size={ICON_SIZE_SMALL} color="white" />
+                            </View>
+                            <Text style={styles.stepTitle}>희망 일정 등록</Text>
+                        </View>
+                    </View>
+                    <View style={[styles.waitingState, styles.warningState]}>
+                        <Ionicons name="information-circle-outline" size={ICON_SIZE_MEDIUM} color="#F59E0B" />
+                        <Text style={[styles.waitingText, { color: '#D97706', flex: 1 }]}>
+                            트레이너가 이미 일정을 배정했습니다. 희망 일정 등록이 불가능합니다.
+                        </Text>
+                    </View>
+                </View>
             ) : (
                 <TouchableOpacity
                     style={styles.stepContainer}
@@ -204,7 +206,33 @@ export default function MemberSchedulePlanningFlow({
             <View style={styles.divider} />
 
             {/* 3단계: 트레이너 스케줄링 대기 */}
-                {!isScheduleRegistered ? (
+                {trainerFixedAutoScheduling && !isScheduleRegistered ? (
+                    // 트레이너가 이미 스케줄링을 완료했고 회원이 희망 일정을 등록하지 않은 경우
+                    <View style={styles.stepContainer}>
+                        <View style={styles.stepHeader}>
+                            <View style={styles.stepTitleRow}>
+                                <View style={[
+                                    styles.stepNumber,
+                                    styles.stepNumberWarning
+                                ]}>
+                                    <Ionicons name="close" size={ICON_SIZE_SMALL} color="white" />
+                                </View>
+                                <Text style={styles.stepTitle}>트레이너 스케줄링</Text>
+                                {cancelRequestsCount > 0 && (
+                                    <View style={styles.cancelRequestBadge}>
+                                        <Text style={styles.cancelRequestBadgeText}>{cancelRequestsCount}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+                        <View style={[styles.waitingState, styles.warningState]}>
+                            <Ionicons name="alert-circle-outline" size={ICON_SIZE_MEDIUM} color="#F59E0B" />
+                            <Text style={[styles.waitingText, { color: '#D97706', flex: 1 }]}>
+                                희망 일정 미등록으로 일정이 배정되지 않았습니다.
+                            </Text>
+                        </View>
+                    </View>
+                ) : !isScheduleRegistered ? (
                     <View style={styles.stepContainer}>
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
@@ -365,6 +393,9 @@ const styles = StyleSheet.create({
     stepNumberDisabled: {
         backgroundColor: '#D1D5DB',
     },
+    stepNumberWarning: {
+        backgroundColor: '#F59E0B',
+    },
     stepNumberText: {
         color: 'white',
         fontSize: 12,
@@ -401,16 +432,24 @@ const styles = StyleSheet.create({
         backgroundColor: '#F9FAFB',
         borderRadius: 10,
         paddingVertical: 12,
-        paddingHorizontal: 16,
+        paddingHorizontal: 10,
         gap: 6,
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        marginTop: 8,
+        marginVertical: 4,
     },
     waitingText: {
         color: '#9CA3AF',
         fontSize: 12,
         fontWeight: '700',
+    },
+    warningState: {
+        backgroundColor: '#FEF3C7',
+        borderColor: '#FDE68A',
+    },
+    infoState: {
+        backgroundColor: '#D1FAE5',
+        borderColor: '#A7F3D0',
     },
     divider: {
         height: 1,

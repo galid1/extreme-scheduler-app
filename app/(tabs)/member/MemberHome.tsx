@@ -11,7 +11,7 @@ import {
     memberService,
     memberTrainerNoticeService,
     TrainerNoticeResponse,
-    MemberTrainerAssignmentRequestDto
+    MemberTrainerAssignmentRequestDto, TrainerAutoSchedulingStatusResponse
 } from '@/src/services/api';
 import type {OnetimeScheduleLine, PeriodicScheduleLine, AssignedTrainerResponse} from '@/src/types/api';
 import {RequestStatus} from '@/src/types/enums';
@@ -55,6 +55,7 @@ export default function MemberHome() {
     // Local state for auto scheduling results and registration status
     const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[] | null>(null);
     const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
+    const [trainerAutoSchedulingStatus, setTrainerAutoSchedulingStatus] = useState<TrainerAutoSchedulingStatusResponse | null>(null);
     const [fixedNotices, setFixedNotices] = useState<TrainerNoticeResponse[]>([]);
     const [notFixedNotices, setNotFixedNotices] = useState<TrainerNoticeResponse[]>([]);
     const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0);
@@ -150,13 +151,17 @@ export default function MemberHome() {
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
 
             // Load all APIs in parallel with individual error handling
-            const [registrationResponse, autoSchedulingResponse, freeTimeScheduleResponse, cancelRequestResponse, fixedNoticesResponse, notFixedNoticesResponse] = await Promise.all([
+            const [registrationResponse, autoSchedulingResponse, trainerSchedulingStatusResponse, freeTimeScheduleResponse, cancelRequestResponse, fixedNoticesResponse, notFixedNoticesResponse] = await Promise.all([
                 memberScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear).catch(err => {
                     console.error('Error fetching weekly schedule registration:', err);
                     return { registered: false };
                 }),
                 memberScheduleService.getFixedAutoSchedulingResult(targetYear, targetWeekOfYear).catch(err => {
                     console.error('Error fetching auto scheduling result:', err);
+                    return null;
+                }),
+                memberScheduleService.checkTrainerAutoSchedulingStatus(targetYear, targetWeekOfYear).catch(err => {
+                    console.error('Error fetching trainer scheduling status:', err);
                     return null;
                 }),
                 memberScheduleService.getFreeSchedule().catch(err => {
@@ -173,6 +178,7 @@ export default function MemberHome() {
 
             setWeeklyScheduleRegistration(registrationResponse);
             setFixedAutoSchedulingResults(autoSchedulingResponse);
+            setTrainerAutoSchedulingStatus(trainerSchedulingStatusResponse);
             setScheduleData({
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
@@ -381,6 +387,7 @@ export default function MemberHome() {
                                 router.push('/training-schedule');
                             } : undefined}
                             cancelRequestsCount={cancelRequests.length}
+                            trainerFixedAutoScheduling={trainerAutoSchedulingStatus?.isFixed}
                         />
                     </View>
                 )}
@@ -1566,7 +1573,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 4,
         elevation: 2,
-        maxHeight: 300,
     },
     weekSelectorContainer: {
         backgroundColor: 'white',

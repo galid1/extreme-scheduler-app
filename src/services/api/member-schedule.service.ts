@@ -13,7 +13,8 @@ import {
   RegisterMemberFreeTimeScheduleResponse,
   ScheduleModificationAvailabilityResponse,
   CancelAutoSchedulingApiResponse,
-  GetCancelRequestsResponse
+  GetCancelRequestsResponse,
+  TrainerAutoSchedulingStatusResponse
 } from '../../types/api';
 
 class MemberScheduleService {
@@ -110,6 +111,22 @@ class MemberScheduleService {
     });
     return apiClient.get<GetCancelRequestsResponse>(
       `/api/v1/members/schedules/auto-scheduling/cancel-requests?${queryParams}`
+    );
+  }
+
+  /**
+   * 트레이너의 자동 스케줄링 완료 여부 확인
+   */
+  async checkTrainerAutoSchedulingStatus(
+    targetYear: number,
+    targetWeekOfYear: number
+  ): Promise<TrainerAutoSchedulingStatusResponse> {
+    const queryParams = new URLSearchParams({
+      targetYear: targetYear.toString(),
+      targetWeekOfYear: targetWeekOfYear.toString()
+    });
+    return apiClient.get<TrainerAutoSchedulingStatusResponse>(
+      `/api/v1/members/schedules/trainer-auto-scheduling-status?${queryParams}`
     );
   }
 }

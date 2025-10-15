@@ -257,6 +257,13 @@ export interface WeeklyScheduleRegistrationStatusResponse {
     weekOfYear: number;
 }
 
+// 트레이너의 자동 스케줄링 완료 여부 확인
+export interface TrainerAutoSchedulingStatusResponse {
+    isFixed: boolean;
+    targetYear: number;
+    targetWeekOfYear: number;
+}
+
 export interface TrainerWeeklyScheduleRegistrationStatusResponse {
     registered: boolean;
     year: number;

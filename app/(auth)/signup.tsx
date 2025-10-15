@@ -13,7 +13,7 @@ import {
     View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useLocalSearchParams, useRouter} from 'expo-router';
+import {useRouter} from 'expo-router';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import authService from '@/src/services/api/auth.service';
 
