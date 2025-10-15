@@ -5,6 +5,7 @@
 
 import { config } from '../../config/environment';
 import { router } from 'expo-router';
+import { useAuthStore } from '../../store/useAuthStore';
 
 // Custom timeout error class
 export class TimeoutError extends Error {
@@ -62,6 +63,22 @@ class ApiClient {
         fetch(url, defaultOptions),
         this.createTimeoutPromise(timeout)
       ]);
+
+      console.log(`[API Response] ${endpoint}: status=${response.status}`);
+
+      // Handle 401 Unauthorized - logout and redirect to auth
+      if (response.status === 401) {
+        console.error(`[401 Unauthorized] ${endpoint}: Session expired or invalid token`);
+
+        // Logout user
+        const { logout } = useAuthStore.getState();
+        await logout();
+
+        // Navigate to auth screen
+        router.replace('/(auth)/phone-auth');
+
+        throw new Error(`[${endpoint}] 인증이 만료되었습니다. 다시 로그인해주세요.`);
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
