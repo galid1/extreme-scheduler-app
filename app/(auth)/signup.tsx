@@ -37,7 +37,7 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { phoneNumber, setAuthToken, setAccountData, pushTokenInfo, tempTokenForSignUp } = useAuthStore();
+  const { phoneNumber, setAuthToken, setAccountData, pushToken, tempTokenForSignUp } = useAuthStore();
 
   const [completedSteps, setCompletedSteps] = useState<SignupStep[]>([]);
   const [name, setName] = useState('');
@@ -173,7 +173,7 @@ export default function SignupScreen() {
         gender: getGenderFromDigit(genderDigit),
         phoneNumber: cleanedPhone,
         accountType,
-        pushTokenInfo: pushTokenInfo || undefined, // 스토어에서 가져온 푸시 토큰 사용
+        pushToken, // 스토어에서 가져온 푸시 토큰 사용
       };
 
       const response = await authService.signUp(signUpData);

@@ -39,12 +39,6 @@ export interface SignInResponse {
     tempTokenForSignUp?: string;  // Present when user doesn't exist (needs signup)
 }
 
-export interface PushTokenInfo {
-    token: string;
-    deviceId: string;
-    platform: Platform;
-}
-
 export interface SignUpRequest {
     tempTokenForSignUp: string;
     name: string;
@@ -53,7 +47,7 @@ export interface SignUpRequest {
     phoneNumber: string;
     accountType: AccountType;
     profileImageUrl?: string;
-    pushTokenInfo?: PushTokenInfo;
+    pushToken?: string;
 }
 
 export interface SignUpResponse {
@@ -223,19 +217,11 @@ export interface PrivacyInfo {
     phoneNumber: string;
 }
 
-export interface PushTokenInfo {
-    token: string;
-    deviceId: string;
-    platform: Platform;
-    lastUpdatedAt: string;
-}
-
 export interface Account {
     id: number;
     accountType: AccountType;
     profileImageUrl?: string;
     privacyInfo: PrivacyInfo;
-    pushToken?: PushTokenInfo;
 }
 
 

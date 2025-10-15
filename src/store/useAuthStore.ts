@@ -1,7 +1,7 @@
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Account, MemberResponse, TrainerResponse, WeeklyScheduleRegistrationStatusResponse, PushTokenInfo} from '@/src/types/api';
+import {Account, MemberResponse, TrainerResponse, WeeklyScheduleRegistrationStatusResponse} from '@/src/types/api';
 import apiClient from '@/src/services/api/client';
 
 interface AuthState {
@@ -21,7 +21,7 @@ interface AuthState {
   weeklyScheduleRegistration: WeeklyScheduleRegistrationStatusResponse | null;
 
   // Push token info
-  pushTokenInfo: PushTokenInfo | null;
+  pushToken: string | null;
 
   // Actions
   setAuthToken: (token: string) => void;
@@ -35,7 +35,7 @@ interface AuthState {
   setTrainerAccountId: (id: number | null) => void;
   setAssignedTrainer: (trainer: any | null) => void;
   setWeeklyScheduleRegistration: (status: WeeklyScheduleRegistrationStatusResponse | null) => void;
-  setPushTokenInfo: (pushTokenInfo: PushTokenInfo | null) => void;
+  setPushToken: (pushToken: string | null) => void;
   logout: () => void;
 }
 
@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthState>()(
       member: null,
       assignedTrainer: null,
       weeklyScheduleRegistration: null,
-      pushTokenInfo: null,
+      pushToken: null,
 
       setAuthToken: (token) => {
         set({ authToken: token });
@@ -97,8 +97,8 @@ export const useAuthStore = create<AuthState>()(
         set({ weeklyScheduleRegistration: status });
       },
 
-      setPushTokenInfo: (pushTokenInfo) => {
-        set({ pushTokenInfo });
+      setPushToken: (pushToken) => {
+        set({ pushToken: pushToken });
       },
 
       logout: async () => {
@@ -112,7 +112,7 @@ export const useAuthStore = create<AuthState>()(
           member: null,
           assignedTrainer: null,
           weeklyScheduleRegistration: null,
-          pushTokenInfo: null,
+          pushToken: null,
         });
 
         // API client token 제거

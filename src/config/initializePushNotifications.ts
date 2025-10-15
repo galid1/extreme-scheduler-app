@@ -29,9 +29,9 @@ export function setupNotificationHandler(): void {
  */
 export async function registerPushToken(): Promise<void> {
   try {
-    const pushTokenInfo = await registerForPushNotificationsAsync();
-    if (pushTokenInfo) {
-      useAuthStore.getState().setPushTokenInfo(pushTokenInfo);
+    const pushToken = await registerForPushNotificationsAsync();
+    if (pushToken) {
+      useAuthStore.getState().setPushToken(pushToken);
       console.log('[Push] Token registered and saved to store');
     } else {
       console.error('[Push] Token is null - check permissions!');

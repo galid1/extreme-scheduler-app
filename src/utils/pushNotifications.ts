@@ -7,7 +7,6 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { PushTokenInfo } from '@/src/types/api';
 
 /**
  * 에러 핸들러
@@ -20,7 +19,7 @@ function handleRegistrationError(errorMessage: string): void {
  * 푸시 알림 토큰 등록
  * @returns PushTokenInfo 또는 null (실패 시)
  */
-export async function registerForPushNotificationsAsync(): Promise<PushTokenInfo | null> {
+export async function registerForPushNotificationsAsync(): Promise<string | null> {
   // 1. Android 알림 채널 설정
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
@@ -70,14 +69,7 @@ export async function registerForPushNotificationsAsync(): Promise<PushTokenInfo
 
     console.log('[Push Token]', pushTokenString);
 
-    // PushTokenInfo 객체 생성
-    const pushTokenInfo: PushTokenInfo = {
-      token: pushTokenString,
-      deviceId: Device.modelId || Device.modelName || 'unknown-device',
-      platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
-    };
-
-    return pushTokenInfo;
+    return pushTokenString;
   } catch (e: unknown) {
     handleRegistrationError(`${e}`);
     return null;
