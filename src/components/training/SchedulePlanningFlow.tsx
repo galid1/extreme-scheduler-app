@@ -213,28 +213,39 @@ export default function SchedulePlanningFlow({
                         </View>
                     </>
                 ) : !isScheduleConfirmed ? (
-                    <View style={styles.stepHeaderWithActions}>
-                        <View style={styles.stepTitleRow}>
-                            <View style={styles.stepNumber}>
-                                <Text style={styles.stepNumberText}>3</Text>
+                    <>
+                        <View style={styles.stepHeaderWithActions}>
+                            <View style={styles.stepTitleRow}>
+                                <View style={styles.stepNumber}>
+                                    <Text style={styles.stepNumberText}>3</Text>
+                                </View>
+                                <Text style={styles.stepTitle}>일정 확정</Text>
                             </View>
-                            <Text style={styles.stepTitle}>일정 확정</Text>
+                            <View style={styles.actionButtonsContainer}>
+                                <TouchableOpacity
+                                    style={styles.textButton}
+                                    onPress={onResetSchedule}
+                                >
+                                    <Text style={styles.textButtonWarning}>재설정</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.textButton}
+                                    onPress={onConfirmSchedule}
+                                >
+                                    <Text style={styles.textButtonPrimary}>스케줄 확인</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                        <View style={styles.actionButtonsContainer}>
-                            <TouchableOpacity
-                                style={styles.textButton}
-                                onPress={onResetSchedule}
-                            >
-                                <Text style={styles.textButtonWarning}>재설정</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.textButton}
-                                onPress={onConfirmSchedule}
-                            >
-                                <Text style={styles.textButtonPrimary}>스케줄 확인</Text>
-                            </TouchableOpacity>
+                        <View style={styles.confirmNoticeContainer}>
+                            <View style={styles.confirmNoticeHeader}>
+                                <Ionicons name="alert-circle" size={18} color="#F59E0B" />
+                                <Text style={styles.confirmNoticeTitle}>일정 확정이 필요합니다</Text>
+                            </View>
+                            <Text style={styles.confirmNoticeText}>
+                                일정을 확정해야 회원들에게 알림이 발송되고 트레이닝 스케줄이 최종 적용됩니다
+                            </Text>
                         </View>
-                    </View>
+                    </>
                 ) : (
                     <View style={styles.stepHeader}>
                         <View style={styles.stepTitleRow}>
@@ -400,5 +411,29 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: '700',
         color: '#92400E',
+    },
+    confirmNoticeContainer: {
+        backgroundColor: '#FFFBEB',
+        borderRadius: 10,
+        padding: 12,
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: '#FDE68A',
+        gap: 6,
+    },
+    confirmNoticeHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    confirmNoticeTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#92400E',
+    },
+    confirmNoticeText: {
+        fontSize: 12,
+        color: '#78350F',
+        lineHeight: 18,
     },
 });

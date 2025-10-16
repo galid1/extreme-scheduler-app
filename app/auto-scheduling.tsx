@@ -112,7 +112,9 @@ export default function AutoSchedulingScreen() {
         return selectedMembers.reduce((total, member) => total + member.sessionCount, 0);
     };
 
-    const formatLastAttendance = (dateTimeString: string) => {
+    const formatLastAttendance = (dateTimeString?: string) => {
+        if(!dateTimeString) return '아직 수강 기록이 없어요';
+
         const date = new Date(dateTimeString);
         const month = date.getMonth() + 1;
         const day = date.getDate();
@@ -123,6 +125,19 @@ export default function AutoSchedulingScreen() {
         const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
 
         return `${month}/${day} ${formattedHours}:${formattedMinutes}`;
+    };
+
+    const formatPhoneNumber = (phoneNumber: string) => {
+        // Remove all non-digit characters
+        const cleaned = phoneNumber.replace(/\D/g, '');
+
+        // Format as 010-XXXX-XXXX
+        if (cleaned.length === 11) {
+            return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
+        }
+
+        // Return original if format doesn't match
+        return phoneNumber;
     };
 
     const handleAutoSchedule = async () => {
@@ -348,31 +363,39 @@ export default function AutoSchedulingScreen() {
                                                                 <Text style={styles.statusText}>READY</Text>
                                                             </View>
                                                         </View>
-                                                        <Text style={styles.memberPhone}>
-                                                            {member.phoneNumber}
-                                                        </Text>
-                                                        {member.lastAttendanceDateTime && (
-                                                            <View style={styles.lastAttendanceContainer}>
-                                                                <Ionicons name="checkmark-circle-outline" size={14} color="#10B981"/>
-                                                                <Text style={styles.lastAttendanceText}>
-                                                                    마지막 세션: {formatLastAttendance(member.lastAttendanceDateTime)}
+                                                        <View style={styles.memberContactInfo}>
+                                                            <Ionicons name="call-outline" size={14} color="#6B7280"/>
+                                                            <Text style={styles.memberPhone}>
+                                                                {formatPhoneNumber(member.phoneNumber)}
+                                                            </Text>
+                                                        </View>
+                                                        <View style={styles.lastAttendanceContainer}>
+                                                            <Ionicons name="checkmark-circle-outline" size={14} />
+                                                            <Text style={styles.lastAttendanceText}>
+                                                                마지막 수강일: {formatLastAttendance(member.lastAttendanceDateTime)}
+                                                            </Text>
+                                                        </View>
+                                                        <View style={styles.memberScheduleInfo}>
+                                                            <View style={styles.scheduleInfoItem}>
+                                                                <Ionicons name="time-outline" size={14} />
+                                                                <Text style={styles.scheduleInfoText}>
+                                                                    총 {totalSchedules}개 시간대
                                                                 </Text>
                                                             </View>
-                                                        )}
-                                                        <View style={styles.memberMetaInfo}>
-                                                            <View style={styles.metaItem}>
-                                                                <Ionicons name="time-outline" size={14} color="#666"/>
-                                                                <Text style={styles.metaText}>
-                                                                    {totalSchedules}개 시간대
-                                                                </Text>
-                                                            </View>
-                                                            <View style={styles.metaItem}>
-                                                                <Ionicons name="calendar-outline" size={14}
-                                                                          color="#666"/>
-                                                                <Text style={styles.metaText}>
-                                                                    정기 {member.periodicSchedules.length}개 ·
-                                                                    일회성 {member.onetimeSchedules.length}개
-                                                                </Text>
+                                                            <View style={styles.scheduleDetailContainer}>
+                                                                <View style={styles.scheduleDetailItem}>
+                                                                    <Ionicons name="refresh-outline" size={12} color="#6B7280"/>
+                                                                    <Text style={styles.scheduleDetailText}>
+                                                                        정기 {member.periodicSchedules.length}개
+                                                                    </Text>
+                                                                </View>
+                                                                <Text style={styles.scheduleDetailDivider}>·</Text>
+                                                                <View style={styles.scheduleDetailItem}>
+                                                                    <Ionicons name="calendar-outline" size={12} color="#6B7280"/>
+                                                                    <Text style={styles.scheduleDetailText}>
+                                                                        일회성 {member.onetimeSchedules.length}개
+                                                                    </Text>
+                                                                </View>
                                                             </View>
                                                         </View>
                                                     </View>
@@ -471,12 +494,15 @@ export default function AutoSchedulingScreen() {
                                                                 </Text>
                                                             </View>
                                                         </View>
-                                                        <Text style={[
-                                                            styles.memberPhone,
-                                                            styles.memberPhoneDisabled,
-                                                        ]}>
-                                                            {member.phoneNumber}
-                                                        </Text>
+                                                        <View style={styles.memberContactInfo}>
+                                                            <Ionicons name="call-outline" size={14} color="#9CA3AF"/>
+                                                            <Text style={[
+                                                                styles.memberPhone,
+                                                                styles.memberPhoneDisabled,
+                                                            ]}>
+                                                                {formatPhoneNumber(member.phoneNumber)}
+                                                            </Text>
+                                                        </View>
                                                     </View>
                                                     <View style={styles.checkboxDisabled}>
                                                         <Ionicons name="close" size={18} color="#D1D5DB"/>
@@ -634,43 +660,66 @@ const styles = StyleSheet.create({
     statusTextNotReady: {
         color: '#9CA3AF',
     },
+    memberContactInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginVertical: 6,
+    },
     memberPhone: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 8,
+        fontSize: 13,
+        color: '#6B7280',
+        fontWeight: '500',
     },
     memberPhoneDisabled: {
-        color: '#999',
+        color: '#9CA3AF',
     },
     lastAttendanceContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        marginBottom: 8,
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-        backgroundColor: '#F0FDF4',
-        borderRadius: 6,
+        gap: 6,
+        marginBottom: 10,
+        paddingHorizontal: 10,
         alignSelf: 'flex-start',
     },
     lastAttendanceText: {
         fontSize: 12,
-        color: '#10B981',
-        fontWeight: '600',
+        fontWeight: '500',
     },
-    memberMetaInfo: {
+    memberScheduleInfo: {
+        gap: 6,
+    },
+    scheduleInfoItem: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 12,
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 10,
+        alignSelf: 'flex-start',
     },
-    metaItem: {
+    scheduleInfoText: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    scheduleDetailContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingLeft: 10,
+    },
+    scheduleDetailItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
     },
-    metaText: {
-        fontSize: 12,
-        color: '#666',
+    scheduleDetailText: {
+        fontSize: 11,
+        color: '#6B7280',
+        fontWeight: '500',
+    },
+    scheduleDetailDivider: {
+        fontSize: 11,
+        color: '#D1D5DB',
+        fontWeight: '500',
     },
     checkbox: {
         width: 28,

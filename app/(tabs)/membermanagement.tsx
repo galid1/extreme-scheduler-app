@@ -1,5 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import {useRouter} from 'expo-router';
 import {Ionicons} from '@expo/vector-icons';
 import {authService, trainerService} from "@/src/services/api";
@@ -239,7 +248,7 @@ export default function MemberManagementScreen() {
                                         {selectedMemberId === member.accountId && (
                                             <View style={styles.memberStats}>
                                                 <View style={styles.statRow}>
-                                                    <Text style={styles.statRowLabel}>마지막 세션</Text>
+                                                    <Text style={styles.statRowLabel}>마지막 수강일</Text>
                                                     <Text style={styles.statRowValue}>
                                                         {formatDate(member.lastAttendanceDateTime)}
                                                     </Text>
@@ -254,7 +263,7 @@ export default function MemberManagementScreen() {
                                                         <Ionicons name="calendar-outline" size={18} color="white"/>
                                                         <Text style={styles.actionButtonText}>트레이닝 가능 일정</Text>
                                                     </TouchableOpacity>
-                                                    <TouchableOpacity style={styles.actionButton}>
+                                                    <TouchableOpacity onPress={() => Alert.alert("오픈 예정", "지원 예정인 기능이에요")} style={styles.actionButton}>
                                                         <Ionicons name="chatbubble-outline" size={18} color="white"/>
                                                         <Text style={styles.actionButtonText}>메시지</Text>
                                                     </TouchableOpacity>
