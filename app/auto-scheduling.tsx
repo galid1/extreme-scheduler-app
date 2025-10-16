@@ -112,6 +112,19 @@ export default function AutoSchedulingScreen() {
         return selectedMembers.reduce((total, member) => total + member.sessionCount, 0);
     };
 
+    const formatLastAttendance = (dateTimeString: string) => {
+        const date = new Date(dateTimeString);
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+
+        const formattedHours = hours < 10 ? `0${hours}` : hours;
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+        return `${month}/${day} ${formattedHours}:${formattedMinutes}`;
+    };
+
     const handleAutoSchedule = async () => {
         setIsProcessing(true);
 
@@ -338,6 +351,14 @@ export default function AutoSchedulingScreen() {
                                                         <Text style={styles.memberPhone}>
                                                             {member.phoneNumber}
                                                         </Text>
+                                                        {member.lastAttendanceDateTime && (
+                                                            <View style={styles.lastAttendanceContainer}>
+                                                                <Ionicons name="checkmark-circle-outline" size={14} color="#10B981"/>
+                                                                <Text style={styles.lastAttendanceText}>
+                                                                    마지막 세션: {formatLastAttendance(member.lastAttendanceDateTime)}
+                                                                </Text>
+                                                            </View>
+                                                        )}
                                                         <View style={styles.memberMetaInfo}>
                                                             <View style={styles.metaItem}>
                                                                 <Ionicons name="time-outline" size={14} color="#666"/>
@@ -620,6 +641,22 @@ const styles = StyleSheet.create({
     },
     memberPhoneDisabled: {
         color: '#999',
+    },
+    lastAttendanceContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginBottom: 8,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        backgroundColor: '#F0FDF4',
+        borderRadius: 6,
+        alignSelf: 'flex-start',
+    },
+    lastAttendanceText: {
+        fontSize: 12,
+        color: '#10B981',
+        fontWeight: '600',
     },
     memberMetaInfo: {
         flexDirection: 'row',

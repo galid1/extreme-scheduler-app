@@ -198,6 +198,7 @@ export interface MemberWithSchedulesResponse {
     birthDate: string;
     gender: Gender;
     phoneNumber: string;
+    lastAttendanceDateTime?: string;
     weeklyFreeTimeScheduleRegistrationStatus: boolean;
     periodicSchedules: PeriodicScheduleLine[];
     onetimeSchedules: OnetimeScheduleLine[];

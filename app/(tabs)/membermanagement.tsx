@@ -70,11 +70,20 @@ export default function MemberManagementScreen() {
     };
 
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
+    const formatDate = (dateTimeString?: string) => {
+        if(!dateTimeString) return '아직 수강 기록이 없어요';
+
+        const date = new Date(dateTimeString);
         const month = date.getMonth() + 1;
         const day = date.getDate();
-        return `${month}/${day}`;
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+
+        // 시간과 분을 두 자리로 표시 (예: 09:05)
+        const formattedHours = hours < 10 ? `0${hours}` : hours;
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+        return `${month}/${day} ${formattedHours}:${formattedMinutes}`;
     };
 
     const pendingRequestsCount = assignmentRequests.filter(req => req.status === 'PENDING').length;
@@ -232,16 +241,9 @@ export default function MemberManagementScreen() {
                                                 <View style={styles.statRow}>
                                                     <Text style={styles.statRowLabel}>마지막 세션</Text>
                                                     <Text style={styles.statRowValue}>
-                                                        {formatDate(member.lastSessionDate)}
+                                                        {formatDate(member.lastAttendanceDateTime)}
                                                     </Text>
                                                 </View>
-                                                <View style={styles.statRow}>
-                                                    <Text style={styles.statRowLabel}>총 세션</Text>
-                                                    <Text style={styles.statRowValue}>
-                                                        {member.totalSessions}회
-                                                    </Text>
-                                                </View>
-
                                                 <View style={styles.memberActions}>
                                                     <TouchableOpacity
                                                         style={styles.actionButton}
