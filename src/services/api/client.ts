@@ -20,7 +20,7 @@ export class TimeoutError extends Error {
 class ApiClient {
   private baseURL: string;
   private authToken: string | null = null;
-  private defaultTimeout: number = 30000; // 30초 기본 타임아웃
+  private defaultTimeout: number = 4000; // 4초 기본 타임아웃
 
   constructor() {
     this.baseURL = config.API_URL;
