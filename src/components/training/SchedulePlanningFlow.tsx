@@ -23,6 +23,9 @@ interface SchedulePlanningFlowProps {
     isScheduleConfirmed: boolean;
     onConfirmSchedule: () => void;
     onResetSchedule: () => void;
+
+    // 취소 요청 개수 (뱃지 표시용)
+    cancelRequestsCount?: number;
 }
 
 export default function SchedulePlanningFlow({
@@ -35,6 +38,7 @@ export default function SchedulePlanningFlow({
     isScheduleConfirmed,
     onConfirmSchedule,
     onResetSchedule,
+    cancelRequestsCount = 0,
 }: SchedulePlanningFlowProps) {
     const handleOnShowOperationSchedule = () => {
         if (isOperationScheduleRegistered) {
@@ -102,6 +106,11 @@ export default function SchedulePlanningFlow({
                                 styles.stepTitle,
                                 styles.stepTitleDisabled
                             ]}>자동 스케줄링</Text>
+                            {cancelRequestsCount > 0 && (
+                                <View style={styles.cancelRequestBadge}>
+                                    <Text style={styles.cancelRequestBadgeText}>{cancelRequestsCount}</Text>
+                                </View>
+                            )}
                         </View>
                     </View>
                     <View style={styles.waitingState}>
@@ -124,6 +133,11 @@ export default function SchedulePlanningFlow({
                                 <Ionicons name="checkmark" size={ICON_SIZE_SMALL} color="white" />
                             </View>
                             <Text style={styles.stepTitle}>자동 스케줄링</Text>
+                            {cancelRequestsCount > 0 && (
+                                <View style={styles.cancelRequestBadge}>
+                                    <Text style={styles.cancelRequestBadgeText}>{cancelRequestsCount}</Text>
+                                </View>
+                            )}
                         </View>
                         <View style={styles.stepHeaderRight}>
                             <View style={styles.textButton}>
@@ -149,6 +163,11 @@ export default function SchedulePlanningFlow({
                                 <Text style={styles.stepNumberText}>2</Text>
                             </View>
                             <Text style={styles.stepTitle}>자동 스케줄링</Text>
+                            {cancelRequestsCount > 0 && (
+                                <View style={styles.cancelRequestBadge}>
+                                    <Text style={styles.cancelRequestBadgeText}>{cancelRequestsCount}</Text>
+                                </View>
+                            )}
                         </View>
                         <View style={styles.stepHeaderRight}>
                             <View style={styles.textButton}>
@@ -367,5 +386,19 @@ const styles = StyleSheet.create({
         height: 1,
         backgroundColor: '#E5E7EB',
         marginVertical: 0,
+    },
+    cancelRequestBadge: {
+        backgroundColor: '#FEF3C7',
+        borderRadius: 10,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderWidth: 1,
+        borderColor: '#FDE68A',
+        marginLeft: 6,
+    },
+    cancelRequestBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#92400E',
     },
 });

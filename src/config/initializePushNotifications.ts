@@ -7,6 +7,7 @@ import * as Notifications from 'expo-notifications';
 import { registerForPushNotificationsAsync } from '@/src/utils/pushNotifications';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useNotificationStore } from '@/src/store/useNotificationStore';
+import { useRefreshStore } from '@/src/store/useRefreshStore';
 
 /**
  * 푸시 알림 핸들러 설정
@@ -57,6 +58,12 @@ function setupNotificationReceivedListener() {
     // 서버에서 최신 안읽은 알림 개수 조회
     const { fetchUnreadCount } = useNotificationStore.getState();
     fetchUnreadCount();
+
+    // 전역 새로고침 트리거 (취소 요청 등 최신 데이터 로드)
+    const { triggerRefresh } = useRefreshStore.getState();
+    triggerRefresh();
+
+    console.log('🔄 [Notification] Triggered global refresh for cancel requests and other data');
   });
 }
 

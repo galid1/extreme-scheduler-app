@@ -40,6 +40,7 @@ export default function TrainerHome() {
         periodicScheduleLines: PeriodicScheduleLine[],
         onetimeScheduleLines: OnetimeScheduleLine[]
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
+    const [cancelRequestsCount, setCancelRequestsCount] = useState(0);
     const {resetWeek} = useTrainingStore();
 
     // Initialize apiClient token on mount (in case it was restored from AsyncStorage)
@@ -61,10 +62,12 @@ export default function TrainerHome() {
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
 
             // Load both APIs in parallel
-            const [registrationResponse, autoSchedulingResultResponse, freeTimeScheduleResponse] = await Promise.all([
+            const [registrationResponse, autoSchedulingResultResponse, freeTimeScheduleResponse, currentWeekCancelRequests, nextWeekCancelRequests] = await Promise.all([
                 trainerScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear),
                 trainerScheduleService.getAutoSchedulingResult(targetYear, targetWeekOfYear),
-                trainerScheduleService.getFreeSchedule()
+                trainerScheduleService.getFreeSchedule(),
+                trainerScheduleService.getCancelRequests(targetYear, getCurrentWeek()),
+                trainerScheduleService.getCancelRequests(targetYear, targetWeekOfYear)
             ]);
 
             setIsRegisteredOperationSchedule(registrationResponse.registered);
@@ -75,6 +78,10 @@ export default function TrainerHome() {
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
             });
+
+            // Calculate total cancel requests count
+            const totalCancelRequests = currentWeekCancelRequests.cancelRequests.length + nextWeekCancelRequests.cancelRequests.length;
+            setCancelRequestsCount(totalCancelRequests);
 
         } catch (error) {
             console.error('Error loading initial data:', error);
@@ -89,19 +96,6 @@ export default function TrainerHome() {
         fetchUnreadCount();
     }, [status]);
 
-    // Fetch unread notification count periodically (every 30 seconds when component is visible)
-    useEffect(() => {
-        // Skip periodic fetch if trainer is PENDING
-        if (status === TrainerStatus.PENDING) {
-            return;
-        }
-
-        const interval = setInterval(() => {
-            fetchUnreadCount();
-        }, 30000); // 30 seconds
-
-        return () => clearInterval(interval);
-    }, [status]);
 
     // 자동 스케줄링 완료 시 데이터 새로고침
     useEffect(() => {
@@ -279,6 +273,9 @@ export default function TrainerHome() {
                                 setCurrentWeek(getCurrentWeek() + 1); // 다음 주
                                 router.push('/training-schedule');
                             }}
+
+                            // 취소 요청 개수
+                            cancelRequestsCount={cancelRequestsCount}
                             onResetSchedule={async () => {
                                 const currentWeek = getCurrentWeek() + 1; // 다음 주
                                 const alertMessage = nextWeekAutoSchedulingResultFixed
