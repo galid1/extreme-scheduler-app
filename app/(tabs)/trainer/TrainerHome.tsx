@@ -71,7 +71,7 @@ export default function TrainerHome() {
             ]);
 
             setIsRegisteredOperationSchedule(registrationResponse.registered);
-            const hasScheduling = autoSchedulingResultResponse.weeklyAutoSchedulingResultStatus != null;
+            const hasScheduling = autoSchedulingResultResponse.weeklyAutoSchedulingResultStatus != AutoSchedulingResultStatus.PLACEHOLDER;
             setHasNextWeekScheduling(hasScheduling); // Store에 저장
             setNextWeekAutoSchedulingResultFixed(autoSchedulingResultResponse.weeklyAutoSchedulingResultStatus == AutoSchedulingResultStatus.FIXED)
             setScheduleData({
