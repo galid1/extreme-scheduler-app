@@ -10,6 +10,12 @@ interface WeekNavigatorProps {
   isPastWeek: boolean;
   isNextWeek: boolean;
   onBack: () => void;
+  showEditButton?: boolean;
+  isEditMode?: boolean;
+  onEditPress?: () => void;
+  onSavePress?: () => void;
+  onCancelPress?: () => void;
+  isSaving?: boolean;
 }
 
 export default function WeekNavigator({
@@ -19,7 +25,13 @@ export default function WeekNavigator({
   isCurrentWeek,
   isPastWeek,
   isNextWeek,
-  onBack
+  onBack,
+  showEditButton = false,
+  isEditMode = false,
+  onEditPress,
+  onSavePress,
+  onCancelPress,
+  isSaving = false,
 }: WeekNavigatorProps) {
   // 현재 실제 주차 계산 (연도 기준)
   const today = new Date();
@@ -66,9 +78,13 @@ export default function WeekNavigator({
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={onBack}
+        onPress={isEditMode ? onCancelPress : onBack}
       >
-        <Ionicons name="arrow-back" size={24} color="#3B82F6" />
+        {isEditMode ? (
+          <Text style={styles.cancelText}>취소</Text>
+        ) : (
+          <Ionicons name="arrow-back" size={24} color="#3B82F6" />
+        )}
       </TouchableOpacity>
 
       <View style={styles.weekInfo}>
@@ -98,7 +114,18 @@ export default function WeekNavigator({
         <Text style={styles.weekPeriod}>{getWeekPeriod()}</Text>
       </View>
 
-      <View style={{width: 44}} />
+      {showEditButton && (
+        <TouchableOpacity
+          style={[styles.editButton, isSaving && styles.editButtonDisabled]}
+          onPress={isEditMode ? onSavePress : onEditPress}
+          disabled={isSaving}
+        >
+          <Text style={styles.editButtonText}>
+            {isEditMode ? '저장' : '수정'}
+          </Text>
+        </TouchableOpacity>
+      )}
+      {!showEditButton && <View style={{width: 44}} />}
     </View>
   );
 }
@@ -181,5 +208,27 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 11,
     fontWeight: '600',
+  },
+  editButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 44,
+  },
+  editButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
+  editButtonDisabled: {
+    opacity: 0.5,
+  },
+  cancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3B82F6',
   },
 });

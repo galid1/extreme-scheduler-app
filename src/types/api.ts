@@ -355,6 +355,22 @@ export interface ProcessCancelRequestApiResponse {
     processedAt: string;
 }
 
+// Auto Scheduling Result Lines Update Types
+export interface UpdateAutoSchedulingResultLineDto {
+    autoSchedulingResultLineId: number;
+    toDayOfWeek: DayOfWeek;
+    toStartHour: number;
+    toEndHour: number;
+}
+
+export interface UpdateAutoSchedulingResultLinesApiRequest {
+    updates: UpdateAutoSchedulingResultLineDto[];
+}
+
+export interface UpdateAutoSchedulingResultLinesApiResponse {
+    updatedCount: number;
+}
+
 // Trainer Notice Types
 export interface TrainerNoticeResponse {
     noticeId: number;

@@ -52,16 +52,31 @@ export default function TrainingScheduleScreen() {
     const [cancelRequests, setCancelRequests] = useState<CancelRequestDetailResponse[]>([]);
     const calendarViewRef = useRef<WeekCalendarViewRef>(null);
 
+    // Edit mode states
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [selectedSessionForMove, setSelectedSessionForMove] = useState<TrainingSession | null>(null);
+    const [editedSessions, setEditedSessions] = useState<TrainingSession[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // 스케줄 변경 사항을 추적하기 위한 Map: autoSchedulingResultLineId -> {originalStartHour, originalEndHour, newStartHour, newEndHour}
+    interface ScheduleChange {
+        autoSchedulingResultLineId: number;
+        memberName: string;
+        originalDay: string;
+        originalStartHour: number;
+        originalEndHour: number;
+        newDay: string;
+        newStartHour: number;
+        newEndHour: number;
+    }
+    const [scheduleChanges, setScheduleChanges] = useState<Map<number, ScheduleChange>>(new Map());
+
     useEffect(() => {
         // Store에 이미 주차가 설정되어 있으면 그대로 사용 (auto-scheduling에서 설정한 경우)
         // 설정되어 있지 않거나 0이면 현재 실제 주차로 초기화
-        console.log('🔍 TrainingSchedule mounted, currentWeek:', currentWeek);
         if (!currentWeek || currentWeek === 0) {
             const realCurrentWeek = getCurrentWeek();
-            console.log('📍 Setting currentWeek to realCurrentWeek:', realCurrentWeek);
             setCurrentWeek(realCurrentWeek);
-        } else {
-            console.log('✅ Using existing currentWeek:', currentWeek);
         }
 
         fetchTrainingSessions();
@@ -128,7 +143,6 @@ export default function TrainingScheduleScreen() {
 
             // 타겟 세션이 있으면 선택하고 스크롤
             if (targetSession) {
-                console.log('Auto-focusing on session:', targetSession);
                 setSelectedMember(targetSession.memberId);
 
                 // 캘린더 뷰 스크롤
@@ -197,6 +211,172 @@ export default function TrainingScheduleScreen() {
             }
         } catch (error) {
             console.error('Error fetching cancel requests:', error);
+        }
+    };
+
+    // Handle edit mode
+    const handleEditPress = () => {
+        setIsEditMode(true);
+        setEditedSessions(JSON.parse(JSON.stringify(trainingSessions)));
+        setSelectedSessionForMove(null);
+        setScheduleChanges(new Map()); // 변경 사항 초기화
+
+        Alert.alert(
+            '일정 수정 방법',
+            '스케줄을 선택하고 이동할 위치를 클릭하세요.\n\n1. 기존 스케줄 클릭 → 선택\n2. 빈 셀 클릭 → 이동',
+            [{text: '확인'}]
+        );
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditMode(false);
+        setEditedSessions([]);
+        setSelectedSessionForMove(null);
+        setScheduleChanges(new Map()); // 변경 사항 초기화
+    };
+
+    const handleSaveEdit = async () => {
+        try {
+            setIsSaving(true);
+
+            if (scheduleChanges.size === 0) {
+                Alert.alert('알림', '변경된 일정이 없습니다.');
+                setIsEditMode(false);
+                setEditedSessions([]);
+                setSelectedSessionForMove(null);
+                setScheduleChanges(new Map());
+                setIsSaving(false);
+                return;
+            }
+
+            // 한글 요일 -> DayOfWeek enum 변환
+            const dayToEnumMap: { [key: string]: string } = {
+                '월': 'MONDAY',
+                '화': 'TUESDAY',
+                '수': 'WEDNESDAY',
+                '목': 'THURSDAY',
+                '금': 'FRIDAY',
+                '토': 'SATURDAY',
+                '일': 'SUNDAY'
+            };
+
+            // scheduleChanges를 API 요청 형식으로 변환
+            const updates = Array.from(scheduleChanges.values()).map(change => ({
+                autoSchedulingResultLineId: change.autoSchedulingResultLineId,
+                toDayOfWeek: dayToEnumMap[change.newDay] as any,
+                toStartHour: change.newStartHour,
+                toEndHour: change.newEndHour,
+            }));
+
+            // API 호출
+            const response = await trainerScheduleService.updateAutoSchedulingResultLines({
+                updates
+            });
+
+            Alert.alert('완료', `${response.updatedCount}개의 일정이 수정되었습니다.`);
+            setIsEditMode(false);
+            setEditedSessions([]);
+            setSelectedSessionForMove(null);
+            setScheduleChanges(new Map());
+
+            // 데이터 새로고침
+            await fetchTrainingSessions();
+        } catch (error) {
+            console.error('일정 수정 오류:', error);
+            Alert.alert('오류', '일정 수정 중 문제가 발생했습니다.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // Handle cell press in edit mode
+    const handleCellPress = (day: string, hour: number, weekOfYear: number, session?: TrainingSession) => {
+        // 기존 스케줄 클릭: 선택
+        if (session) {
+            setSelectedSessionForMove(session);
+            return;
+        }
+
+        // 빈 셀 클릭: 선택된 세션이 있으면 이동
+        if (selectedSessionForMove) {
+            if (!selectedSessionForMove.autoSchedulingResultLineId) {
+                Alert.alert('오류', '스케줄 ID를 찾을 수 없습니다.');
+                return;
+            }
+
+            // 현재 editedSessions에서 선택된 세션의 모든 연속 시간대 찾기 (현재 위치)
+            // 요일 조건을 제거: 이동된 세션은 다른 요일에 있을 수 있으므로 autoSchedulingResultLineId로만 찾음
+            const currentMemberSessions = editedSessions.filter(s =>
+                s.autoSchedulingResultLineId === selectedSessionForMove.autoSchedulingResultLineId
+            ).sort((a, b) => a.hour - b.hour);
+
+            if (currentMemberSessions.length === 0) {
+                Alert.alert('오류', '현재 세션을 찾을 수 없습니다.');
+                return;
+            }
+
+            const currentStartHour = currentMemberSessions[0].hour;
+            const currentEndHour = currentMemberSessions[currentMemberSessions.length - 1].hour + 1;
+            const duration = currentEndHour - currentStartHour;
+
+            // 새 위치에서 연속된 빈 셀이 충분한지 확인
+            const newEndHour = hour + duration;
+            for (let h = hour; h < newEndHour; h++) {
+                const existingSession = editedSessions.find(s =>
+                    s.day === day && s.hour === h && s.weekOfYear === weekOfYear
+                );
+                if (existingSession) {
+                    Alert.alert('오류', `${h}시에 이미 다른 일정이 있습니다.`);
+                    return;
+                }
+            }
+
+            // 업데이트된 세션 생성
+            const updatedSessions = editedSessions.map(s => {
+                // 이동할 세션들 찾기
+                const isMovingSession = currentMemberSessions.some(ms =>
+                    s.day === ms.day &&
+                    s.hour === ms.hour &&
+                    s.weekOfYear === ms.weekOfYear &&
+                    s.memberId === ms.memberId
+                );
+
+                if (isMovingSession) {
+                    const hourOffset = s.hour - currentStartHour;
+                    return {
+                        ...s,
+                        day,
+                        hour: hour + hourOffset,
+                        weekOfYear,
+                    };
+                }
+                return s;
+            });
+
+            setEditedSessions(updatedSessions);
+            setTrainingSessions(updatedSessions);
+
+            // 변경 사항 저장 - 이동된 셀의 새로운 시간으로 저장
+            // 원본 정보는 scheduleChanges에 이미 있으면 유지, 없으면 처음 선택한 위치 사용
+            const existingChange = scheduleChanges.get(selectedSessionForMove.autoSchedulingResultLineId);
+            const originalDay = existingChange?.originalDay || selectedSessionForMove.day;
+            const originalStartHour = existingChange?.originalStartHour || currentStartHour;
+            const originalEndHour = existingChange?.originalEndHour || currentEndHour;
+
+            const newChanges = new Map(scheduleChanges);
+            newChanges.set(selectedSessionForMove.autoSchedulingResultLineId, {
+                autoSchedulingResultLineId: selectedSessionForMove.autoSchedulingResultLineId,
+                memberName: selectedSessionForMove.memberName,
+                originalDay,
+                originalStartHour,
+                originalEndHour,
+                newDay: day,
+                newStartHour: hour,
+                newEndHour: newEndHour,
+            });
+
+            setScheduleChanges(newChanges);
+            setSelectedSessionForMove(null);
         }
     };
 
@@ -288,7 +468,6 @@ export default function TrainingScheduleScreen() {
             );
 
             const allSessions = [...currentWeekSessions, ...nextWeekSessions];
-            console.log(`Total sessions loaded: ${allSessions.length}`);
             setTrainingSessions(allSessions);
 
             // 트레이너인 경우 취소 요청도 가져오기
@@ -380,6 +559,12 @@ export default function TrainingScheduleScreen() {
                         router.replace('/(tabs)');
                     }
                 }}
+                showEditButton={account?.accountType === AccountType.TRAINER && !isPastWeek(currentWeek)}
+                isEditMode={isEditMode}
+                onEditPress={handleEditPress}
+                onSavePress={handleSaveEdit}
+                onCancelPress={handleCancelEdit}
+                isSaving={isSaving}
             />
 
             {/* Cancel Requests Section - Only show for trainers */}
@@ -508,6 +693,9 @@ export default function TrainingScheduleScreen() {
                     onSelectSession={setSelectedSession}
                     currentWeek={currentWeek}
                     onWeekChange={setCurrentWeek}
+                    isEditMode={isEditMode}
+                    selectedSessionForMove={selectedSessionForMove}
+                    onCellPress={handleCellPress}
                 />
             </View>
 

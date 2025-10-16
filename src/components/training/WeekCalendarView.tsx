@@ -36,6 +36,9 @@ interface WeekCalendarViewProps {
   onSelectSession?: (session: TrainingSession | null) => void;
   currentWeek: number;
   onWeekChange: (week: number) => void;
+  isEditMode?: boolean;
+  selectedSessionForMove?: TrainingSession | null;
+  onCellPress?: (day: string, hour: number, weekOfYear: number, session?: TrainingSession) => void;
 }
 
 export interface WeekCalendarViewRef {
@@ -49,7 +52,10 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
   onSelectMember,
   onSelectSession,
   currentWeek,
-  onWeekChange
+  onWeekChange,
+  isEditMode = false,
+  selectedSessionForMove = null,
+  onCellPress,
 }, ref) => {
   const currentTime = new Date();
   const currentDay = ['일', '월', '화', '수', '목', '금', '토'][currentTime.getDay()];
@@ -274,6 +280,15 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
                   const isOtherMember = selectedMember && session && session.memberId !== selectedMember;
                   const isPast = isPastSession(day, hour, weekNumber);
 
+                  // Edit mode: check if this session is selected for move
+                  const isSelectedForMove = isEditMode && selectedSessionForMove &&
+                    selectedSessionForMove.day === day &&
+                    selectedSessionForMove.hour === hour &&
+                    selectedSessionForMove.weekOfYear === weekNumber;
+
+                  // Edit mode: check if this is a valid destination cell (empty cell when a session is selected)
+                  const isValidDestination = isEditMode && selectedSessionForMove && !session && !isPast;
+
                   return (
                     <TouchableOpacity
                       key={`${day}-${hour}`}
@@ -286,9 +301,19 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
                         isPast && styles.dayCellPast,
                         isPast && session && styles.dayCellPastWithSession,
                         isTodayForWeek(day, weekNumber) && styles.dayCellToday,
-                        isCurrent && isTodayForWeek(day, weekNumber) && styles.currentCell
+                        isCurrent && isTodayForWeek(day, weekNumber) && styles.currentCell,
+                        isEditMode && styles.dayCellEditable,
+                        isSelectedForMove && styles.dayCellSelectedForMove,
+                        isValidDestination && styles.dayCellValidDestination,
                       ]}
                       onPress={() => {
+                        // Edit mode: use onCellPress callback
+                        if (isEditMode && onCellPress) {
+                          onCellPress(day, hour, weekNumber, session);
+                          return;
+                        }
+
+                        // Normal mode: existing logic
                         // 빈 셀 클릭 시 선택 취소
                         if (!session) {
                           onSelectMember(null);
@@ -314,7 +339,7 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
                         onSelectMember(session.memberId);
                         onSelectSession?.(session);
                       }}
-                      disabled={isPast}
+                      disabled={!isEditMode && isPast}
                       activeOpacity={0.8}
                     >
                       {session && (
@@ -555,5 +580,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
+  },
+  dayCellEditable: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#D1D5DB',
+  },
+  dayCellSelectedForMove: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+  },
+  dayCellValidDestination: {
+    backgroundColor: '#D1FAE5',
+    borderWidth: 2,
+    borderColor: '#10B981',
+    borderLeftWidth: 2,
+    borderLeftColor: '#10B981',
   },
 });
