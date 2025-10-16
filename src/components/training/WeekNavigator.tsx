@@ -116,11 +116,18 @@ export default function WeekNavigator({
 
       {showEditButton && (
         <TouchableOpacity
-          style={[styles.editButton, isSaving && styles.editButtonDisabled]}
+          style={[
+            styles.editButton,
+            isEditMode && styles.editButtonSaveMode,
+            isSaving && styles.editButtonDisabled
+          ]}
           onPress={isEditMode ? onSavePress : onEditPress}
           disabled={isSaving}
         >
-          <Text style={styles.editButtonText}>
+          <Text style={[
+            styles.editButtonText,
+            isEditMode && styles.editButtonSaveText
+          ]}>
             {isEditMode ? '저장' : '수정'}
           </Text>
         </TouchableOpacity>
@@ -218,10 +225,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 44,
   },
+  editButtonSaveMode: {
+    backgroundColor: '#3B82F6',
+  },
   editButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#3B82F6',
+  },
+  editButtonSaveText: {
+    color: 'white',
   },
   editButtonDisabled: {
     opacity: 0.5,

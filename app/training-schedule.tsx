@@ -249,42 +249,73 @@ export default function TrainingScheduleScreen() {
                 return;
             }
 
-            // 한글 요일 -> DayOfWeek enum 변환
-            const dayToEnumMap: { [key: string]: string } = {
-                '월': 'MONDAY',
-                '화': 'TUESDAY',
-                '수': 'WEDNESDAY',
-                '목': 'THURSDAY',
-                '금': 'FRIDAY',
-                '토': 'SATURDAY',
-                '일': 'SUNDAY'
-            };
+            // 변경된 회원 이름 목록 생성
+            const changedMemberNames = Array.from(new Set(
+                Array.from(scheduleChanges.values()).map(change => change.memberName)
+            ));
+            const memberNamesText = changedMemberNames.join(', ');
 
-            // scheduleChanges를 API 요청 형식으로 변환
-            const updates = Array.from(scheduleChanges.values()).map(change => ({
-                autoSchedulingResultLineId: change.autoSchedulingResultLineId,
-                toDayOfWeek: dayToEnumMap[change.newDay] as any,
-                toStartHour: change.newStartHour,
-                toEndHour: change.newEndHour,
-            }));
+            // 저장 확인 Alert
+            Alert.alert(
+                '일정 저장',
+                `${scheduleChanges.size}개의 일정을 저장하시겠습니까?\n\n변경된 회원: ${memberNamesText}\n\n일정이 변경된 회원에게 알림이 발송됩니다.`,
+                [
+                    {
+                        text: '취소',
+                        style: 'cancel',
+                        onPress: () => {
+                            setIsSaving(false);
+                        }
+                    },
+                    {
+                        text: '저장',
+                        onPress: async () => {
+                            try {
+                                // 한글 요일 -> DayOfWeek enum 변환
+                                const dayToEnumMap: { [key: string]: string } = {
+                                    '월': 'MONDAY',
+                                    '화': 'TUESDAY',
+                                    '수': 'WEDNESDAY',
+                                    '목': 'THURSDAY',
+                                    '금': 'FRIDAY',
+                                    '토': 'SATURDAY',
+                                    '일': 'SUNDAY'
+                                };
 
-            // API 호출
-            const response = await trainerScheduleService.updateAutoSchedulingResultLines({
-                updates
-            });
+                                // scheduleChanges를 API 요청 형식으로 변환
+                                const updates = Array.from(scheduleChanges.values()).map(change => ({
+                                    autoSchedulingResultLineId: change.autoSchedulingResultLineId,
+                                    toDayOfWeek: dayToEnumMap[change.newDay] as any,
+                                    toStartHour: change.newStartHour,
+                                    toEndHour: change.newEndHour,
+                                }));
 
-            Alert.alert('완료', `${response.updatedCount}개의 일정이 수정되었습니다.`);
-            setIsEditMode(false);
-            setEditedSessions([]);
-            setSelectedSessionForMove(null);
-            setScheduleChanges(new Map());
+                                // API 호출
+                                const response = await trainerScheduleService.updateAutoSchedulingResultLines({
+                                    updates
+                                });
 
-            // 데이터 새로고침
-            await fetchTrainingSessions();
+                                Alert.alert('완료', `${response.updatedCount}개의 일정이 수정되었습니다.\n해당 회원에게 알림이 발송되었습니다.`);
+                                setIsEditMode(false);
+                                setEditedSessions([]);
+                                setSelectedSessionForMove(null);
+                                setScheduleChanges(new Map());
+
+                                // 데이터 새로고침
+                                await fetchTrainingSessions();
+                            } catch (error) {
+                                console.error('일정 수정 오류:', error);
+                                Alert.alert('오류', '일정 수정 중 문제가 발생했습니다.');
+                            } finally {
+                                setIsSaving(false);
+                            }
+                        }
+                    }
+                ]
+            );
         } catch (error) {
             console.error('일정 수정 오류:', error);
             Alert.alert('오류', '일정 수정 중 문제가 발생했습니다.');
-        } finally {
             setIsSaving(false);
         }
     };
@@ -697,6 +728,24 @@ export default function TrainingScheduleScreen() {
                     selectedSessionForMove={selectedSessionForMove}
                     onCellPress={handleCellPress}
                 />
+
+                {/* Floating Guidance Message - Only show in edit mode */}
+                {isEditMode && (
+                    <View style={styles.floatingGuidance}>
+                        <View style={styles.guidanceContent}>
+                            <Ionicons
+                                name={selectedSessionForMove ? "arrow-forward-circle" : "hand-left"}
+                                size={20}
+                                color="#3B82F6"
+                            />
+                            <Text style={styles.guidanceText}>
+                                {selectedSessionForMove
+                                    ? "이동을 원하는 셀을 선택하세요"
+                                    : "변경을 원하는 일정의 셀을 선택하세요"}
+                            </Text>
+                        </View>
+                    </View>
+                )}
             </View>
 
             {/* Trainer Schedule Actions - Only show for trainers and next week */}
@@ -1014,5 +1063,37 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 11,
         fontWeight: '600',
+    },
+    floatingGuidance: {
+        position: 'absolute',
+        bottom: 20,
+        left: 16,
+        right: 16,
+        alignItems: 'center',
+        zIndex: 100,
+    },
+    guidanceContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 24,
+        gap: 10,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
+        borderWidth: 2,
+        borderColor: '#3B82F6',
+    },
+    guidanceText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1F2937',
     },
 });
