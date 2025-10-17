@@ -50,7 +50,7 @@ export default function MemberHome() {
         periodicScheduleLines: PeriodicScheduleLine[],
         onetimeScheduleLines: OnetimeScheduleLine[]
     }>({periodicScheduleLines: [], onetimeScheduleLines: []});
-    const [cancelRequests, setCancelRequests] = useState<GetCancelRequestsResponse[]>([]);
+    const [cancelRequests, setCancelRequests] = useState<any[]>([]);
 
     // Local state for auto scheduling results and registration status
     const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[] | null>(null);
@@ -177,13 +177,13 @@ export default function MemberHome() {
             ]);
 
             setWeeklyScheduleRegistration(registrationResponse);
-            setFixedAutoSchedulingResults(autoSchedulingResponse);
+            setFixedAutoSchedulingResults(autoSchedulingResponse?.data || null);
             setTrainerAutoSchedulingStatus(trainerSchedulingStatusResponse);
             setScheduleData({
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
                 onetimeScheduleLines: freeTimeScheduleResponse.onetimeScheduleLines,
             });
-            setCancelRequests(cancelRequestResponse);
+            setCancelRequests(Array.isArray(cancelRequestResponse) ? cancelRequestResponse : cancelRequestResponse?.data || []);
             setFixedNotices(fixedNoticesResponse.notices);
             setNotFixedNotices(notFixedNoticesResponse.notices);
         } catch (error) {
@@ -233,7 +233,7 @@ export default function MemberHome() {
 
     // Update data when app comes to foreground
     useEffect(() => {
-        const handleAppStateChange = async (nextAppState: string) => {
+        const handleAppStateChange = async (nextAppState: any) => {
             if (
                 appStateRef.current.match(/inactive|background/) &&
                 nextAppState === 'active'

@@ -36,7 +36,7 @@ export default function WeekNavigator({
   // 현재 실제 주차 계산 (연도 기준)
   const today = new Date();
   const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+  const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
   const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
   // 주차 기간 문자열 생성

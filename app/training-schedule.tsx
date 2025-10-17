@@ -90,7 +90,7 @@ export default function TrainingScheduleScreen() {
 
             const today = new Date();
             const startOfYear = new Date(today.getFullYear(), 0, 1);
-            const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+            const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
             const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
             const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
@@ -201,7 +201,7 @@ export default function TrainingScheduleScreen() {
                 );
 
                 // 두 주차의 요청을 합쳐서 저장 (CancelRequestResponse를 CancelRequestDetailResponse 형식으로 변환)
-                const allRequests = [...currentWeekRequests, ...nextWeekRequests].map(req => ({
+                const allRequests = [...currentWeekRequests.data, ...nextWeekRequests.data].map(req => ({
                     ...req,
                     memberAccountId: account.id,
                     memberName: account.privacyInfo?.name || '',
@@ -439,7 +439,7 @@ export default function TrainingScheduleScreen() {
                 setCurrentWeekAutoSchedulingStatus(currentWeekResponse.weeklyAutoSchedulingResultStatus)
                 setNextWeekAutoSchedulingStatus(nextWeekResponse.weeklyAutoSchedulingResultStatus)
             } else {
-                // 회원: memberScheduleService 사용 (배열을 scheduleList로 감싸기)
+                // 회원: memberScheduleService 사용 (data 필드를 scheduleList로 변환)
                 const currentWeekData = await memberScheduleService.getFixedAutoSchedulingResult(
                     currentTime.getFullYear(),
                     realCurrentWeek
@@ -449,8 +449,8 @@ export default function TrainingScheduleScreen() {
                     realCurrentWeek + 1
                 );
 
-                currentWeekResponse = {scheduleList: currentWeekData};
-                nextWeekResponse = {scheduleList: nextWeekData};
+                currentWeekResponse = {scheduleList: currentWeekData.data};
+                nextWeekResponse = {scheduleList: nextWeekData.data};
                 // Members don't have status info, so leave as undefined
             }
 
@@ -641,7 +641,7 @@ export default function TrainingScheduleScreen() {
 
                                 // Get current week of year
                                 const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
-                                const daysSinceStart = Math.floor((currentDate - startOfYear) / (24 * 60 * 60 * 1000));
+                                const daysSinceStart = Math.floor((currentDate.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
                                 const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
                                 // Calculate week difference

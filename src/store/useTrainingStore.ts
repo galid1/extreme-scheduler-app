@@ -1,7 +1,7 @@
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {AutoSchedulingResultStatus, WeekScheduleStatus} from "@/src/types/enums";
+import {AutoSchedulingResultStatus} from "@/src/types/enums";
 
 export interface TrainingSession {
   memberId: string;
@@ -27,7 +27,7 @@ interface TrainingState {
   selectedMember: string | null;
 
   // 주차별 자동 스케줄링 일정 상태
-  weekScheduleStatus: { [week: number]: WeekScheduleStatus };
+  weekScheduleStatus: { [week: number]: AutoSchedulingResultStatus };
 
   // Actions
   setTrainingSessions: (sessions: TrainingSession[]) => void;
@@ -84,7 +84,7 @@ export const useTrainingStore = create<TrainingState>()(
         // 이번 주는 수정 불가능
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
         const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
         return week !== currentWeekNumber;
       },
@@ -92,7 +92,7 @@ export const useTrainingStore = create<TrainingState>()(
       isCurrentWeek: (week) => {
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
         const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
         return week === currentWeekNumber;
       },
@@ -100,7 +100,7 @@ export const useTrainingStore = create<TrainingState>()(
       isPastWeek: (week) => {
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
         const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
         return week < currentWeekNumber;
       },
@@ -108,7 +108,7 @@ export const useTrainingStore = create<TrainingState>()(
       isNextWeek: (week) => {
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
         const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
         return week === currentWeekNumber + 1;
       },
@@ -117,7 +117,7 @@ export const useTrainingStore = create<TrainingState>()(
         set((state) => ({
           weekScheduleStatus: {
             ...state.weekScheduleStatus,
-            [week]: AutoSchedulingResultStatus.NOT_FIXED,
+            [week]: AutoSchedulingResultStatus.PLACEHOLDER,
           }
         }));
       },

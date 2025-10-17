@@ -22,6 +22,7 @@ const DAY_COLUMN_WIDTH = AVAILABLE_WIDTH / 7;
 interface TrainingSession {
   memberId: string;
   memberName: string;
+  memberPhone: string;
   hour: number;
   day: string;
   weekOfYear: number;

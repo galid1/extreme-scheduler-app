@@ -185,7 +185,7 @@ export default function AutoSchedulingScreen() {
         // 일반 모드: 다음 주차로 이동
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
         const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
         const targetWeek = currentWeekOfYear + 1;
 

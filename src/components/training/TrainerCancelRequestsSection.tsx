@@ -81,7 +81,7 @@ export default function TrainerCancelRequestsSection({
                 { text: '취소', style: 'cancel' },
                 {
                     text: '거절',
-                    onPress: async (rejectedReason) => {
+                    onPress: async (rejectedReason?: string) => {
                         if (!rejectedReason || rejectedReason.trim() === '') {
                             Alert.alert('알림', '거절 사유를 입력해주세요.');
                             return;

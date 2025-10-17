@@ -45,9 +45,6 @@ export default function ProfileScreen() {
 
         // 로그아웃 후 store 상태 다시 확인
         const authStore = useAuthStore.getState();
-        console.log(`Account after logout: ${JSON.stringify(authStore.account)}`)
-        console.log(`Token after logout: ${JSON.stringify(authStore.token)}`)
-
         // 전역 인증 체크가 자동으로 처리하므로 명시적 리다이렉트 불필요
         // router.replace('/(auth)/phone-auth');
     };

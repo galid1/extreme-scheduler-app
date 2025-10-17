@@ -307,8 +307,8 @@ export default function TrainerHome() {
                                                         router.replace({
                                                             pathname: '/auto-scheduling',
                                                             params: {
-                                                                weekToReset: currentWeek,
-                                                                resetMode: true
+                                                                weekToReset: currentWeek.toString(),
+                                                                resetMode: 'true'
                                                             }
                                                         });
                                                     } else {
