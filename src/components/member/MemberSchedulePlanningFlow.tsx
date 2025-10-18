@@ -3,6 +3,8 @@ import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import SchedulingCompletedCard from "@/src/components/member/SchedulingCompletedCard";
 import WeekInfo from "@/src/components/WeekInfo";
+import {AutoSchedulingResultStatus} from "@/src/types/enums";
+import {AutoSchedulingScheduleApiResponse} from "@/src/types/api";
 
 // Icon sizes
 const ICON_SIZE_SMALL = 10;
@@ -19,16 +21,13 @@ interface MemberSchedulePlanningFlowProps {
     onViewSchedule: () => void;
     onEditSchedule: () => void;
 
+    weeklyAutoSchedulingResultStatus?: AutoSchedulingResultStatus,
     // 3단계: 트레이너 스케줄링 대기
-    isTrainerScheduled: boolean;
-    hasSchedulingResults: boolean;
+    fixedAutoSchedulingResults: AutoSchedulingScheduleApiResponse[];
     onViewTrainingSchedule?: () => void;
 
     // 취소 요청 개수 (뱃지 표시용)
     cancelRequestsCount?: number;
-
-    // 트레이너가 이미 자동 스케줄링을 완료했는지 여부
-    trainerFixedAutoScheduling?: boolean;
 }
 
 export default function MemberSchedulePlanningFlow({
@@ -38,12 +37,15 @@ export default function MemberSchedulePlanningFlow({
     onRegisterSchedule,
     onViewSchedule,
     onEditSchedule,
-    isTrainerScheduled,
-    hasSchedulingResults,
+    weeklyAutoSchedulingResultStatus,
+    fixedAutoSchedulingResults,
     onViewTrainingSchedule,
     cancelRequestsCount = 0,
-    trainerFixedAutoScheduling = false,
 }: MemberSchedulePlanningFlowProps) {
+    const isTrainerScheduled = weeklyAutoSchedulingResultStatus === AutoSchedulingResultStatus.SCHEDULED || weeklyAutoSchedulingResultStatus === AutoSchedulingResultStatus.FIXED;
+    const trainerFixedAutoScheduling = weeklyAutoSchedulingResultStatus === AutoSchedulingResultStatus.FIXED;
+    const hasAutoSchedulingResults = fixedAutoSchedulingResults?.length > 0;
+
     return (
         <View style={styles.container}>
             <View style={styles.dashBoardTitleContainer}>
@@ -322,12 +324,12 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                         <View>
                             <SchedulingCompletedCard
-                                hasAutoSchedulingResults={hasSchedulingResults}
+                                hasAutoSchedulingResults={hasAutoSchedulingResults}
                                 compact={true}
                             />
                         </View>
                     </TouchableOpacity>
-                ) : isTrainerScheduled && hasSchedulingResults ? (
+                ) : isTrainerScheduled && hasAutoSchedulingResults ? (
                     // Case 5: 일반 스케줄링 완료 (결과 있음) - 클릭 가능
                     <TouchableOpacity
                         style={styles.stepContainer}
@@ -362,7 +364,7 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                         <View>
                             <SchedulingCompletedCard
-                                hasAutoSchedulingResults={hasSchedulingResults}
+                                hasAutoSchedulingResults={hasAutoSchedulingResults}
                                 compact={true}
                             />
                         </View>
@@ -383,7 +385,7 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                         <View>
                             <SchedulingCompletedCard
-                                hasAutoSchedulingResults={hasSchedulingResults}
+                                hasAutoSchedulingResults={hasAutoSchedulingResults}
                                 compact={true}
                             />
                         </View>

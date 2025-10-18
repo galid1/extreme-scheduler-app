@@ -1,20 +1,32 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Alert, AppState, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Dimensions, NativeScrollEvent, NativeSyntheticEvent} from 'react-native';
+import {
+    Alert,
+    AppState,
+    Dimensions,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
 import {
     authService,
+    AutoSchedulingResultStatus,
     AutoSchedulingScheduleApiResponse,
-    GetCancelRequestsResponse,
     memberScheduleService,
     memberService,
+    MemberTrainerAssignmentRequestDto,
     memberTrainerNoticeService,
-    TrainerNoticeResponse,
-    MemberTrainerAssignmentRequestDto, TrainerAutoSchedulingStatusResponse
+    TrainerAutoSchedulingStatusResponse,
+    TrainerNoticeResponse
 } from '@/src/services/api';
-import type {OnetimeScheduleLine, PeriodicScheduleLine, AssignedTrainerResponse} from '@/src/types/api';
-import {RequestStatus} from '@/src/types/enums';
+import type {AssignedTrainerResponse, OnetimeScheduleLine, PeriodicScheduleLine} from '@/src/types/api';
 import {getCurrentWeek, getNextWeekYearAndWeek} from '@/src/utils/dateUtils';
 import TrainerSearchComponent from '@/src/components/member/TrainerSearchComponent';
 import MemberPendingAssignmentScreen from '@/src/components/member/MemberPendingAssignmentScreen';
@@ -53,7 +65,7 @@ export default function MemberHome() {
     const [cancelRequests, setCancelRequests] = useState<any[]>([]);
 
     // Local state for auto scheduling results and registration status
-    const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[] | null>(null);
+    const [fixedAutoSchedulingResults, setFixedAutoSchedulingResults] = useState<AutoSchedulingScheduleApiResponse[]>([]);
     const [weeklyScheduleRegistration, setWeeklyScheduleRegistration] = useState<any | null>(null);
     const [trainerAutoSchedulingStatus, setTrainerAutoSchedulingStatus] = useState<TrainerAutoSchedulingStatusResponse | null>(null);
     const [fixedNotices, setFixedNotices] = useState<TrainerNoticeResponse[]>([]);
@@ -87,11 +99,6 @@ export default function MemberHome() {
     useEffect(() => {
         setCurrentNoticeIndex(0);
     }, [fixedNotices, notFixedNotices]);
-
-    // Helper function to check if auto scheduling is completed with results
-    const hasAutoSchedulingResults = () => {
-        return fixedAutoSchedulingResults !== null && fixedAutoSchedulingResults?.length > 0;
-    };
 
     // Fetch user data and assigned trainer
     const fetchUserData = useCallback(async () => {
@@ -151,7 +158,7 @@ export default function MemberHome() {
             const {targetYear, targetWeekOfYear} = getNextWeekYearAndWeek();
 
             // Load all APIs in parallel with individual error handling
-            const [registrationResponse, autoSchedulingResponse, trainerSchedulingStatusResponse, freeTimeScheduleResponse, cancelRequestResponse, fixedNoticesResponse, notFixedNoticesResponse] = await Promise.all([
+            const [registrationResponse, fixedAutoSchedulingResponse, trainerSchedulingStatusResponse, freeTimeScheduleResponse, cancelRequestResponse, fixedNoticesResponse, notFixedNoticesResponse] = await Promise.all([
                 memberScheduleService.checkWeeklyScheduleRegistration(targetYear, targetWeekOfYear).catch(err => {
                     console.error('Error fetching weekly schedule registration:', err);
                     return { registered: false };
@@ -177,7 +184,7 @@ export default function MemberHome() {
             ]);
 
             setWeeklyScheduleRegistration(registrationResponse);
-            setFixedAutoSchedulingResults(autoSchedulingResponse?.data || null);
+            setFixedAutoSchedulingResults(fixedAutoSchedulingResponse?.data || null);
             setTrainerAutoSchedulingStatus(trainerSchedulingStatusResponse);
             setScheduleData({
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
@@ -362,8 +369,7 @@ export default function MemberHome() {
                                     // Reload data to check latest status
                                     await loadInitialData();
 
-                                    // Check if trainer has already scheduled
-                                    if (hasAutoSchedulingResults()) {
+                                    if (trainerAutoSchedulingStatus?.weeklyAutoSchedulingResultStatus === AutoSchedulingResultStatus.FIXED) {
                                         Alert.alert(
                                             '일정 수정 불가',
                                             '이미 트레이너가 스케줄링을 완료했습니다. 일정을 수정할 수 없습니다.',
@@ -378,16 +384,15 @@ export default function MemberHome() {
                                     Alert.alert('오류', '일정 상태 확인에 실패했습니다.');
                                 }
                             }}
-                            isTrainerScheduled={hasAutoSchedulingResults()}
-                            hasSchedulingResults={hasAutoSchedulingResults()}
-                            onViewTrainingSchedule={hasAutoSchedulingResults() ? () => {
+                            weeklyAutoSchedulingResultStatus={trainerAutoSchedulingStatus?.weeklyAutoSchedulingResultStatus}
+                            fixedAutoSchedulingResults={fixedAutoSchedulingResults}
+                            onViewTrainingSchedule={() => {
                                 // 다음 주 일정으로 이동
                                 const { setCurrentWeek } = useTrainingStore.getState();
                                 setCurrentWeek(getCurrentWeek() + 1);
                                 router.push('/training-schedule');
-                            } : undefined}
+                            }}
                             cancelRequestsCount={cancelRequests.length}
-                            trainerFixedAutoScheduling={trainerAutoSchedulingStatus?.isFixed}
                         />
                     </View>
                 )}
