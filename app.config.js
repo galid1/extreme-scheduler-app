@@ -21,6 +21,10 @@ export default {
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
+      },
+      notification: {
+        icon: "./assets/images/splash.png",
+        color: "#3B82F6"
       }
     },
     web: {
