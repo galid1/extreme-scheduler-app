@@ -44,7 +44,6 @@ export default function MemberSchedulePlanningFlow({
     cancelRequestsCount = 0,
     trainerFixedAutoScheduling = false,
 }: MemberSchedulePlanningFlowProps) {
-
     return (
         <View style={styles.container}>
             <View style={styles.dashBoardTitleContainer}>
@@ -94,6 +93,7 @@ export default function MemberSchedulePlanningFlow({
 
             {/* 2단계: 희망 일정 등록 */}
             {!hasTrainer ? (
+                // Case 1: 트레이너 미지정 - disabled
                 <View style={styles.stepContainer}>
                     <View style={styles.stepHeader}>
                         <View style={styles.stepTitleRow}>
@@ -118,6 +118,7 @@ export default function MemberSchedulePlanningFlow({
                     </View>
                 </View>
             ) : isScheduleRegistered ? (
+                // Case 2: 희망 일정 등록 완료
                 <View style={styles.stepContainer}>
                     <View style={styles.stepHeader}>
                         <View style={styles.stepTitleRow}>
@@ -155,7 +156,7 @@ export default function MemberSchedulePlanningFlow({
                     </View>
                 </View>
             ) : trainerFixedAutoScheduling ? (
-                // 트레이너가 이미 스케줄링을 완료한 경우
+                // Case 3: 트레이너가 이미 스케줄링 완료 - 희망 일정 등록 불가
                 <View style={styles.stepContainer}>
                     <View style={styles.stepHeader}>
                         <View style={styles.stepTitleRow}>
@@ -176,6 +177,7 @@ export default function MemberSchedulePlanningFlow({
                     </View>
                 </View>
             ) : (
+                // Case 4: 희망 일정 등록 가능
                 <TouchableOpacity
                     style={styles.stepContainer}
                     onPress={onRegisterSchedule}
@@ -207,7 +209,7 @@ export default function MemberSchedulePlanningFlow({
 
             {/* 3단계: 트레이너 스케줄링 대기 */}
                 {trainerFixedAutoScheduling && !isScheduleRegistered ? (
-                    // 트레이너가 이미 스케줄링을 완료했고 회원이 희망 일정을 등록하지 않은 경우
+                    // Case 1: 트레이너 스케줄링 완료했으나 희망 일정 미등록 - 경고
                     <View style={styles.stepContainer}>
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
@@ -233,6 +235,7 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                     </View>
                 ) : !isScheduleRegistered ? (
+                    // Case 2: 희망 일정 미등록 - disabled
                     <View style={styles.stepContainer}>
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
@@ -261,7 +264,8 @@ export default function MemberSchedulePlanningFlow({
                             <Text style={styles.waitingText}>희망 일정을 먼저 등록해주세요</Text>
                         </View>
                     </View>
-                ) : !isTrainerScheduled ? (
+                ) : !trainerFixedAutoScheduling && !isTrainerScheduled ? (
+                    // Case 3: 트레이너 스케줄링 진행 중
                     <View style={styles.stepContainer}>
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
@@ -283,7 +287,48 @@ export default function MemberSchedulePlanningFlow({
                             </Text>
                         </View>
                     </View>
-                ) : hasSchedulingResults && onViewTrainingSchedule ? (
+                ) : trainerFixedAutoScheduling && isScheduleRegistered ? (
+                    // Case 4: 트레이너가 고정한 스케줄링 완료 - 클릭 가능
+                    <TouchableOpacity
+                        style={styles.stepContainer}
+                        onPress={onViewTrainingSchedule}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.stepHeader}>
+                            <View style={styles.stepTitleRow}>
+                                <View style={[
+                                    styles.stepNumber,
+                                    styles.stepNumberCompleted
+                                ]}>
+                                    <Ionicons name="checkmark" size={ICON_SIZE_SMALL} color="white" />
+                                </View>
+                                <Text style={styles.stepTitle}>트레이너 스케줄링</Text>
+                                {cancelRequestsCount > 0 && (
+                                    <View style={styles.cancelRequestBadge}>
+                                        <Text style={styles.cancelRequestBadgeText}>{cancelRequestsCount}</Text>
+                                    </View>
+                                )}
+                            </View>
+                            <View style={styles.stepHeaderRight}>
+                                <View style={styles.textButton}>
+                                    <Text style={styles.textButtonPrimary}>확인</Text>
+                                </View>
+                                <Ionicons
+                                    name="chevron-forward"
+                                    size={ICON_SIZE_MEDIUM}
+                                    color="#3B82F6"
+                                />
+                            </View>
+                        </View>
+                        <View>
+                            <SchedulingCompletedCard
+                                hasAutoSchedulingResults={hasSchedulingResults}
+                                compact={true}
+                            />
+                        </View>
+                    </TouchableOpacity>
+                ) : isTrainerScheduled && hasSchedulingResults ? (
+                    // Case 5: 일반 스케줄링 완료 (결과 있음) - 클릭 가능
                     <TouchableOpacity
                         style={styles.stepContainer}
                         onPress={onViewTrainingSchedule}
@@ -323,20 +368,25 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                     </TouchableOpacity>
                 ) : (
-                    <View style={styles.stepHeader}>
-                        <View style={styles.stepTitleRow}>
-                            <View style={[
-                                styles.stepNumber,
-                                styles.stepNumberCompleted
-                            ]}>
-                                <Ionicons name="checkmark" size={ICON_SIZE_SMALL} color="white" />
+                    // Case 6: 스케줄링 완료 (결과 없음) - 클릭 불가
+                    <View style={styles.stepContainer}>
+                        <View style={styles.stepHeader}>
+                            <View style={styles.stepTitleRow}>
+                                <View style={[
+                                    styles.stepNumber,
+                                    styles.stepNumberCompleted
+                                ]}>
+                                    <Ionicons name="checkmark" size={ICON_SIZE_SMALL} color="white" />
+                                </View>
+                                <Text style={styles.stepTitle}>트레이너 스케줄링</Text>
                             </View>
-                            <Text style={styles.stepTitle}>트레이너 스케줄링</Text>
                         </View>
-                        <SchedulingCompletedCard
-                            hasAutoSchedulingResults={hasSchedulingResults}
-                            compact={true}
-                        />
+                        <View>
+                            <SchedulingCompletedCard
+                                hasAutoSchedulingResults={hasSchedulingResults}
+                                compact={true}
+                            />
+                        </View>
                     </View>
                 )}
         </View>
