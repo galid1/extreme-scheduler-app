@@ -18,15 +18,27 @@ const getMondayOfWeek = (date: Date): Date => {
 };
 
 /**
- * 특정 날짜의 연도와 주차를 계산
+ * 특정 날짜의 연도와 주차를 계산 (월~일을 같은 주차로 계산)
  * @param date 계산할 날짜 (기본값: 현재 날짜)
  * @returns { targetYear: number, targetWeekOfYear: number }
  */
 export const getYearAndWeek = (date: Date = new Date()): { targetYear: number; targetWeekOfYear: number } => {
-  const targetYear = date.getFullYear();
+  // 해당 날짜가 속한 주의 월요일을 구함 (월~일을 같은 주로 계산하기 위해)
+  const monday = getMondayOfWeek(date);
+  const targetYear = monday.getFullYear();
+
+  // 해당 연도의 첫 월요일을 구함
   const startOfYear = new Date(targetYear, 0, 1);
-  const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const targetWeekOfYear = Math.ceil((dayOfYear + startOfYear.getDay() + 1) / 7);
+  const firstMonday = getMondayOfWeek(startOfYear);
+
+  // 첫 월요일이 전년도에 있다면 다음 월요일을 사용
+  if (firstMonday.getFullYear() < targetYear) {
+    firstMonday.setDate(firstMonday.getDate() + 7);
+  }
+
+  // 두 월요일 사이의 일수 차이를 계산하여 주차 구함
+  const daysDiff = Math.floor((monday.getTime() - firstMonday.getTime()) / (24 * 60 * 60 * 1000));
+  const targetWeekOfYear = Math.floor(daysDiff / 7) + 1;
 
   return {
     targetYear,
@@ -81,12 +93,9 @@ export const formatDateMMDD = (date: Date): string => {
 };
 
 /**
- * 현재 주차 번호를 반환
+ * 현재 주차 번호를 반환 (월~일을 같은 주차로 계산)
  * @returns 현재 주차 번호
  */
 export const getCurrentWeek = (): number => {
-  const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  return Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+  return getYearAndWeek(new Date()).targetWeekOfYear;
 };
