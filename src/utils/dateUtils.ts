@@ -18,7 +18,8 @@ const getMondayOfWeek = (date: Date): Date => {
 };
 
 /**
- * 특정 날짜의 연도와 주차를 계산 (월~일을 같은 주차로 계산)
+ * 특정 날짜의 연도와 주차를 계산 (ISO 8601 표준 - 월~일을 같은 주차로 계산)
+ * 1월 4일을 포함한 주가 해당 연도의 1주차입니다.
  * @param date 계산할 날짜 (기본값: 현재 날짜)
  * @returns { targetYear: number, targetWeekOfYear: number }
  */
@@ -27,17 +28,12 @@ export const getYearAndWeek = (date: Date = new Date()): { targetYear: number; t
   const monday = getMondayOfWeek(date);
   const targetYear = monday.getFullYear();
 
-  // 해당 연도의 첫 월요일을 구함
-  const startOfYear = new Date(targetYear, 0, 1);
-  const firstMonday = getMondayOfWeek(startOfYear);
-
-  // 첫 월요일이 전년도에 있다면 다음 월요일을 사용
-  if (firstMonday.getFullYear() < targetYear) {
-    firstMonday.setDate(firstMonday.getDate() + 7);
-  }
+  // ISO 8601: 1월 4일을 포함한 주의 월요일이 그 해의 첫 번째 주
+  const jan4 = new Date(targetYear, 0, 4);
+  const firstMondayOfYear = getMondayOfWeek(jan4);
 
   // 두 월요일 사이의 일수 차이를 계산하여 주차 구함
-  const daysDiff = Math.floor((monday.getTime() - firstMonday.getTime()) / (24 * 60 * 60 * 1000));
+  const daysDiff = Math.floor((monday.getTime() - firstMondayOfYear.getTime()) / (24 * 60 * 60 * 1000));
   const targetWeekOfYear = Math.floor(daysDiff / 7) + 1;
 
   return {
