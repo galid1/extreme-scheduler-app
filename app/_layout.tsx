@@ -6,7 +6,6 @@ import {useEffect, useState} from 'react';
 
 import {useColorScheme} from '@/hooks/use-color-scheme';
 import {useAuthStore} from '@/src/store/useAuthStore';
-import {useConfigStore} from '@/src/store/useConfigStore';
 import authService from '@/src/services/api/auth.service';
 import apiClient from '@/src/services/api/client';
 import {initializeAuth} from '@/src/config/initializeAuth';
@@ -19,27 +18,27 @@ export default function RootLayout() {
   const { setAccountData, authToken, account } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Initialize auth on app start
+  // Initialize auth and push notifications on app start
   useEffect(() => {
+    let cleanup: (() => void) | null = null;
+
     const init = async () => {
       try {
+        cleanup = await initializePushNotifications();
         await initializeAuth();
         setIsHydrated(true);
       } catch (error) {
-        console.error('[App] Auth initialization failed:', error);
-        setIsHydrated(true); // Continue even if auth fails
+        console.error('[App] Initialization failed:', error);
+        setIsHydrated(true); // Continue even if initialization fails
       }
     };
 
     init();
-  }, []);
 
-  // Initialize push notifications on app start
-  useEffect(() => {
-    const cleanup = initializePushNotifications();
-
-    // Cleanup on unmount
-    return cleanup;
+    // unmount시, notification 구독 해제
+    return () => {
+      cleanup?.();
+    };
   }, []);
 
   useEffect(() => {

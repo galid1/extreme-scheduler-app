@@ -17,7 +17,8 @@
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
       "Bash(npx expo install:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

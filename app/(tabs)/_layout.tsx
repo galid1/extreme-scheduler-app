@@ -11,14 +11,16 @@ import {useAuthStore} from '@/src/store/useAuthStore';
 import {AccountType} from '@/src/types/enums';
 import {useAssignmentStore} from '@/src/store/useAssignmentStore';
 import {trainerService} from '@/src/services/api';
+import {useRefreshStore} from '@/src/store/useRefreshStore';
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
     const {account} = useAuthStore();
     const accountType = account?.accountType;
     const {assignmentRequests, setAssignmentRequests, setIsLoadingRequests} = useAssignmentStore();
+    const {refreshKey} = useRefreshStore();
 
-    // Fetch assignment requests when layout mounts (only for trainers)
+    // Fetch assignment requests when layout mounts or refreshKey changes (only for trainers)
     useEffect(() => {
         const fetchAssignmentRequests = async () => {
             if (accountType !== AccountType.TRAINER) {
@@ -29,6 +31,7 @@ export default function TabLayout() {
             try {
                 const response = await trainerService.getAssignmentRequests();
                 setAssignmentRequests(response.content);
+                console.log('🔄 [TabLayout] Updated assignment requests (triggered by refreshKey)');
             } catch (error) {
                 console.error('Error fetching assignment requests in tab layout:', error);
             } finally {
@@ -37,7 +40,7 @@ export default function TabLayout() {
         };
 
         fetchAssignmentRequests();
-    }, [accountType]);
+    }, [accountType, refreshKey]);
 
     // Calculate pending requests count
     const pendingRequestsCount = assignmentRequests.filter(req => req.status === 'PENDING').length;

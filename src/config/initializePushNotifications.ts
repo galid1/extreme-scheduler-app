@@ -31,12 +31,18 @@ export function setupNotificationHandler(): void {
 export async function registerPushToken(): Promise<void> {
   try {
     const pushToken = await registerForPushNotificationsAsync();
-    if (pushToken) {
-      useAuthStore.getState().setPushToken(pushToken);
-      console.log('[Push] Token registered and saved to store');
-    } else {
-      console.error('[Push] Token is null - check permissions!');
+
+    if (!pushToken || typeof pushToken !== 'string' || pushToken.length === 0) {
+      console.error('[Push] Invalid token - check permissions');
+      return;
     }
+
+    // Force evaluation to prevent JS engine optimization
+    void pushToken.length;
+
+    // Set token in store
+    useAuthStore.getState().setPushToken(pushToken);
+    console.log('[Push] Token registered successfully');
   } catch (error) {
     console.error('[Push] Failed to register token:', error);
   }
@@ -55,15 +61,17 @@ function setupNotificationReceivedListener() {
     console.log('Data:', JSON.stringify(notification.request.content.data));
     console.log('=============================================');
 
-    // 서버에서 최신 안읽은 알림 개수 조회
+    // 서버에서 최신 안읽은 알림 개수 조회 (상단 알림 뱃지)
     const { fetchUnreadCount } = useNotificationStore.getState();
     fetchUnreadCount();
 
-    // 전역 새로고침 트리거 (취소 요청 등 최신 데이터 로드)
+    // 전역 새로고침 트리거
+    // - TrainerHome: 운영 일정, 자동 스케줄링, 취소 요청 등
+    // - TabLayout: 담당자 요청 목록 (하단 회원관리 탭 뱃지)
     const { triggerRefresh } = useRefreshStore.getState();
     triggerRefresh();
 
-    console.log('🔄 [Notification] Triggered global refresh for cancel requests and other data');
+    console.log('🔄 [Notification] Triggered global refresh (TrainerHome + TabLayout)');
   });
 }
 
@@ -113,12 +121,12 @@ export function setupNotificationListeners(): () => void {
  * 핸들러 설정 + 토큰 등록 + 리스너 등록
  * @returns cleanup 함수
  */
-export function initializePushNotifications(): () => void {
+export async function initializePushNotifications(): Promise<() => void> {
   // 1. 핸들러 설정 (foreground 알림 표시 방식)
   setupNotificationHandler();
 
-  // 2. 푸시 토큰 등록
-  registerPushToken();
+  // 2. 푸시 토큰 등록 (비동기로 백그라운드 실행)
+  await registerPushToken();
 
   // 3. 리스너 등록 및 cleanup 함수 반환
   return setupNotificationListeners();

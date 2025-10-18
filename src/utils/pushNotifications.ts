@@ -61,14 +61,19 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   // 5. Expo 푸시 토큰 생성
   try {
-    const pushTokenString = (
-      await Notifications.getExpoPushTokenAsync({
-        projectId,
-      })
-    ).data;
+    const tokenObject = await Notifications.getExpoPushTokenAsync({
+      projectId,
+    });
+
+    // Force evaluation to prevent optimization
+    const pushTokenString = tokenObject?.data ?? null;
+
+    if (!pushTokenString || typeof pushTokenString !== 'string' || pushTokenString.length === 0) {
+      handleRegistrationError('Token string is empty or invalid');
+      return null;
+    }
 
     console.log('[Push Token]', pushTokenString);
-
     return pushTokenString;
   } catch (e: unknown) {
     handleRegistrationError(`${e}`);
