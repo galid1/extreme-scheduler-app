@@ -184,7 +184,7 @@ export default function MemberHome() {
             ]);
 
             setWeeklyScheduleRegistration(registrationResponse);
-            setFixedAutoSchedulingResults(fixedAutoSchedulingResponse?.data || null);
+            setFixedAutoSchedulingResults(fixedAutoSchedulingResponse || []);
             setTrainerAutoSchedulingStatus(trainerSchedulingStatusResponse);
             setScheduleData({
                 periodicScheduleLines: freeTimeScheduleResponse.periodicScheduleLines,
