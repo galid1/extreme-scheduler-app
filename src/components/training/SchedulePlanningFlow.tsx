@@ -188,7 +188,7 @@ export default function SchedulePlanningFlow({
 
             {/* 3단계: 일정 확정 */}
             <View style={styles.stepContainer}>
-                {!hasAutoSchedulingResult ? (
+                {!isOperationScheduleRegistered || !hasAutoSchedulingResult ? (
                     <>
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
