@@ -198,8 +198,8 @@ export default function TrainingScheduleScreen() {
 
                 // 두 주차의 요청을 합쳐서 저장 (CancelRequestResponse를 CancelRequestDetailResponse 형식으로 변환)
                 const allRequests = [
-                    ...(currentWeekRequests?.data || []),
-                    ...(nextWeekRequests?.data || [])
+                    ...(currentWeekRequests || []),
+                    ...(nextWeekRequests || [])
                 ].map(req => ({
                     ...req,
                     memberAccountId: account.id,
@@ -762,6 +762,11 @@ export default function TrainingScheduleScreen() {
                 <MemberScheduleActions
                     selectedSession={selectedSession}
                     currentAccountId={account?.id}
+                    onCancelComplete={() => {
+                        // Clear selected session after cancel request is complete
+                        setSelectedSession(null);
+                        setSelectedMember(null);
+                    }}
                 />
             )}
 

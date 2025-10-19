@@ -8,11 +8,13 @@ import { useSchedulingEventStore } from '@/src/store/useSchedulingEventStore';
 interface MemberScheduleActionsProps {
     selectedSession: TrainingSession | null;
     currentAccountId: number | undefined;
+    onCancelComplete?: () => void;
 }
 
 export default function MemberScheduleActions({
     selectedSession,
     currentAccountId,
+    onCancelComplete,
 }: MemberScheduleActionsProps) {
     const { triggerRefresh } = useSchedulingEventStore();
 
@@ -49,6 +51,8 @@ export default function MemberScheduleActions({
                                 Alert.alert('완료', result.message || '일정 취소 요청이 완료되었습니다.');
                                 // Trigger refresh to update MemberHome
                                 triggerRefresh();
+                                // Clear selected session
+                                onCancelComplete?.();
                             } else {
                                 Alert.alert('알림', result.message || '일정 취소 요청에 실패했습니다.');
                             }
