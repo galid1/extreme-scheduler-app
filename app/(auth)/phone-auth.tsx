@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -30,6 +30,8 @@ export default function PhoneAuthScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [remainingTime, setRemainingTime] = useState(180); // 3 minutes
 
+  const verificationInputRef = useRef<TextInput>(null);
+
   // Phone number validation
   const isValidPhone = localPhoneNumber.match(/^010\d{8}$/);
 
@@ -42,6 +44,17 @@ export default function PhoneAuthScreen() {
       return () => clearTimeout(timer);
     }
   }, [isPhoneSubmitted, remainingTime]);
+
+  // Auto-focus verification input when phone is submitted
+  useEffect(() => {
+    if (isPhoneSubmitted) {
+      // Small delay to ensure the input is rendered
+      const timer = setTimeout(() => {
+        verificationInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isPhoneSubmitted]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -192,6 +205,7 @@ export default function PhoneAuthScreen() {
               <View style={{ marginTop: 16 }}>
                 <View style={{ position: 'relative' }}>
                   <TextInput
+                    ref={verificationInputRef}
                     style={{
                       borderWidth: 1,
                       borderColor: '#3B82F6',

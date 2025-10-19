@@ -4,7 +4,7 @@
     "slug": "extreme-scheduler-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "extremeschedulerapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,7 +14,7 @@
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification"]
       },
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/app-icon.png"
     },
     "android": {
       "adaptiveIcon": {
