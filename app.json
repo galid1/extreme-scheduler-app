@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.extremescheduler.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      },
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +24,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "notification": {
+        "icon": "./assets/images/notification-icon.png",
+        "color": "#3B82F6"
+      }
     },
     "web": {
       "output": "static",
@@ -37,6 +46,14 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#3B82F6",
+          "sounds": ["default"]
         }
       ]
     ],
