@@ -161,9 +161,13 @@ function handleNotificationNavigation(data: any): void {
       // 취소 요청 승인/거절
       case NotificationType.CANCEL_REQUEST_APPROVED:
       case NotificationType.CANCEL_REQUEST_REJECTED:
-        const nextWeekForCancelRequest = getCurrentWeek() + 1;
-        useTrainingStore.getState().setCurrentWeek(nextWeekForCancelRequest);
-        router.push('/training-schedule');
+        // 계정 타입에 따라 홈 화면으로
+        const accountTypeForCancelRequest = useAuthStore.getState().account?.accountType;
+        if (accountTypeForCancelRequest === 'TRAINER') {
+          router.push('/(tabs)/trainer/TrainerHome');
+        } else {
+          router.push('/(tabs)/member/MemberHome');
+        }
         break;
 
       // 알 수 없는 타입은 알림 목록으로

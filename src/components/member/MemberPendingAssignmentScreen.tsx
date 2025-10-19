@@ -19,8 +19,11 @@ export default function MemberPendingAssignmentScreen({
 }: MemberPendingAssignmentScreenProps) {
   const [cancellingRequestId, setCancellingRequestId] = useState<number | null>(null);
 
-  // 요청이 없으면 아무것도 표시하지 않음
-  if (!requests || requests.length === 0) {
+  // PENDING 요청만 필터링
+  const pendingRequests = requests?.filter(req => req.status === RequestStatus.PENDING) || [];
+
+  // PENDING 요청이 없으면 아무것도 표시하지 않음
+  if (pendingRequests.length === 0) {
     return null;
   }
 
@@ -52,7 +55,6 @@ export default function MemberPendingAssignmentScreen({
             try {
               const result = await memberService.cancelTrainerAssignmentRequest(request.requestId);
               // undefined가 반환되면 409 에러로 API 클라이언트에서 처리된 것
-              // 이 경우 alert을 띄우지 않음 (API 클라이언트에서 이미 표시함)
               if (result !== undefined) {
                 Alert.alert('완료', '배정 요청이 취소되었습니다.');
               }
@@ -69,109 +71,58 @@ export default function MemberPendingAssignmentScreen({
     );
   };
 
-  // 대기 중인 요청과 거절된 요청 분리
-  const pendingRequests = requests.filter(req => req.status === RequestStatus.PENDING);
-  const rejectedRequests = requests.filter(req => req.status === RequestStatus.REJECTED);
-
-  // 상태 플래그
-  const isPending = pendingRequests.length > 0;
-  const isRejected = rejectedRequests.length > 0;
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 헤더 */}
         <View style={styles.header}>
-          {pendingRequests.length > 0 && <Ionicons name="time-outline" size={80} color="#3B82F6" />}
-          {pendingRequests.length === 0 && rejectedRequests.length > 0 && (
-            <Ionicons name="close-circle-outline" size={80} color="#EF4444" />
-          )}
-
-          <Text style={styles.title}>
-            {pendingRequests.length > 0 && '트레이너 배정 대기중'}
-            {pendingRequests.length === 0 && rejectedRequests.length > 0 && '트레이너 배정 거절됨'}
-          </Text>
-
+          <Ionicons name="time-outline" size={80} color="#3B82F6" />
+          <Text style={styles.title}>트레이너 배정 대기중</Text>
           <Text style={styles.message}>
-            {pendingRequests.length > 0 && `트레이너의 승인을 기다리고 있습니다.\n승인되면 일정 등록이 가능합니다.`}
-            {pendingRequests.length === 0 && rejectedRequests.length > 0 && `배정 요청이 거절되었습니다.\n다른 트레이너를 검색해보세요.`}
+            트레이너의 승인을 기다리고 있습니다.{'\n'}승인되면 일정 등록이 가능합니다.
           </Text>
         </View>
 
         {/* 대기 중인 요청 목록 */}
-        {pendingRequests.length > 0 && (
-          <View style={styles.requestSection}>
-            <Text style={styles.sectionTitle}>대기 중인 요청</Text>
-            {pendingRequests.map((request) => (
-              <View key={request.requestId} style={styles.requestCard}>
-                <View style={styles.requestHeader}>
-                  <View style={styles.trainerInfo}>
-                    <Ionicons name="person-circle" size={40} color="#3B82F6" />
-                    <View style={styles.trainerDetails}>
-                      <Text style={styles.trainerName}>{request.trainerName}</Text>
-                      <Text style={styles.requestDate}>
-                        요청일: {formatDate(request.requestedAt)}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusBadgeText}>대기중</Text>
+        <View style={styles.requestSection}>
+          <Text style={styles.sectionTitle}>대기 중인 요청</Text>
+          {pendingRequests.map((request) => (
+            <View key={request.requestId} style={styles.requestCard}>
+              <View style={styles.requestHeader}>
+                <View style={styles.trainerInfo}>
+                  <Ionicons name="person-circle" size={40} color="#3B82F6" />
+                  <View style={styles.trainerDetails}>
+                    <Text style={styles.trainerName}>{request.trainerName}</Text>
+                    <Text style={styles.requestDate}>
+                      요청일: {formatDate(request.requestedAt)}
+                    </Text>
                   </View>
                 </View>
-
-                {/* 취소 버튼 */}
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => handleCancelRequest(request)}
-                  disabled={cancellingRequestId === request.requestId}
-                >
-                  {cancellingRequestId === request.requestId ? (
-                    <ActivityIndicator size="small" color="#EF4444" />
-                  ) : (
-                    <>
-                      <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
-                      <Text style={styles.cancelButtonText}>요청 취소</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                <View style={styles.statusBadge}>
+                  <Text style={styles.statusBadgeText}>대기중</Text>
+                </View>
               </View>
-            ))}
-          </View>
-        )}
 
-        {/* 거절된 요청 목록 */}
-        {rejectedRequests.length > 0 && (
-          <View style={styles.requestSection}>
-            <Text style={styles.sectionTitle}>거절된 요청</Text>
-            {rejectedRequests.map((request) => (
-              <View key={request.requestId} style={[styles.requestCard, styles.rejectedCard]}>
-                <View style={styles.requestHeader}>
-                  <View style={styles.trainerInfo}>
-                    <Ionicons name="person-circle" size={40} color="#EF4444" />
-                    <View style={styles.trainerDetails}>
-                      <Text style={styles.trainerName}>{request.trainerName}</Text>
-                      <Text style={styles.requestDate}>
-                        거절일: {request.processedAt ? formatDate(request.processedAt) : '-'}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.rejectedBadge}>
-                    <Text style={styles.rejectedBadgeText}>거절됨</Text>
-                  </View>
-                </View>
-
-                {/* 거절 사유 */}
-                {request.rejectReason && (
-                  <View style={styles.rejectReasonContainer}>
-                    <Text style={styles.rejectReasonLabel}>거절 사유:</Text>
-                    <Text style={styles.rejectReasonText}>{request.rejectReason}</Text>
-                  </View>
+              {/* 취소 버튼 */}
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => handleCancelRequest(request)}
+                disabled={cancellingRequestId === request.requestId}
+              >
+                {cancellingRequestId === request.requestId ? (
+                  <ActivityIndicator size="small" color="#EF4444" />
+                ) : (
+                  <>
+                    <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
+                    <Text style={styles.cancelButtonText}>요청 취소</Text>
+                  </>
                 )}
-              </View>
-            ))}
-          </View>
-        )}
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
 
+        {/* 새로고침 버튼 */}
         <TouchableOpacity
           style={styles.refreshButton}
           onPress={onRefresh}
@@ -187,11 +138,11 @@ export default function MemberPendingAssignmentScreen({
           )}
         </TouchableOpacity>
 
+        {/* 안내 메시지 */}
         <View style={styles.infoBox}>
           <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
           <Text style={styles.infoText}>
-            {isPending && '배정 상태는 자동으로 업데이트됩니다.\n새로고침 버튼으로 최신 상태를 확인할 수 있습니다.'}
-            {isRejected && '요청이 거절되었습니다.\n트레이너 검색으로 돌아가서 다른 트레이너를 찾아보세요.'}
+            배정 상태는 자동으로 업데이트됩니다.{'\n'}새로고침 버튼으로 최신 상태를 확인할 수 있습니다.
           </Text>
         </View>
       </ScrollView>
@@ -249,10 +200,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  rejectedCard: {
-    borderColor: '#FEE2E2',
-    backgroundColor: '#FEF2F2',
-  },
   requestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -288,32 +235,6 @@ const styles = StyleSheet.create({
     color: '#1E40AF',
     fontSize: 12,
     fontWeight: '700',
-  },
-  rejectedBadge: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#EF4444',
-  },
-  rejectedBadgeText: {
-    color: '#DC2626',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  rejectReasonContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#FEE2E2',
-  },
-  rejectReasonLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#DC2626',
-    marginBottom: 4,
-  },
-  rejectReasonText: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
   },
   cancelButton: {
     flexDirection: 'row',

@@ -259,22 +259,25 @@ export default function MemberHome() {
         };
     }, [fetchUserData, loadScheduleData]);
 
-    // Show trainer search UI if no trainer assigned and no pending requests (or empty array)
-    if (!trainerAccountId && (!assignmentRequests || assignmentRequests.length === 0)) {
-        return (
-            <TrainerSearchComponent
-                onAssignmentSuccess={handleRefreshAssignment}
-            />
-        );
-    }
+    // Check if there are pending requests (not rejected)
+    const hasPendingRequest = assignmentRequests?.some(req => req.status === 'PENDING') || false;
 
-    // Show pending assignment screen if there are pending requests but no trainer yet
-    if (!trainerAccountId && assignmentRequests && assignmentRequests.length > 0) {
+    // Show pending assignment screen if there are PENDING requests (not rejected)
+    if (!trainerAccountId && hasPendingRequest) {
         return (
             <MemberPendingAssignmentScreen
                 requests={assignmentRequests}
                 onRefresh={handleRefreshAssignment}
                 isRefreshing={isRefreshingAssignment}
+            />
+        );
+    }
+
+    // Show trainer search UI if no trainer assigned (including when there are only rejected requests)
+    if (!trainerAccountId) {
+        return (
+            <TrainerSearchComponent
+                onAssignmentSuccess={handleRefreshAssignment}
             />
         );
     }
