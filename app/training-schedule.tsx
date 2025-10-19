@@ -197,7 +197,10 @@ export default function TrainingScheduleScreen() {
                 );
 
                 // 두 주차의 요청을 합쳐서 저장 (CancelRequestResponse를 CancelRequestDetailResponse 형식으로 변환)
-                const allRequests = [...currentWeekRequests.data, ...nextWeekRequests.data].map(req => ({
+                const allRequests = [
+                    ...(currentWeekRequests?.data || []),
+                    ...(nextWeekRequests?.data || [])
+                ].map(req => ({
                     ...req,
                     memberAccountId: account.id,
                     memberName: account.privacyInfo?.name || '',
@@ -443,8 +446,8 @@ export default function TrainingScheduleScreen() {
                     realCurrentWeek + 1
                 );
 
-                currentWeekResponse = {scheduleList: currentWeekData.data};
-                nextWeekResponse = {scheduleList: nextWeekData.data};
+                currentWeekResponse = {scheduleList: currentWeekData};
+                nextWeekResponse = {scheduleList: nextWeekData};
                 // Members don't have status info, so leave as undefined
             }
 
