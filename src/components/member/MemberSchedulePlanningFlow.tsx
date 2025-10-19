@@ -5,6 +5,7 @@ import SchedulingCompletedCard from "@/src/components/member/SchedulingCompleted
 import WeekInfo from "@/src/components/WeekInfo";
 import {AutoSchedulingResultStatus} from "@/src/types/enums";
 import {AutoSchedulingScheduleApiResponse} from "@/src/types/api";
+import {getNextWeekYearAndWeek} from "@/src/utils/dateUtils";
 
 // Icon sizes
 const ICON_SIZE_SMALL = 10;
@@ -139,14 +140,14 @@ export default function MemberSchedulePlanningFlow({
                             >
                                 <Text style={styles.textButtonPrimary}>확인</Text>
                             </TouchableOpacity>
-                            {isTrainerScheduled && (
+                            {trainerFixedAutoScheduling && (
                                 <Ionicons
                                     name="chevron-forward"
                                     size={ICON_SIZE_MEDIUM}
                                     color={"#3B82F6"}
                                 />
                             )}
-                            {!isTrainerScheduled && (
+                            {!trainerFixedAutoScheduling && (
                                 <TouchableOpacity
                                     style={styles.textButton}
                                     onPress={onEditSchedule}
@@ -266,8 +267,8 @@ export default function MemberSchedulePlanningFlow({
                             <Text style={styles.waitingText}>희망 일정을 먼저 등록해주세요</Text>
                         </View>
                     </View>
-                ) : !trainerFixedAutoScheduling && !isTrainerScheduled ? (
-                    // Case 3: 트레이너 스케줄링 진행 중
+                ) : !isTrainerScheduled ? (
+                    // Case 3: 트레이너 스케줄링 대기 중 (PLACEHOLDER)
                     <View style={styles.stepContainer}>
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
@@ -289,8 +290,8 @@ export default function MemberSchedulePlanningFlow({
                             </Text>
                         </View>
                     </View>
-                ) : trainerFixedAutoScheduling && isScheduleRegistered ? (
-                    // Case 4: 트레이너가 고정한 스케줄링 완료 - 클릭 가능
+                ) : trainerFixedAutoScheduling ? (
+                    // Case 4: 트레이너가 스케줄링 확정 완료 (FIXED) - 클릭 가능
                     <TouchableOpacity
                         style={styles.stepContainer}
                         onPress={onViewTrainingSchedule}
@@ -324,72 +325,48 @@ export default function MemberSchedulePlanningFlow({
                         </View>
                         <View>
                             <SchedulingCompletedCard
+                                weeklyAutoSchedulingResultStatus={weeklyAutoSchedulingResultStatus}
                                 hasAutoSchedulingResults={hasAutoSchedulingResults}
-                                compact={true}
-                            />
-                        </View>
-                    </TouchableOpacity>
-                ) : isTrainerScheduled && hasAutoSchedulingResults ? (
-                    // Case 5: 일반 스케줄링 완료 (결과 있음) - 클릭 가능
-                    <TouchableOpacity
-                        style={styles.stepContainer}
-                        onPress={onViewTrainingSchedule}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.stepHeader}>
-                            <View style={styles.stepTitleRow}>
-                                <View style={[
-                                    styles.stepNumber,
-                                    styles.stepNumberCompleted
-                                ]}>
-                                    <Ionicons name="checkmark" size={ICON_SIZE_SMALL} color="white" />
-                                </View>
-                                <Text style={styles.stepTitle}>트레이너 스케줄링</Text>
-                                {cancelRequestsCount > 0 && (
-                                    <View style={styles.cancelRequestBadge}>
-                                        <Text style={styles.cancelRequestBadgeText}>{cancelRequestsCount}</Text>
-                                    </View>
-                                )}
-                            </View>
-                            <View style={styles.stepHeaderRight}>
-                                <View style={styles.textButton}>
-                                    <Text style={styles.textButtonPrimary}>확인</Text>
-                                </View>
-                                <Ionicons
-                                    name="chevron-forward"
-                                    size={ICON_SIZE_MEDIUM}
-                                    color="#3B82F6"
-                                />
-                            </View>
-                        </View>
-                        <View>
-                            <SchedulingCompletedCard
-                                hasAutoSchedulingResults={hasAutoSchedulingResults}
-                                compact={true}
                             />
                         </View>
                     </TouchableOpacity>
                 ) : (
-                    // Case 6: 스케줄링 완료 (결과 없음) - 클릭 불가
-                    <View style={styles.stepContainer}>
+                    // Case 5: 트레이너가 임시 배정 완료 (SCHEDULED) - 클릭 가능하지만 아직 확정 아님
+                    <TouchableOpacity
+                        style={styles.stepContainer}
+                        onPress={onViewTrainingSchedule}
+                        activeOpacity={0.7}
+                    >
                         <View style={styles.stepHeader}>
                             <View style={styles.stepTitleRow}>
-                                <View style={[
-                                    styles.stepNumber,
-                                    styles.stepNumberCompleted
-                                ]}>
-                                    <Ionicons name="checkmark" size={ICON_SIZE_SMALL} color="white" />
+                                <View style={styles.stepNumber}>
+                                    <Text style={styles.stepNumberText}>3</Text>
                                 </View>
                                 <Text style={styles.stepTitle}>트레이너 스케줄링</Text>
+                                {cancelRequestsCount > 0 && (
+                                    <View style={styles.cancelRequestBadge}>
+                                        <Text style={styles.cancelRequestBadgeText}>{cancelRequestsCount}</Text>
+                                    </View>
+                                )}
+                            </View>
+                            <View style={styles.stepHeaderRight}>
+                                <View style={styles.textButton}>
+                                    <Text style={styles.textButtonPrimary}>확인</Text>
+                                </View>
+                                <Ionicons
+                                    name="chevron-forward"
+                                    size={ICON_SIZE_MEDIUM}
+                                    color="#3B82F6"
+                                />
                             </View>
                         </View>
                         <View>
                             <SchedulingCompletedCard
+                                weeklyAutoSchedulingResultStatus={weeklyAutoSchedulingResultStatus}
                                 hasAutoSchedulingResults={hasAutoSchedulingResults}
-                                compact={true}
                             />
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 )}
         </View>
     );

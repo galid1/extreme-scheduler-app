@@ -1,43 +1,48 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import {AutoSchedulingResultStatus} from "@/src/types/enums";
 
 interface SchedulingCompletedCardProps {
+    weeklyAutoSchedulingResultStatus?: AutoSchedulingResultStatus,
     hasAutoSchedulingResults: boolean;
-    compact?: boolean;
 }
 
 export default function SchedulingCompletedCard({
+                                                    weeklyAutoSchedulingResultStatus,
                                                      hasAutoSchedulingResults,
-                                                     compact = false,
                                                  }: SchedulingCompletedCardProps) {
     return (
-        <View style={[styles.scheduledStateContainer, compact && styles.scheduledStateContainerCompact]}>
-            <View style={[styles.scheduledStateCard, compact && styles.scheduledStateCardCompact]}>
-                {!hasAutoSchedulingResults ? (
-                    <>
-                        <Text style={[styles.scheduledStateMessage, compact && styles.scheduledStateMessageCompact]}>
-                            이번 주는 트레이너와의 일정이 맞지 않아{' '}
-                            스케줄된 세션이 없습니다.
-                        </Text>
-                        {!compact && (
+        <View style={[styles.scheduledStateContainer && styles.scheduledStateContainerCompact]}>
+            <View style={[styles.scheduledStateCard && styles.scheduledStateCardCompact]}>
+                {
+                    // 트레이너가 일정을 확정한 경우
+                    (weeklyAutoSchedulingResultStatus && weeklyAutoSchedulingResultStatus === AutoSchedulingResultStatus.FIXED)? (
+                        // 일정이 존재하는 경우
+                        (hasAutoSchedulingResults) ? (
+                            <>
+                                <Text style={[styles.scheduledStateMessage, styles.scheduledStateMessageCompact]}>
+                                    트레이닝 일정이 확정되었습니다.
+                                </Text>
+                                <Text style={styles.scheduledStateSubMessage}>
+                                    확정된 일정을 확인해주세요.
+                                </Text>
+                            </>
+                        ) : // 일정이 없는 경우
+                            <>
+                                <Text style={[styles.scheduledStateMessage, styles.scheduledStateMessageCompact]}>
+                                    이번 주는 트레이너와의 일정이 맞지 않아{' '}
+                                    스케줄된 세션이 없습니다.
+                                </Text>
+                            </>
+                    ) : ( // 아직 일정 조정 중인 경우
+                        <>
                             <Text style={styles.scheduledStateSubMessage}>
                                 다음 주에는 트레이너와 일정을 조율하여{' '}
                                 트레이닝 세션이 배정될 예정입니다.
                             </Text>
-                        )}
-                    </>
-                ) : (
-                    <>
-                        <Text style={[styles.scheduledStateMessage, compact && styles.scheduledStateMessageCompact]}>
-                            트레이닝 일정이 확정되었습니다.
-                        </Text>
-                        {!compact && (
-                            <Text style={styles.scheduledStateSubMessage}>
-                                확정된 일정을 확인해주세요.
-                            </Text>
-                        )}
-                    </>
-                )}
+                        </>
+                    )
+                }
             </View>
         </View>
     );
@@ -90,7 +95,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 24,
         color: '#4B5563',
-        marginBottom: 8,
     },
     scheduledStateMessageCompact: {
         fontSize: 12,
@@ -102,7 +106,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 20,
         color: '#6B7280',
-        marginBottom: 16,
     },
     scheduledStateInfo: {
         flexDirection: 'row',
