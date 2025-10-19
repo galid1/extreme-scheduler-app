@@ -128,15 +128,19 @@ const WeekCalendarView = forwardRef<WeekCalendarViewRef, WeekCalendarViewProps>(
     }
   };
 
-  // 해당 주차의 날짜 계산
+  // 해당 주차의 날짜 계산 (ISO 8601 기준)
   const getWeekDates = (weekNumber: number) => {
     const year = currentTime.getFullYear();
-    const startOfYear = new Date(year, 0, 1);
 
-    // 1월 1일부터 해당 주차의 시작까지의 일수 계산
-    const daysToAdd = (weekNumber - 1) * 7 - startOfYear.getDay() + 1; // 월요일로 시작
-    const weekStartDate = new Date(startOfYear);
-    weekStartDate.setDate(startOfYear.getDate() + daysToAdd);
+    // ISO 8601: 1월 4일을 포함한 주의 월요일이 그 해의 첫 번째 주
+    const jan4 = new Date(year, 0, 4);
+    const jan4Day = jan4.getDay();
+    const daysToMonday = jan4Day === 0 ? -6 : 1 - jan4Day;
+    const firstMonday = new Date(year, 0, 4 + daysToMonday);
+
+    // 해당 주차의 월요일 계산
+    const weekStartDate = new Date(firstMonday);
+    weekStartDate.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
 
     const dates = [];
     const dayNames = ['월', '화', '수', '목', '금', '토', '일'];

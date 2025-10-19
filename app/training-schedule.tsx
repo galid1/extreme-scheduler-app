@@ -15,7 +15,7 @@ import {useTrainingStore, TrainingSession} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView, {WeekCalendarViewRef} from '@/src/components/training/WeekCalendarView';
 import {AutoSchedulingResultStatus, trainerScheduleService, memberScheduleService} from '@/src/services/api';
-import {getCurrentWeek} from '@/src/utils/dateUtils';
+import {getCurrentWeek, getYearAndWeek} from '@/src/utils/dateUtils';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {AccountType} from '@/src/types/enums';
 import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
@@ -89,9 +89,7 @@ export default function TrainingScheduleScreen() {
             if (weekSessions.length === 0) return;
 
             const today = new Date();
-            const startOfYear = new Date(today.getFullYear(), 0, 1);
-            const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-            const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+            const { targetWeekOfYear: realCurrentWeek } = getYearAndWeek(today);
 
             const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
             const currentDay = dayOrder[today.getDay()];
@@ -167,9 +165,7 @@ export default function TrainingScheduleScreen() {
     const fetchCancelRequests = async () => {
         try {
             const today = new Date();
-            const startOfYear = new Date(today.getFullYear(), 0, 1);
-            const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-            const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+            const { targetWeekOfYear: realCurrentWeek } = getYearAndWeek(today);
 
             if (account?.accountType === AccountType.TRAINER) {
                 // 트레이너: 현재 주차와 다음 주차의 취소 요청 가져오기
@@ -416,9 +412,7 @@ export default function TrainingScheduleScreen() {
         try {
             // 현재 주차 계산
             const today = new Date();
-            const startOfYear = new Date(today.getFullYear(), 0, 1);
-            const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-            const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+            const { targetWeekOfYear: realCurrentWeek } = getYearAndWeek(today);
 
             // 이번주와 다음주 데이터 가져오기
             let currentWeekResponse;
@@ -557,7 +551,7 @@ export default function TrainingScheduleScreen() {
 
     // Helper to get scheduling status for the currently viewing week
     const getCurrentViewingWeekStatus = (): AutoSchedulingResultStatus | undefined => {
-        const realCurrentWeek = getCurrentWeek();
+        const { targetWeekOfYear: realCurrentWeek } = getYearAndWeek(new Date());
         if (currentWeek === realCurrentWeek) {
             return currentWeekAutoSchedulingStatus;
         } else if (currentWeek === realCurrentWeek + 1) {
@@ -640,9 +634,7 @@ export default function TrainingScheduleScreen() {
                                 const sessionDayIndex = dayOrder.indexOf(session.day);
 
                                 // Get current week of year
-                                const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
-                                const daysSinceStart = Math.floor((currentDate.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-                                const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+                                const { targetWeekOfYear: currentWeekOfYear } = getYearAndWeek(currentDate);
 
                                 // Calculate week difference
                                 const weekDiff = session.weekOfYear - currentWeekOfYear;

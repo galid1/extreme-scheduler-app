@@ -1,6 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {getYearAndWeek} from '@/src/utils/dateUtils';
 
 interface WeekNavigatorProps {
   currentWeek: number;
@@ -35,9 +36,7 @@ export default function WeekNavigator({
 }: WeekNavigatorProps) {
   // 현재 실제 주차 계산 (연도 기준)
   const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const realCurrentWeek = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+  const { targetWeekOfYear: realCurrentWeek } = getYearAndWeek(today);
 
   // 주차 기간 문자열 생성
   const getWeekPeriod = () => {

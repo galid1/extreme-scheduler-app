@@ -183,10 +183,7 @@ export default function AutoSchedulingScreen() {
     const handleConfirmSchedule = () => {
         // 재설정 모드인 경우 해당 주차로, 아니면 다음 주차로 설정
         // 일반 모드: 다음 주차로 이동
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-        const currentWeekOfYear = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+        const { targetWeekOfYear: currentWeekOfYear } = getYearAndWeek(new Date());
         const targetWeek = currentWeekOfYear + 1;
 
         // Store에 타겟 주차 설정

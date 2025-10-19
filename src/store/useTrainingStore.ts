@@ -2,6 +2,7 @@ import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {AutoSchedulingResultStatus} from "@/src/types/enums";
+import {getYearAndWeek} from '@/src/utils/dateUtils';
 
 export interface TrainingSession {
   memberId: string;
@@ -82,35 +83,23 @@ export const useTrainingStore = create<TrainingState>()(
 
       canEditWeek: (week) => {
         // 이번 주는 수정 불가능
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-        const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-        return week !== currentWeekNumber;
+        const { targetWeekOfYear } = getYearAndWeek(new Date());
+        return week !== targetWeekOfYear;
       },
 
       isCurrentWeek: (week) => {
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-        const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-        return week === currentWeekNumber;
+        const { targetWeekOfYear } = getYearAndWeek(new Date());
+        return week === targetWeekOfYear;
       },
 
       isPastWeek: (week) => {
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-        const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-        return week < currentWeekNumber;
+        const { targetWeekOfYear } = getYearAndWeek(new Date());
+        return week < targetWeekOfYear;
       },
 
       isNextWeek: (week) => {
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-        const currentWeekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-        return week === currentWeekNumber + 1;
+        const { targetWeekOfYear } = getYearAndWeek(new Date());
+        return week === targetWeekOfYear + 1;
       },
 
       resetWeek: (week) => {
