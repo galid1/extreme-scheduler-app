@@ -11,14 +11,13 @@ import {
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
-import {useTrainingStore, TrainingSession} from '@/src/store/useTrainingStore';
+import {TrainingSession, useTrainingStore} from '@/src/store/useTrainingStore';
 import WeekNavigator from '@/src/components/training/WeekNavigator';
 import WeekCalendarView, {WeekCalendarViewRef} from '@/src/components/training/WeekCalendarView';
-import {AutoSchedulingResultStatus, trainerScheduleService, memberScheduleService} from '@/src/services/api';
+import {AutoSchedulingResultStatus, memberScheduleService, trainerScheduleService} from '@/src/services/api';
 import {getCurrentWeek, getYearAndWeek} from '@/src/utils/dateUtils';
 import {useAuthStore} from '@/src/store/useAuthStore';
 import {AccountType} from '@/src/types/enums';
-import {useSchedulingEventStore} from '@/src/store/useSchedulingEventStore';
 import TrainerScheduleActions from '@/src/components/training/TrainerScheduleActions';
 import MemberScheduleActions from '@/src/components/training/MemberScheduleActions';
 import TrainerCancelRequestsSection from '@/src/components/training/TrainerCancelRequestsSection';
