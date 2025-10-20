@@ -16,7 +16,7 @@ const getEnvironmentConfig = (): EnvironmentConfig => {
   // 개발 환경에서 사용할 로컬 서버 주소
   // 본인의 로컬 IP 주소로 변경하세요 (ifconfig 또는 ipconfig로 확인)
   // const defaultApiUrl = 'http://localhost:8080'; // ios simulator에서 테스트시
-    const url = "http://172.30.1.85:8080" // device에서 테스트시
+    const url = "http://app.timesmaker.com:8080" // device에서 테스트시
 
   // const apiUrl = process.env.EXPO_PUBLIC_API_URL || defaultApiUrl;
   const env = process.env.EXPO_PUBLIC_ENV || 'development';
