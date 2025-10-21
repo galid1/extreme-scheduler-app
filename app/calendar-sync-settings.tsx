@@ -135,48 +135,71 @@ export default function CalendarSyncSettingsScreen() {
         const disabled = requiresPermission && !hasCalendarPermission;
 
         return (
-            <View key={platform} style={styles.calendarItem}>
-                <View style={styles.calendarLeft}>
-                    {/* Placeholder 아이콘 - 추후 asset 이미지로 교체 */}
-                    <View style={[styles.iconPlaceholder, disabled && styles.iconDisabled]}>
-                        {platform === 'naver' ? (
-                            <Image
-                                source={require('@/assets/images/calendar/naver_btn_square.png')}
-                                style={{ width: 40, height: 40 }}
-                                resizeMode="cover"
-                            />
-                        ) : platform === 'google' ? (
-                            <Image
-                                source={require('@/assets/images/calendar/google_btn.png')}
-                                style={{ width: 40, height: 40 }}
-                                resizeMode="cover"
-                            />
-                        ) : (
-                            <Ionicons
-                                name={iconName as any}
-                                size={24}
-                                color={disabled ? '#9CA3AF' : '#3B82F6'}
-                            />
-                        )}
+            <View key={platform}>
+                <View style={styles.calendarItem}>
+                    <View style={styles.calendarLeft}>
+                        {/* Placeholder 아이콘 - 추후 asset 이미지로 교체 */}
+                        <View style={[styles.iconPlaceholder, disabled && styles.iconDisabled]}>
+                            {platform === 'naver' ? (
+                                <Image
+                                    source={require('@/assets/images/calendar/naver_btn_square.png')}
+                                    style={{ width: 40, height: 40 }}
+                                    resizeMode="cover"
+                                />
+                            ) : platform === 'google' ? (
+                                <Image
+                                    source={require('@/assets/images/calendar/google_btn.png')}
+                                    style={{ width: 40, height: 40 }}
+                                    resizeMode="cover"
+                                />
+                            ) : (
+                                <Ionicons
+                                    name={iconName as any}
+                                    size={24}
+                                    color={disabled ? '#9CA3AF' : '#3B82F6'}
+                                />
+                            )}
+                        </View>
+                        <View style={styles.calendarTextContainer}>
+                            <Text style={[styles.calendarTitle, disabled && styles.disabledText]}>
+                                {getPlatformName(platform)}
+                            </Text>
+                            <Text style={styles.calendarDescription}>
+                                {requiresPermission && !hasCalendarPermission
+                                    ? '권한이 필요합니다'
+                                    : '자동으로 일정을 동기화합니다'}
+                            </Text>
+                        </View>
                     </View>
-                    <View style={styles.calendarTextContainer}>
-                        <Text style={[styles.calendarTitle, disabled && styles.disabledText]}>
-                            {getPlatformName(platform)}
-                        </Text>
-                        <Text style={styles.calendarDescription}>
-                            {requiresPermission && !hasCalendarPermission
-                                ? '권한이 필요합니다'
-                                : '자동으로 일정을 동기화합니다'}
-                        </Text>
-                    </View>
+                    <Switch
+                        value={isEnabled}
+                        onValueChange={(value) => handleToggle(platform, value)}
+                        trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
+                        thumbColor={isEnabled ? '#3B82F6' : '#F3F4F6'}
+                        disabled={isLoading || disabled}
+                    />
                 </View>
-                <Switch
-                    value={isEnabled}
-                    onValueChange={(value) => handleToggle(platform, value)}
-                    trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-                    thumbColor={isEnabled ? '#3B82F6' : '#F3F4F6'}
-                    disabled={isLoading || disabled}
-                />
+
+                {/* 네이티브 캘린더 권한 경고 */}
+                {platform === 'native' && !hasCalendarPermission && (
+                    <View style={styles.warningCardInline}>
+                        <Ionicons name="warning" size={18} color="#F59E0B" />
+                        <View style={styles.warningTextContainer}>
+                            <Text style={styles.warningTitle}>
+                                {Platform.OS === 'ios' ? 'iOS' : 'Android'} 캘린더 권한 필요
+                            </Text>
+                            <Text style={styles.warningDescription}>
+                                위의 {Platform.OS === 'ios' ? 'iOS' : 'Android'} 캘린더를 연동하려면 권한을 허용해주세요
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={requestCalendarPermission}
+                            style={styles.permissionButton}
+                        >
+                            <Text style={styles.permissionButtonText}>권한 요청</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
         );
     };
@@ -196,25 +219,6 @@ export default function CalendarSyncSettingsScreen() {
 
                 {/* Content */}
                 <View style={styles.content}>
-                    {/* 권한 경고 (기본 캘린더용) */}
-                    {!hasCalendarPermission && (
-                        <View style={styles.warningCard}>
-                            <Ionicons name="warning" size={20} color="#F59E0B" />
-                            <View style={styles.warningTextContainer}>
-                                <Text style={styles.warningTitle}>캘린더 권한 없음</Text>
-                                <Text style={styles.warningDescription}>
-                                    기본 캘린더 연동을 위해서는 권한이 필요합니다
-                                </Text>
-                            </View>
-                            <TouchableOpacity
-                                onPress={requestCalendarPermission}
-                                style={styles.permissionButton}
-                            >
-                                <Text style={styles.permissionButtonText}>권한 요청</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
-
                     {/* 캘린더 연동 목록 */}
                     <View style={styles.card}>
                         {/* iOS/Android 기본 캘린더 (플랫폼에 따라 하나만 표시) */}
@@ -225,8 +229,12 @@ export default function CalendarSyncSettingsScreen() {
                             true
                         )}
 
+                        <View style={styles.divider} />
+
                         {/* Google 캘린더 */}
                         {renderCalendarItem('google', 'logo-google', syncState.google)}
+
+                        <View style={styles.divider} />
 
                         {/* Naver 캘린더 */}
                         {renderCalendarItem('naver', 'globe-outline', syncState.naver)}
@@ -331,7 +339,11 @@ const styles = StyleSheet.create({
         padding: 16,
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        gap: 20,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#E5E7EB',
+        marginVertical: 16,
     },
     calendarItem: {
         flexDirection: 'row',
@@ -395,5 +407,16 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#6B7280',
         flex: 1,
+    },
+    warningCardInline: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FEF3C7',
+        borderRadius: 12,
+        padding: 12,
+        marginTop: 12,
+        gap: 10,
+        borderWidth: 1,
+        borderColor: '#FCD34D',
     },
 });
