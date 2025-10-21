@@ -15,7 +15,7 @@ const getEnvironmentConfig = (): EnvironmentConfig => {
 
   // 개발 환경에서 사용할 로컬 서버 주소
   // 본인의 로컬 IP 주소로 변경하세요 (ifconfig 또는 ipconfig로 확인)
-   const url = "http://172.30.1.85:8080"  // local
+   const url = "http://172.30.1.42:8080"  // local
   //   const url = "http://app.timesmaker.com:8080" // production
 
   // const env = process.env.EXPO_PUBLIC_ENV || 'development';

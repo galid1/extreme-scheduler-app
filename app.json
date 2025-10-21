@@ -12,7 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.extremescheduler.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": ["remote-notification"],
+        "NSCalendarsUsageDescription": "일정을 캘린더에 동기화하기 위해 캘린더 접근 권한이 필요합니다.",
+        "NSRemindersUsageDescription": "일정 리마인더를 설정하기 위해 접근 권한이 필요합니다."
       },
       "icon": "./assets/images/app-icon.png"
     },
@@ -28,7 +30,11 @@
       "notification": {
         "icon": "./assets/images/notification-icon.png",
         "color": "#3B82F6"
-      }
+      },
+      "permissions": [
+        "READ_CALENDAR",
+        "WRITE_CALENDAR"
+      ]
     },
     "web": {
       "output": "static",

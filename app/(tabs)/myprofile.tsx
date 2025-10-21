@@ -76,11 +76,20 @@ export default function ProfileScreen() {
                 {/* Menu Section */}
                 <View style={styles.menuSection}>
                     <TouchableOpacity
-                        style={[styles.menuItem, styles.lastMenuItem]}
+                        style={styles.menuItem}
                         onPress={() => router.push('/notification-settings')}
                     >
                         <Ionicons name="notifications-outline" size={22} color="#3B82F6"/>
                         <Text style={styles.menuText}>알림 설정</Text>
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, styles.lastMenuItem]}
+                        onPress={() => router.push('/calendar-sync-settings')}
+                    >
+                        <Ionicons name="calendar-outline" size={22} color="#3B82F6"/>
+                        <Text style={styles.menuText}>캘린더 연동 설정</Text>
                         <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
                     </TouchableOpacity>
 
@@ -195,6 +204,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 16,
         gap: 10,
+        borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
     lastMenuItem: {

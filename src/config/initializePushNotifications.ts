@@ -59,7 +59,7 @@ export async function registerPushToken(): Promise<void> {
     const pushToken = await registerForPushNotificationsAsync();
 
     if (!pushToken || typeof pushToken !== 'string' || pushToken.length === 0) {
-      console.error('[Push] Invalid token - check permissions');
+      console.log('[Push] No token available - likely running on simulator or permissions denied');
       return;
     }
 

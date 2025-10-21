@@ -30,9 +30,9 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     });
   }
 
-  // 2. 실제 디바이스 확인
+  // 2. 실제 디바이스 확인 (시뮬레이터에서는 조용히 스킵)
   if (!Device.isDevice) {
-    handleRegistrationError('Must use physical device for push notifications');
+    console.log('[Push] Skipping push notifications - running on simulator/emulator');
     return null;
   }
 
