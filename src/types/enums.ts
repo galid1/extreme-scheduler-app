@@ -40,3 +40,8 @@ export enum TrainerStatus {
   PENDING = 'PENDING',
   ACTIVE = 'ACTIVE'
 }
+
+export enum CalendarPlatformType {
+    GOOGLE_CALENDAR = "GOOGLE_CALENDAR",
+    NAVER_CALENDAR = "NAVER_CALENDAR",
+}

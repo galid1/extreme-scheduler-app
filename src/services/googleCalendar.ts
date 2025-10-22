@@ -1,7 +1,7 @@
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { Platform } from 'react-native';
-import { apiClient } from './api/client';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {Platform} from 'react-native';
 import calendarIntegrationService from "@/src/services/api/calendar-integration.service";
+import {CalendarPlatformType} from "@/src/types/enums";
 
 /**
  * Google Sign-In 초기 설정
@@ -38,31 +38,17 @@ export const signInWithGoogle = async () => {
         if (response.type !== 'success') {
             throw new Error('Google sign-in was cancelled or failed');
         }
+
+        const serverAuthCode = response.data.serverAuthCode;
+        if (!serverAuthCode) {
+            throw new Error('Failed to get server auth code from Google');
+        }
+
         return {
-            authorizationCode: response.data.serverAuthCode
+            authorizationCode: serverAuthCode
         };
     } catch (error: any) {
         console.error('[Google Calendar] Sign-in failed:', error);
-        throw error;
-    }
-};
-
-/**
- * 현재 로그인 상태 확인
- */
-export const isSignedIn = async (): Promise<boolean> => {
-    return await GoogleSignin.isSignedIn();
-};
-
-/**
- * Access Token 가져오기
- */
-export const getAccessToken = async (): Promise<string> => {
-    try {
-        const tokens = await GoogleSignin.getTokens();
-        return tokens.accessToken;
-    } catch (error) {
-        console.error('[Google Calendar] Failed to get access token:', error);
         throw error;
     }
 };
@@ -88,7 +74,7 @@ export const sendTokensToServer = async (
     authorizationCode: string,
 ) => {
     try {
-        await calendarIntegrationService.connectGoogleCalendar(authorizationCode)
+        await calendarIntegrationService.integrateCalendar(authorizationCode, CalendarPlatformType.GOOGLE_CALENDAR)
         console.log('[Google Calendar] Tokens sent to server successfully');
     } catch (error: any) {
         console.error('[Google Calendar] Failed to send tokens to server:', error.message);
@@ -99,17 +85,9 @@ export const sendTokensToServer = async (
 /**
  * 서버에서 Google Calendar 연동 해제
  */
-export const disconnectFromServer = async (userAuthToken: string) => {
+export const disconnectFromServer = async () => {
     try {
-        // 임시로 토큰 설정
-        const previousToken = (apiClient as any).authToken;
-        apiClient.setAuthToken(userAuthToken);
-
-        await apiClient.delete('/api/v1/google-calendar/disconnect');
-
-        // 원래 토큰으로 복원
-        apiClient.setAuthToken(previousToken);
-
+        await calendarIntegrationService.disconnectCalendar(CalendarPlatformType.GOOGLE_CALENDAR);
         console.log('[Google Calendar] Disconnected from server');
     } catch (error: any) {
         console.error('[Google Calendar] Failed to disconnect:', error.message);

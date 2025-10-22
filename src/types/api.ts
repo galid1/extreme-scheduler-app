@@ -9,7 +9,7 @@ import {
     DayOfWeek,
     RequestStatus,
     TrainerStatus,
-    AutoSchedulingResultStatus
+    AutoSchedulingResultStatus, CalendarPlatformType
 } from './enums';
 
 // Re-export enums for backward compatibility
@@ -473,10 +473,22 @@ export interface ReadNotificationResponse {
 // Calendar Integration Types
 export interface ConnectGoogleCalendarRequest {
     authorizationCode: string;
+    calendarPlatformType: CalendarPlatformType;
 }
 
 export interface ConnectGoogleCalendarResponse {
     success: boolean;
     message?: string;
+}
+
+export interface CalendarIntegrationInfo {
+    calendarPlatformType: CalendarPlatformType;
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface GetActiveCalendarIntegrationsResponse {
+    integration: CalendarIntegrationInfo | null;
 }
 

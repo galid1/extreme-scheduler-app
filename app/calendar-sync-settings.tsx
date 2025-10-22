@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     configureGoogleSignIn,
     signInWithGoogle,
@@ -21,10 +20,10 @@ import {
     signOutFromGoogle,
     disconnectFromServer,
 } from '@/src/services/googleCalendar';
+import calendarIntegrationService from '@/src/services/api/calendar-integration.service';
+import { CalendarPlatformType } from '@/src/types/enums';
 // TODO: expo-calendar는 네이티브 빌드 후 활성화
 // import * as Calendar from 'expo-calendar';
-
-const CALENDAR_SYNC_PREFIX = 'calendar_sync_';
 
 type CalendarPlatform = 'native' | 'google' | 'naver';
 
@@ -50,25 +49,50 @@ export default function CalendarSyncSettingsScreen() {
         loadSettings();
     }, []);
 
+    /**
+     * 서버에서 캘린더 연동 상태 불러오기 (내부 함수)
+     */
+    const fetchCalendarState = async () => {
+        const response = await calendarIntegrationService.getActiveCalendarIntegrations();
+
+        if (response.integration && response.integration.active) {
+            // 연동된 캘린더가 있는 경우
+            const platform = response.integration.calendarPlatformType;
+            setSyncState({
+                native: false,
+                google: platform === CalendarPlatformType.GOOGLE_CALENDAR,
+                naver: platform === CalendarPlatformType.NAVER_CALENDAR,
+            });
+        } else {
+            // 연동된 캘린더가 없는 경우
+            setSyncState({
+                native: false,
+                google: false,
+                naver: false,
+            });
+        }
+
+        // 캘린더 권한 확인 (TODO: expo-calendar 활성화 후 주석 해제)
+        // const { status } = await Calendar.getCalendarPermissionsAsync();
+        // setHasCalendarPermission(status === 'granted');
+        setHasCalendarPermission(false); // 임시로 false
+    };
+
+    /**
+     * 초기 로딩 시 설정 불러오기
+     */
     const loadSettings = async () => {
         try {
-            // 1. 저장된 설정 불러오기
-            const nativeSync = await AsyncStorage.getItem(`${CALENDAR_SYNC_PREFIX}native`);
-            const googleSync = await AsyncStorage.getItem(`${CALENDAR_SYNC_PREFIX}google`);
-            const naverSync = await AsyncStorage.getItem(`${CALENDAR_SYNC_PREFIX}naver`);
-
-            setSyncState({
-                native: nativeSync === 'true',
-                google: googleSync === 'true',
-                naver: naverSync === 'true',
-            });
-
-            // 2. 캘린더 권한 확인 (TODO: expo-calendar 활성화 후 주석 해제)
-            // const { status } = await Calendar.getCalendarPermissionsAsync();
-            // setHasCalendarPermission(status === 'granted');
-            setHasCalendarPermission(false); // 임시로 false
+            setIsLoading(true);
+            await fetchCalendarState();
         } catch (error) {
             console.error('[Calendar Sync] Failed to load settings:', error);
+            // 에러 발생 시 기본값 설정
+            setSyncState({
+                native: false,
+                google: false,
+                naver: false,
+            });
         } finally {
             setIsLoading(false);
         }
@@ -118,7 +142,26 @@ export default function CalendarSyncSettingsScreen() {
 
         // Naver 캘린더 (추후 구현)
         if (platform === 'naver') {
-            Alert.alert('준비 중', 'Naver 캘린더 연동 기능은 준비 중입니다.');
+            if (value) {
+                // Naver 연동 활성화 시도
+                Alert.alert(
+                    '준비 중',
+                    'Naver 캘린더 연동 기능은 준비 중입니다.',
+                    [
+                        {
+                            text: '확인',
+                            onPress: async () => {
+                                // 준비 중이므로 상태를 되돌림
+                                setSyncState({ ...syncState, naver: false });
+                            },
+                        },
+                    ]
+                );
+            } else {
+                // Naver 연동 해제
+                await handleCalendarDisconnect('naver');
+                Alert.alert('연동 해제됨', 'Naver 캘린더 연동이 해제되었습니다.');
+            }
             return;
         }
 
@@ -127,9 +170,6 @@ export default function CalendarSyncSettingsScreen() {
             // 상태 업데이트
             const newState = { ...syncState, [platform]: value };
             setSyncState(newState);
-
-            // AsyncStorage에 저장
-            await AsyncStorage.setItem(`${CALENDAR_SYNC_PREFIX}${platform}`, value.toString());
 
             if (value) {
                 Alert.alert('연동 활성화', `${getPlatformName(platform)} 연동이 활성화되었습니다.`);
@@ -149,29 +189,22 @@ export default function CalendarSyncSettingsScreen() {
         try {
             setIsLoading(true);
 
+            // 0. 다른 캘린더가 연동되어 있으면 먼저 해제
+            if (syncState.naver) {
+                await handleCalendarDisconnect('naver');
+            }
+
             // 1. Google 로그인 및 토큰 획득
             const authorizationCode = await signInWithGoogle();
-            console.log("###############")
-            console.log("###############")
-            console.log(authorizationCode)
-
             // 2. 서버로 토큰 전송
             await sendTokensToServer(authorizationCode.authorizationCode);
 
-            // 4. 상태 저장
-            const newState = { ...syncState, google: true };
-            setSyncState(newState);
-            await AsyncStorage.setItem(`${CALENDAR_SYNC_PREFIX}google`, 'true');
+            // 3. 서버에서 최신 상태 다시 가져오기 (Single Source of Truth)
+            await fetchCalendarState();
 
-            Alert.alert(
-                '연동 완료',
-                `${user.email}로 Google 캘린더가 연동되었습니다.\n\n자동 스케줄링 시 Google 캘린더에 일정이 자동으로 추가됩니다.`
-            );
+            Alert.alert('연동 완료', 'Google 캘린더 연동이 완료되었습니다.');
         } catch (error: any) {
             console.error('[Google Calendar] Connection failed:', error);
-
-            // 상태 되돌리기
-            setSyncState({ ...syncState, google: false });
 
             if (error.code === 'SIGN_IN_CANCELLED') {
                 Alert.alert('취소됨', 'Google 로그인이 취소되었습니다.');
@@ -180,6 +213,29 @@ export default function CalendarSyncSettingsScreen() {
             }
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    /**
+     * 캘린더 연동 해제 (공통 함수)
+     */
+    const handleCalendarDisconnect = async (platform: 'google' | 'naver') => {
+        try {
+            if (platform === 'google') {
+                // 1. 서버에서 연동 해제
+                await disconnectFromServer();
+                // 2. Google Sign-Out
+                await signOutFromGoogle();
+            } else if (platform === 'naver') {
+                // TODO: Naver 캘린더 연동 해제 로직 추가
+                // await disconnectNaverCalendar();
+            }
+
+            // 3. 서버에서 최신 상태 다시 가져오기 (Single Source of Truth)
+            await fetchCalendarState();
+        } catch (error) {
+            console.error(`[${platform} Calendar] Disconnection failed:`, error);
+            throw error;
         }
     };
 
@@ -201,22 +257,7 @@ export default function CalendarSyncSettingsScreen() {
                     onPress: async () => {
                         try {
                             setIsLoading(true);
-
-                            // 1. 사용자 인증 토큰 가져오기
-                            const userAuthToken = await AsyncStorage.getItem('userToken');
-                            if (userAuthToken) {
-                                // 2. 서버에서 연동 해제
-                                await disconnectFromServer(userAuthToken);
-                            }
-
-                            // 3. Google Sign-Out
-                            await signOutFromGoogle();
-
-                            // 4. 로컬 상태 업데이트
-                            const newState = { ...syncState, google: false };
-                            setSyncState(newState);
-                            await AsyncStorage.setItem(`${CALENDAR_SYNC_PREFIX}google`, 'false');
-
+                            await handleCalendarDisconnect('google');
                             Alert.alert('연동 해제됨', 'Google 캘린더 연동이 해제되었습니다.');
                         } catch (error) {
                             console.error('[Google Calendar] Disconnection failed:', error);
