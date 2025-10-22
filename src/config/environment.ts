@@ -9,20 +9,11 @@ interface EnvironmentConfig {
 }
 
 const getEnvironmentConfig = (): EnvironmentConfig => {
-  // Expo 환경변수 사용 (EXPO_PUBLIC_ prefix 필요)
-  // Expo 앱에서는 컴퓨터의 실제 IP 주소를 사용해야 합니다.
-  // iOS Simulator에서도 localhost 대신 실제 IP를 사용하는 것이 안전합니다.
-
-  // 개발 환경에서 사용할 로컬 서버 주소
-  // 본인의 로컬 IP 주소로 변경하세요 (ifconfig 또는 ipconfig로 확인)
-   const url = "http://172.30.1.81:8080"  // local
-  //   const url = "http://app.timesmaker.com:8080" // production
-
-  // const env = process.env.EXPO_PUBLIC_ENV || 'development';
-    const env = process.env.EXPO_PUBLIC_ENV || 'devleopment';
+    const url = process.env.EXPO_PUBLIC_API_URL || "http://172.30.1.30:8080"  // local
+    const env = process.env.EXPO_PUBLIC_ENV || 'production';
 
   return {
-      API_URL: url,
+    API_URL: url,
     ENV: env,
   };
 };

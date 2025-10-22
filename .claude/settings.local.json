@@ -21,7 +21,8 @@
       "Bash(pkill:*)",
       "Bash(grep -n \"calendar-sync\" app/(tabs)/myprofile.tsx)",
       "Bash(ipconfig getifaddr en0)",
-      "Bash(ipconfig getifaddr en1)"
+      "Bash(ipconfig getifaddr en1)",
+      "Bash(npx expo prebuild:*)"
     ],
     "deny": [],
     "ask": []

@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.extremescheduler.app",
+      "bundleIdentifier": "com.galid.extremescheduler",
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification"],
         "NSCalendarsUsageDescription": "일정을 캘린더에 동기화하기 위해 캘린더 접근 권한이 필요합니다.",
@@ -19,6 +19,7 @@
       "icon": "./assets/images/app-icon.png"
     },
     "android": {
+      "package": "com.galid.extremescheduler",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -60,6 +61,12 @@
           "icon": "./assets/images/notification-icon.png",
           "color": "#3B82F6",
           "sounds": ["default"]
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.991345162013-2496c5htlnmscbb349b9q2o8hglmqkof"
         }
       ]
     ],

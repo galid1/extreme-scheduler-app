@@ -1667,6 +1667,11 @@
   dependencies:
     merge-options "^3.0.4"
 
+"@react-native-google-signin/google-signin@^16.0.0":
+  version "16.0.0"
+  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-16.0.0.tgz#05af652e16f7dab745907db06edc74c007c0e670"
+  integrity sha512-jVuzPo8odREekFc0b4RK3YsqCvedtLIM2P6NSszFr9cYyhKrUNikffPapL6LmkL9qkb8K6pDeb5CXg4qALOc0g==
+
 "@react-native/assets-registry@0.81.5":
   version "0.81.5"
   resolved "https://registry.yarnpkg.com/@react-native/assets-registry/-/assets-registry-0.81.5.tgz#d22c924fa6f6d4a463c5af34ce91f38756c0fa7d"
@@ -2673,7 +2678,7 @@ balanced-match@^1.0.0:
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
 
-base64-js@^1.2.3, base64-js@^1.3.1, base64-js@^1.5.1:
+base64-js@^1.2.3, base64-js@^1.3.0, base64-js@^1.3.1, base64-js@^1.5.1:
   version "1.5.1"
   resolved "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz"
   integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
@@ -3709,6 +3714,18 @@ expo-asset@~12.0.9:
     "@expo/image-utils" "^0.8.7"
     expo-constants "~18.0.9"
 
+expo-auth-session@~7.0.8:
+  version "7.0.8"
+  resolved "https://registry.yarnpkg.com/expo-auth-session/-/expo-auth-session-7.0.8.tgz#a6b82c7e0bf2ac18e56d815c7d84c0d86fa8477b"
+  integrity sha512-kpo2Jva+6uVjk6TmNqWAoqTnULXZaEVa9l4uf8JH32uDMt/iZQhM0fauy7Ww+y910Euhv5djCP7cPj8KWv6cmQ==
+  dependencies:
+    expo-application "~7.0.7"
+    expo-constants "~18.0.8"
+    expo-crypto "~15.0.7"
+    expo-linking "~8.0.8"
+    expo-web-browser "~15.0.7"
+    invariant "^2.2.4"
+
 expo-calendar@~15.0.7:
   version "15.0.7"
   resolved "https://registry.yarnpkg.com/expo-calendar/-/expo-calendar-15.0.7.tgz#d3afc1882c4c9bb5a5e3a73a57c4681e18f7ce53"
@@ -3729,6 +3746,13 @@ expo-constants@~18.0.8, expo-constants@~18.0.9:
   dependencies:
     "@expo/config" "~12.0.9"
     "@expo/env" "~2.0.7"
+
+expo-crypto@~15.0.7:
+  version "15.0.7"
+  resolved "https://registry.yarnpkg.com/expo-crypto/-/expo-crypto-15.0.7.tgz#0d06a621ddbcfdcfbcb9961462ee227b52a4f73b"
+  integrity sha512-FUo41TwwGT2e5rA45PsjezI868Ch3M6wbCZsmqTWdF/hr+HyPcrp1L//dsh/hsrsyrQdpY/U96Lu71/wXePJeg==
+  dependencies:
+    base64-js "^1.3.0"
 
 expo-dev-client@~6.0.16:
   version "6.0.16"
@@ -3916,7 +3940,7 @@ expo-updates-interface@~2.0.0:
   resolved "https://registry.yarnpkg.com/expo-updates-interface/-/expo-updates-interface-2.0.0.tgz#7721cb64c37bcb46b23827b2717ef451a9378749"
   integrity sha512-pTzAIufEZdVPKql6iMi5ylVSPqV1qbEopz9G6TSECQmnNde2nwq42PxdFBaUEd8IZJ/fdJLQnOT3m6+XJ5s7jg==
 
-expo-web-browser@~15.0.8:
+expo-web-browser@~15.0.7, expo-web-browser@~15.0.8:
   version "15.0.8"
   resolved "https://registry.yarnpkg.com/expo-web-browser/-/expo-web-browser-15.0.8.tgz#9425ad225255a49b9163006db9ed9578f399585d"
   integrity sha512-gn+Y2ABQr6/EvFN/XSjTuzwsSPLU1vNVVV0wNe4xXkcSnYGdHxt9kHxs9uLfoCyPByoaGF4VxzAhHIMI7yDcSg==

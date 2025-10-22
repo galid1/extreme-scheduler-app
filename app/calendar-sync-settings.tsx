@@ -9,10 +9,18 @@ import {
     Alert,
     Platform,
     Image,
+    ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+    configureGoogleSignIn,
+    signInWithGoogle,
+    sendTokensToServer,
+    signOutFromGoogle,
+    disconnectFromServer,
+} from '@/src/services/googleCalendar';
 // TODO: expo-calendar는 네이티브 빌드 후 활성화
 // import * as Calendar from 'expo-calendar';
 
@@ -37,6 +45,8 @@ export default function CalendarSyncSettingsScreen() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // Google Sign-In 설정
+        configureGoogleSignIn();
         loadSettings();
     }, []);
 
@@ -94,6 +104,25 @@ export default function CalendarSyncSettingsScreen() {
             return;
         }
 
+        // Google 캘린더 연동/해제
+        if (platform === 'google') {
+            if (value) {
+                // Google 연동 활성화
+                await handleGoogleCalendarConnect();
+            } else {
+                // Google 연동 해제
+                await handleGoogleCalendarDisconnect();
+            }
+            return;
+        }
+
+        // Naver 캘린더 (추후 구현)
+        if (platform === 'naver') {
+            Alert.alert('준비 중', 'Naver 캘린더 연동 기능은 준비 중입니다.');
+            return;
+        }
+
+        // 네이티브 캘린더 (기본)
         try {
             // 상태 업데이트
             const newState = { ...syncState, [platform]: value };
@@ -111,6 +140,94 @@ export default function CalendarSyncSettingsScreen() {
             console.error('[Calendar Sync] Failed to save:', error);
             Alert.alert('오류', '설정을 저장하는데 실패했습니다.');
         }
+    };
+
+    /**
+     * Google Calendar 연동
+     */
+    const handleGoogleCalendarConnect = async () => {
+        try {
+            setIsLoading(true);
+
+            // 1. Google 로그인 및 토큰 획득
+            const authorizationCode = await signInWithGoogle();
+            console.log("###############")
+            console.log("###############")
+            console.log(authorizationCode)
+
+            // 2. 서버로 토큰 전송
+            await sendTokensToServer(authorizationCode.authorizationCode);
+
+            // 4. 상태 저장
+            const newState = { ...syncState, google: true };
+            setSyncState(newState);
+            await AsyncStorage.setItem(`${CALENDAR_SYNC_PREFIX}google`, 'true');
+
+            Alert.alert(
+                '연동 완료',
+                `${user.email}로 Google 캘린더가 연동되었습니다.\n\n자동 스케줄링 시 Google 캘린더에 일정이 자동으로 추가됩니다.`
+            );
+        } catch (error: any) {
+            console.error('[Google Calendar] Connection failed:', error);
+
+            // 상태 되돌리기
+            setSyncState({ ...syncState, google: false });
+
+            if (error.code === 'SIGN_IN_CANCELLED') {
+                Alert.alert('취소됨', 'Google 로그인이 취소되었습니다.');
+            } else {
+                Alert.alert('연동 실패', 'Google 캘린더 연동에 실패했습니다. 다시 시도해주세요.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * Google Calendar 연동 해제
+     */
+    const handleGoogleCalendarDisconnect = async () => {
+        Alert.alert(
+            'Google 캘린더 연동 해제',
+            '정말로 Google 캘린더 연동을 해제하시겠습니까?\n\n향후 자동 스케줄링 시 Google 캘린더에 일정이 추가되지 않습니다.',
+            [
+                {
+                    text: '취소',
+                    style: 'cancel',
+                },
+                {
+                    text: '연동 해제',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setIsLoading(true);
+
+                            // 1. 사용자 인증 토큰 가져오기
+                            const userAuthToken = await AsyncStorage.getItem('userToken');
+                            if (userAuthToken) {
+                                // 2. 서버에서 연동 해제
+                                await disconnectFromServer(userAuthToken);
+                            }
+
+                            // 3. Google Sign-Out
+                            await signOutFromGoogle();
+
+                            // 4. 로컬 상태 업데이트
+                            const newState = { ...syncState, google: false };
+                            setSyncState(newState);
+                            await AsyncStorage.setItem(`${CALENDAR_SYNC_PREFIX}google`, 'false');
+
+                            Alert.alert('연동 해제됨', 'Google 캘린더 연동이 해제되었습니다.');
+                        } catch (error) {
+                            console.error('[Google Calendar] Disconnection failed:', error);
+                            Alert.alert('오류', '연동 해제에 실패했습니다.');
+                        } finally {
+                            setIsLoading(false);
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     const getPlatformName = (platform: CalendarPlatform): string => {

@@ -470,3 +470,13 @@ export interface ReadNotificationResponse {
     success: boolean;
 }
 
+// Calendar Integration Types
+export interface ConnectGoogleCalendarRequest {
+    authorizationCode: string;
+}
+
+export interface ConnectGoogleCalendarResponse {
+    success: boolean;
+    message?: string;
+}
+
