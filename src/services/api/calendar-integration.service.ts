@@ -28,7 +28,7 @@ class CalendarIntegrationService {
 
         try {
             const response = await apiClient.put<GoogleCalendarIntegrationResponse>(
-                '/api/v1/integrations/calendar/integrate',
+                '/api/v1/integrations/calendar/google/integrate',
                 request
             );
             return response;

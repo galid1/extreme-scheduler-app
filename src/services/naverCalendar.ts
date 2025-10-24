@@ -116,3 +116,57 @@ export const disconnectFromServer = async () => {
         throw error;
     }
 };
+
+/**
+ * Naver OAuth API를 직접 호출하여 토큰 갱신
+ * @param refreshToken - Naver refresh token
+ * @returns { accessToken, refreshToken, expiresIn }
+ */
+export const refreshNaverToken = async (refreshToken: string) => {
+    try {
+        const clientId = process.env.EXPO_PUBLIC_NAVER_CONSUMER_KEY || '';
+        const clientSecret = process.env.EXPO_PUBLIC_NAVER_CONSUMER_SECRET || '';
+
+        const params = new URLSearchParams({
+            grant_type: 'refresh_token',
+            client_id: clientId,
+            client_secret: clientSecret,
+            refresh_token: refreshToken,
+        });
+
+        const response = await fetch(`https://nid.naver.com/oauth2.0/token?${params.toString()}`, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Token refresh failed: ${JSON.stringify(error)}`);
+        }
+
+        const data = await response.json();
+
+        return {
+            accessToken: data.access_token,
+            refreshToken: refreshToken, // 갱신 토큰은 변경되지 않음
+            expiresIn: data.expires_in || 3600, // 기본 1시간
+        };
+    } catch (error: any) {
+        console.error('[Naver Calendar] Token refresh failed:', error);
+        throw error;
+    }
+};
+
+/**
+ * Naver 사용자 프로필 조회
+ * @param accessToken - Naver access token
+ */
+export const getNaverProfile = async (accessToken: string) => {
+    try {
+        const profile = await NaverLogin.getProfile(accessToken);
+        console.log('[Naver Calendar] Profile:', profile);
+        return profile;
+    } catch (error: any) {
+        console.error('[Naver Calendar] Get profile failed:', error);
+        throw error;
+    }
+};

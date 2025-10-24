@@ -184,29 +184,48 @@ export default function CalendarSyncSettingsScreen() {
      */
     const handleGoogleCalendarConnect = async () => {
         try {
+            console.log('[DEBUG] Google Calendar connect started');
             setIsLoading(true);
 
             // 0. 다른 캘린더가 연동되어 있으면 먼저 해제
             if (syncState.naver) {
+                console.log('[DEBUG] Naver is connected, disconnecting first...');
                 await handleCalendarDisconnect('naver');
+                console.log('[DEBUG] Naver disconnected successfully');
+
+                // Naver 로그아웃 후 앱 상태가 안정화될 시간 제공
+                console.log('[DEBUG] Waiting for app to stabilize...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
             // 1. Google 로그인 및 토큰 획득
+            console.log('[DEBUG] Starting Google sign-in...');
             const authorizationCode = await signInWithGoogle();
+            console.log('[DEBUG] Google sign-in successful, got auth code');
+
             // 2. 서버로 토큰 전송
+            console.log('[DEBUG] Sending tokens to server...');
             await sendGoogleTokensToServer(authorizationCode.authorizationCode);
+            console.log('[DEBUG] Tokens sent successfully');
 
             // 3. 서버에서 최신 상태 다시 가져오기 (Single Source of Truth)
+            console.log('[DEBUG] Fetching calendar state...');
             await fetchCalendarState();
+            console.log('[DEBUG] Calendar state fetched successfully');
 
             Alert.alert('연동 완료', 'Google 캘린더 연동이 완료되었습니다.');
         } catch (error: any) {
             console.error('[Google Calendar] Connection failed:', error);
+            console.error('[DEBUG] Error details:', {
+                message: error.message,
+                code: error.code,
+                stack: error.stack,
+            });
 
             if (error.code === 'SIGN_IN_CANCELLED') {
                 Alert.alert('취소됨', 'Google 로그인이 취소되었습니다.');
             } else {
-                Alert.alert('연동 실패', 'Google 캘린더 연동에 실패했습니다. 다시 시도해주세요.');
+                Alert.alert('연동 실패', `Google 캘린더 연동에 실패했습니다.\n${error.message}`);
             }
         } finally {
             setIsLoading(false);
@@ -262,10 +281,10 @@ export default function CalendarSyncSettingsScreen() {
             } else if (platform === 'naver') {
                 // 1. 서버에서 연동 해제
                 await disconnectNaverFromServer();
-                // 2. Naver Sign-Out
+                // 2. Naver Sign-Out (deleteToken은 라우팅 문제를 일으켜서 제외)
                 await signOutFromNaver();
-                // 3. Naver Token 삭제
-                await deleteNaverToken();
+                // Note: deleteToken()은 앱을 다른 화면으로 리다이렉트시켜서 생략
+                // 서버에서 토큰을 이미 삭제했으므로 클라이언트 측 삭제는 선택사항
             }
 
             // 3. 서버에서 최신 상태 다시 가져오기 (Single Source of Truth)
