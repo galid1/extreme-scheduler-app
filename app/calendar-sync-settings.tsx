@@ -16,10 +16,18 @@ import { Stack, useRouter } from 'expo-router';
 import {
     configureGoogleSignIn,
     signInWithGoogle,
-    sendTokensToServer,
+    sendTokensToServer as sendGoogleTokensToServer,
     signOutFromGoogle,
-    disconnectFromServer,
+    disconnectFromServer as disconnectGoogleFromServer,
 } from '@/src/services/googleCalendar';
+import {
+    configureNaverLogin,
+    signInWithNaver,
+    sendTokensToServer as sendNaverTokensToServer,
+    signOutFromNaver,
+    disconnectFromServer as disconnectNaverFromServer,
+    deleteNaverToken,
+} from '@/src/services/naverCalendar';
 import calendarIntegrationService from '@/src/services/api/calendar-integration.service';
 import { CalendarPlatformType } from '@/src/types/enums';
 // TODO: expo-calendar는 네이티브 빌드 후 활성화
@@ -46,6 +54,8 @@ export default function CalendarSyncSettingsScreen() {
     useEffect(() => {
         // Google Sign-In 설정
         configureGoogleSignIn();
+        // Naver Login 설정
+        configureNaverLogin();
         loadSettings();
     }, []);
 
@@ -140,27 +150,14 @@ export default function CalendarSyncSettingsScreen() {
             return;
         }
 
-        // Naver 캘린더 (추후 구현)
+        // Naver 캘린더
         if (platform === 'naver') {
             if (value) {
-                // Naver 연동 활성화 시도
-                Alert.alert(
-                    '준비 중',
-                    'Naver 캘린더 연동 기능은 준비 중입니다.',
-                    [
-                        {
-                            text: '확인',
-                            onPress: async () => {
-                                // 준비 중이므로 상태를 되돌림
-                                setSyncState({ ...syncState, naver: false });
-                            },
-                        },
-                    ]
-                );
+                // Naver 연동 활성화
+                await handleNaverCalendarConnect();
             } else {
                 // Naver 연동 해제
-                await handleCalendarDisconnect('naver');
-                Alert.alert('연동 해제됨', 'Naver 캘린더 연동이 해제되었습니다.');
+                await handleNaverCalendarDisconnect();
             }
             return;
         }
@@ -197,7 +194,7 @@ export default function CalendarSyncSettingsScreen() {
             // 1. Google 로그인 및 토큰 획득
             const authorizationCode = await signInWithGoogle();
             // 2. 서버로 토큰 전송
-            await sendTokensToServer(authorizationCode.authorizationCode);
+            await sendGoogleTokensToServer(authorizationCode.authorizationCode);
 
             // 3. 서버에서 최신 상태 다시 가져오기 (Single Source of Truth)
             await fetchCalendarState();
@@ -217,18 +214,58 @@ export default function CalendarSyncSettingsScreen() {
     };
 
     /**
+     * Naver Calendar 연동
+     */
+    const handleNaverCalendarConnect = async () => {
+        try {
+            setIsLoading(true);
+
+            // 0. 다른 캘린더가 연동되어 있으면 먼저 해제
+            if (syncState.google) {
+                await handleCalendarDisconnect('google');
+            }
+
+            // 1. Naver 로그인 및 토큰 획득
+            const { accessToken, refreshToken } = await signInWithNaver();
+            console.log('[Naver Calendar] Login successful');
+
+            // 2. 서버로 토큰 전송
+            await sendNaverTokensToServer(accessToken, refreshToken);
+
+            // 3. 서버에서 최신 상태 다시 가져오기 (Single Source of Truth)
+            await fetchCalendarState();
+
+            Alert.alert('연동 완료', 'Naver 캘린더 연동이 완료되었습니다.');
+        } catch (error: any) {
+            console.error('[Naver Calendar] Connection failed:', error);
+
+            if (error.code === 'USER_CANCEL') {
+                Alert.alert('취소됨', 'Naver 로그인이 취소되었습니다.');
+            } else {
+                Alert.alert('연동 실패', 'Naver 캘린더 연동에 실패했습니다. 다시 시도해주세요.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
      * 캘린더 연동 해제 (공통 함수)
      */
     const handleCalendarDisconnect = async (platform: 'google' | 'naver') => {
         try {
             if (platform === 'google') {
                 // 1. 서버에서 연동 해제
-                await disconnectFromServer();
+                await disconnectGoogleFromServer();
                 // 2. Google Sign-Out
                 await signOutFromGoogle();
             } else if (platform === 'naver') {
-                // TODO: Naver 캘린더 연동 해제 로직 추가
-                // await disconnectNaverCalendar();
+                // 1. 서버에서 연동 해제
+                await disconnectNaverFromServer();
+                // 2. Naver Sign-Out
+                await signOutFromNaver();
+                // 3. Naver Token 삭제
+                await deleteNaverToken();
             }
 
             // 3. 서버에서 최신 상태 다시 가져오기 (Single Source of Truth)
@@ -261,6 +298,38 @@ export default function CalendarSyncSettingsScreen() {
                             Alert.alert('연동 해제됨', 'Google 캘린더 연동이 해제되었습니다.');
                         } catch (error) {
                             console.error('[Google Calendar] Disconnection failed:', error);
+                            Alert.alert('오류', '연동 해제에 실패했습니다.');
+                        } finally {
+                            setIsLoading(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+    /**
+     * Naver Calendar 연동 해제
+     */
+    const handleNaverCalendarDisconnect = async () => {
+        Alert.alert(
+            'Naver 캘린더 연동 해제',
+            '정말로 Naver 캘린더 연동을 해제하시겠습니까?\n\n향후 자동 스케줄링 시 Naver 캘린더에 일정이 추가되지 않습니다.',
+            [
+                {
+                    text: '취소',
+                    style: 'cancel',
+                },
+                {
+                    text: '연동 해제',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setIsLoading(true);
+                            await handleCalendarDisconnect('naver');
+                            Alert.alert('연동 해제됨', 'Naver 캘린더 연동이 해제되었습니다.');
+                        } catch (error) {
+                            console.error('[Naver Calendar] Disconnection failed:', error);
                             Alert.alert('오류', '연동 해제에 실패했습니다.');
                         } finally {
                             setIsLoading(false);

@@ -471,12 +471,22 @@ export interface ReadNotificationResponse {
 }
 
 // Calendar Integration Types
-export interface ConnectGoogleCalendarRequest {
+export interface GoogleCalendarIntegrationRequest {
     authorizationCode: string;
-    calendarPlatformType: CalendarPlatformType;
 }
 
-export interface ConnectGoogleCalendarResponse {
+export interface GoogleCalendarIntegrationResponse {
+    success: boolean;
+    message?: string;
+}
+
+export interface NaverCalendarIntegrationRequest {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: string; // ISO 8601 format (LocalDateTime)
+}
+
+export interface NaverCalendarIntegrationResponse {
     success: boolean;
     message?: string;
 }

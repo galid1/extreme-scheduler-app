@@ -74,7 +74,7 @@ export const sendTokensToServer = async (
     authorizationCode: string,
 ) => {
     try {
-        await calendarIntegrationService.integrateCalendar(authorizationCode, CalendarPlatformType.GOOGLE_CALENDAR)
+        await calendarIntegrationService.integrateGoogleCalendar(authorizationCode, CalendarPlatformType.GOOGLE_CALENDAR)
         console.log('[Google Calendar] Tokens sent to server successfully');
     } catch (error: any) {
         console.error('[Google Calendar] Failed to send tokens to server:', error.message);
