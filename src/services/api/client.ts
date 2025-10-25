@@ -170,8 +170,11 @@ class ApiClient {
     }, timeout);
   }
 
-  async delete<T>(endpoint: string, timeout?: number): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' }, timeout);
+  async delete<T>(endpoint: string, data?: any, timeout?: number): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+      body: data ? JSON.stringify(data) : undefined,
+    }, timeout);
   }
 
   async patch<T>(endpoint: string, data?: any, timeout?: number): Promise<T> {

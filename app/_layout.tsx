@@ -3,6 +3,7 @@ import {Stack, useRouter, useSegments} from 'expo-router';
 import {StatusBar} from 'expo-status-bar';
 import 'react-native-reanimated';
 import {useEffect, useState} from 'react';
+import * as Linking from 'expo-linking';
 
 import {useColorScheme} from '@/hooks/use-color-scheme';
 import {useAuthStore} from '@/src/store/useAuthStore';
@@ -113,6 +114,8 @@ export default function RootLayout() {
         <Stack.Screen name="auto-scheduling" options={{ headerShown: false }} />
         <Stack.Screen name="training-schedule" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="notification-settings" options={{ headerShown: false }} />
+        <Stack.Screen name="calendar-sync-settings" options={{ headerShown: false }} />
         <Stack.Screen name="timeout-error" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>

@@ -6,7 +6,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 
 /**
  * 에러 핸들러
@@ -30,9 +30,9 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     });
   }
 
-  // 2. 실제 디바이스 확인
+  // 2. 실제 디바이스 확인 (시뮬레이터에서는 조용히 스킵)
   if (!Device.isDevice) {
-    handleRegistrationError('Must use physical device for push notifications');
+    console.log('[Push] Skipping push notifications - running on simulator/emulator');
     return null;
   }
 
@@ -40,12 +40,16 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
+  // 권한이 없는 경우에만 요청 (첫 실행 시)
   if (existingStatus !== 'granted') {
+    // iOS/Android: 이미 거절한 경우 팝업이 뜨지 않고 이전 상태 반환
+    // 따라서 사용자가 명시적으로 거절한 경우 조용히 실패
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
   }
 
   if (finalStatus !== 'granted') {
+    console.warn('[Push] Permission denied - user needs to enable in Settings');
     handleRegistrationError('Permission not granted to get push token for push notification!');
     return null;
   }
@@ -91,4 +95,20 @@ export async function checkPushNotificationPermission(): Promise<boolean> {
 
   const { status } = await Notifications.getPermissionsAsync();
   return status === 'granted';
+}
+
+/**
+ * 앱 설정으로 이동
+ * 권한 거절 후 재허용을 위해 사용
+ */
+export async function openAppSettings(): Promise<void> {
+  try {
+    if (Platform.OS === 'ios') {
+      await Linking.openURL('app-settings:');
+    } else {
+      await Linking.openSettings();
+    }
+  } catch (error) {
+    console.error('[Settings] Failed to open settings:', error);
+  }
 }

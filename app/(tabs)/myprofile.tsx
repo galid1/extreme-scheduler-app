@@ -67,34 +67,34 @@ export default function ProfileScreen() {
                         <Ionicons name="person-circle" size={80} color="#3B82F6"/>
                     </View>
                     <Text style={styles.name}>{account.privacyInfo.name}</Text>
+                    <Text style={styles.infoValue}>{formatPhoneNumber(account.privacyInfo.phoneNumber)}</Text>
                     <Text style={styles.accountType}>
                         {account.accountType === AccountType.TRAINER ? '트레이너' : '회원'}
                     </Text>
                 </View>
 
-                {/* Profile Info */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>기본 정보</Text>
+                {/* Menu Section */}
+                <View style={styles.menuSection}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => router.push('/notification-settings')}
+                    >
+                        <Ionicons name="notifications-outline" size={22} color="#3B82F6"/>
+                        <Text style={styles.menuText}>알림 설정</Text>
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
+                    </TouchableOpacity>
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="call-outline" size={20} color="#6B7280"/>
-                        <Text style={styles.infoLabel}>전화번호</Text>
-                        <Text style={styles.infoValue}>{formatPhoneNumber(account.privacyInfo.phoneNumber)}</Text>
-                    </View>
+                    <TouchableOpacity
+                        style={[styles.menuItem, styles.lastMenuItem]}
+                        onPress={() => router.push('/calendar-sync-settings')}
+                    >
+                        <Ionicons name="calendar-outline" size={22} color="#3B82F6"/>
+                        <Text style={styles.menuText}>캘린더 연동 설정</Text>
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
+                    </TouchableOpacity>
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="calendar-outline" size={20} color="#6B7280"/>
-                        <Text style={styles.infoLabel}>생년월일</Text>
-                        <Text style={styles.infoValue}>{account.privacyInfo.birthDate}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Ionicons name="person-outline" size={20} color="#6B7280"/>
-                        <Text style={styles.infoLabel}>성별</Text>
-                        <Text style={styles.infoValue}>
-                            {account.privacyInfo.gender === 'MALE' ? '남성' : '여성'}
-                        </Text>
-                    </View>
+                    {/* 추가 메뉴 아이템은 여기에 추가 */}
+                    {/* 마지막 아이템에는 styles.lastMenuItem 적용 */}
                 </View>
 
                 {/* Logout Button */}
@@ -191,20 +191,34 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         color: '#1F2937',
+        marginBottom: 4,
+    },
+    menuSection: {
+        backgroundColor: 'white',
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 14,
-        gap: 12,
+        paddingVertical: 16,
+        gap: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    lastMenuItem: {
+        borderBottomWidth: 0,
     },
     menuText: {
         flex: 1,
         fontSize: 15,
+        fontWeight: '500',
         color: '#1F2937',
     },
     logoutSection: {
         padding: 16,
+        marginTop: 8,
     },
     logoutButton: {
         flexDirection: 'row',

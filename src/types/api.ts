@@ -9,7 +9,7 @@ import {
     DayOfWeek,
     RequestStatus,
     TrainerStatus,
-    AutoSchedulingResultStatus
+    AutoSchedulingResultStatus, CalendarPlatformType
 } from './enums';
 
 // Re-export enums for backward compatibility
@@ -468,5 +468,37 @@ export interface ReadNotificationListResponse {
 export interface ReadNotificationResponse {
     notificationId: number;
     success: boolean;
+}
+
+// Calendar Integration Types
+export interface GoogleCalendarIntegrationRequest {
+    authorizationCode: string;
+}
+
+export interface GoogleCalendarIntegrationResponse {
+    success: boolean;
+    message?: string;
+}
+
+export interface NaverCalendarIntegrationRequest {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: string; // ISO 8601 format (LocalDateTime)
+}
+
+export interface NaverCalendarIntegrationResponse {
+    success: boolean;
+    message?: string;
+}
+
+export interface CalendarIntegrationInfo {
+    calendarPlatformType: CalendarPlatformType;
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface GetActiveCalendarIntegrationsResponse {
+    integration: CalendarIntegrationInfo | null;
 }
 

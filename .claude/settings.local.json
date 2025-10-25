@@ -18,7 +18,16 @@
       "Bash(xargs kill:*)",
       "Bash(npx expo install:*)",
       "Bash(cat:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(grep -n \"calendar-sync\" app/(tabs)/myprofile.tsx)",
+      "Bash(ipconfig getifaddr en0)",
+      "Bash(ipconfig getifaddr en1)",
+      "Bash(npx expo prebuild:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npm cache clean:*)",
+      "Bash(pod install)"
     ],
     "deny": [],
     "ask": []
